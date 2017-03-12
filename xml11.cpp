@@ -284,7 +284,14 @@ public:
         : m_name {move(name)},
           m_text {move(text)}
     {
-
+        if (m_name.empty() and not m_text.empty()) {
+            m_type = Node::Type::TEXT;
+        }
+        else if (not m_name.empty() and not m_text.empty()) {
+            NodeImpl node {"", move(m_text)};
+            node.type(Node::Type::TEXT);
+            addNode(move(node));
+        }
     }
 
     /********************************************************************************
@@ -471,7 +478,7 @@ public:
     const vector<shared_ptr<NodeImpl> >& nodes() const
         noexcept
     {
-        return m_nodes.nodes();
+        return const_cast<NodeImpl*>(this)->nodes();
     }
 
 private:
@@ -895,56 +902,42 @@ Node::operator bool() const noexcept
 
 NodeList Node::operator [] (const string& name)
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(name)) {
-        result.emplace_back(node);
-    }
-    return result;
+    return findNodes(name);
 }
 
 NodeList Node::operator [] (string&& name)
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(move(name))) {
-        result.emplace_back(node);
-    }
-    return result;
+    return findNodes(move(name));
 }
 
 NodeList Node::operator [] (const char* name)
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(name)) {
-        result.emplace_back(node);
-    }
-    return result;
+    return findNodes(name);
+}
+
+NodeList Node::operator [] (const Node::Type& type)
+{
+    return findNodes(type);
 }
 
 const NodeList Node::operator [] (const string& name) const
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(name)) {
-        result.emplace_back(node);
-    }
-    return result;
+    return findNodes(name);
 }
 
 const NodeList Node::operator [] (string&& name) const
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(move(name))) {
-        result.emplace_back(node);
-    }
-    return result;
+    return findNodes(move(name));
 }
 
 const NodeList Node::operator [] (const char* name) const
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(name)) {
-        result.emplace_back(node);
-    }
-    return result;
+    return findNodes(name);
+}
+
+const NodeList Node::operator [] (const Node::Type& type) const
+{
+    return findNodes(type);
 }
 
 NodeList Node::findNodes(const string& name)
@@ -974,61 +967,75 @@ NodeList Node::findNodes(const char* name)
     return result;
 }
 
-const NodeList Node::findNodes(const string& name) const
+NodeList Node::findNodes(const Type& type)
 {
     NodeList result;
-    for (const auto& node : pimpl->findNodes(name)) {
-        result.emplace_back(node);
+    for (const auto& node : pimpl->nodes()) {
+        if (node->type() == type) {
+            result.emplace_back(node);
+        }
     }
     return result;
+}
+
+const NodeList Node::findNodes(const string& name) const
+{
+    return const_cast<Node*>(this)->findNodes(name);
 }
 
 const NodeList Node::findNodes(string&& name) const
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(move(name))) {
-        result.emplace_back(node);
-    }
-    return result;
+    return const_cast<Node*>(this)->findNodes(move(name));
 }
 
 const NodeList Node::findNodes(const char* name) const
 {
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(name)) {
-        result.emplace_back(node);
-    }
-    return result;
+    return const_cast<Node*>(this)->findNodes(name);
+}
+
+const NodeList Node::findNodes(const Type& type) const
+{
+    return const_cast<Node*>(this)->findNodes(type);
 }
 
 Node Node::operator () (const string& name)
 {
-    return pimpl->findNode(name);
+    return findNode(name);
 }
 
 Node Node::operator () (string&& name)
 {
-    return pimpl->findNode(move(name));
+    return findNode(move(name));
 }
 
 Node Node::operator () (const char* name)
 {
-    return pimpl->findNode(name);
+    return findNode(name);
+}
+
+Node Node::operator () (const Type& type)
+{
+    return findNode(type);
 }
 
 const Node Node::operator () (const string& name) const
 {
-    return pimpl->findNode(name);
+    return findNode(name);
 }
 
 const Node Node::operator () (string&& name) const
 {
-    return pimpl->findNode(move(name));
+    return findNode(move(name));
 }
 
 const Node Node::operator () (const char* name) const
 {
-    return pimpl->findNode(name);
+    return findNode(name);
+}
+
+const Node Node::operator () (const Type& type) const
+{
+    return findNode(type);
 }
 
 Node Node::findNode(const string& name)
@@ -1046,19 +1053,34 @@ Node Node::findNode(const char* name)
     return pimpl->findNode(name);
 }
 
+Node Node::findNode(const Type& type)
+{
+    for (const auto& node : nodes()) {
+        if (node.type() == type) {
+            return node;
+        }
+    }
+    return Node {make_shared<NodeImpl>()};
+}
+
 const Node Node::findNode(const string& name) const
 {
-    return pimpl->findNode(name);
+    return const_cast<Node*>(this)->findNode(name);
 }
 
 const Node Node::findNode(string&& name) const
 {
-    return pimpl->findNode(move(name));
+    return const_cast<Node*>(this)->findNode(move(name));
 }
 
 const Node Node::findNode(const char* name) const
 {
-    return pimpl->findNode(name);
+    return const_cast<Node*>(this)->findNode(name);
+}
+
+const Node Node::findNode(const Type& type) const
+{
+    return const_cast<Node*>(this)->findNode(type);
 }
 
 Node::Type Node::type() const noexcept
@@ -1145,46 +1167,58 @@ const std::string& Node::error() const noexcept
     return pimpl->error();
 }
 
-Node& Node::operator += (const Node& root)
+Node& Node::operator += (const Node& node)
 {
-    addNode(root);
+    if (node) {
+        addNode(node);
+    }
     return *this;
 }
 
-Node& Node::operator += (Node&& root)
+Node& Node::operator += (Node&& node)
 {
-    addNode(move(root));
+    if (node) {
+        addNode(move(node));
+    }
     return *this;
 }
 
 Node& Node::addNode(const Node& node)
 {
-    pimpl->addNode(node.pimpl);
-    return *this;
-}
-
-Node& Node::addNode(string name)
-{
-    pimpl->addNode(move(name));
-    return *this;
-}
-
-Node& Node::addNode(string name, std::string value)
-{
-    pimpl->addNode(move(name), move(value));
+    if (node) {
+        pimpl->addNode(node.pimpl);
+    }
     return *this;
 }
 
 Node& Node::addNode(Node&& node)
 {
-    pimpl->addNode(node.pimpl);
+    if (node) {
+        pimpl->addNode(node.pimpl);
+    }
+    return *this;
+}
+
+Node& Node::addNode(string name)
+{
+    if (not name.empty()) {
+        pimpl->addNode(move(name));
+    }
+    return *this;
+}
+
+Node& Node::addNode(string name, std::string value)
+{
+    if (not (name.empty() and value.empty())) {
+        pimpl->addNode(move(name), move(value));
+    }
     return *this;
 }
 
 Node& Node::addNodes(const NodeList& nodes)
 {
-    for (const auto& node : nodes) {
-        pimpl->addNode(node.pimpl);
+    for (auto& node : nodes) {
+        addNode(node);
     }
     return *this;
 }
@@ -1192,7 +1226,7 @@ Node& Node::addNodes(const NodeList& nodes)
 Node& Node::addNodes(NodeList&& nodes)
 {
     for (auto& node : nodes) {
-        pimpl->addNode(node.pimpl);
+        addNode(move(node));
     }
     return *this;
 }
@@ -1203,22 +1237,18 @@ Node& Node::operator -= (const Node& root)
     return *this;
 }
 
-Node& Node::operator -= (Node&& root)
-{
-    eraseNode(move(root));
-    return *this;
-}
-
 Node& Node::eraseNode(const Node& node)
 {
-    pimpl->eraseNode(node.pimpl);
+    if (node) {
+        pimpl->eraseNode(node.pimpl);
+    }
     return *this;
 }
 
 Node& Node::eraseNodes(const NodeList& nodes)
 {
     for (const auto& node : nodes) {
-        pimpl->eraseNode(node.pimpl);
+        eraseNode(node);
     }
     return *this;
 }
@@ -1234,11 +1264,7 @@ NodeList Node::nodes()
 
 const NodeList Node::nodes() const
 {
-    std::vector<Node> result;
-    for (const auto& node : pimpl->nodes()) {
-        result.emplace_back(node);
-    }
-    return result;
+    return const_cast<Node*>(this)->nodes();
 }
 
 Node Node::fromString(const string& text)

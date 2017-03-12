@@ -42,31 +42,39 @@ public:
     NodeList operator [] (const std::string& name);
     NodeList operator [] (std::string&& name);
     NodeList operator [] (const char* name);
+    NodeList operator [] (const Type& type);
     const NodeList operator [] (const std::string& name) const;
     const NodeList operator [] (std::string&& name) const;
     const NodeList operator [] (const char* name) const;
+    const NodeList operator [] (const Type& type) const;
 
     NodeList findNodes(const std::string& name);
     NodeList findNodes(std::string&& name);
     NodeList findNodes(const char* name);
+    NodeList findNodes(const Type& type);
     const NodeList findNodes(const std::string& name) const;
     const NodeList findNodes(std::string&& name) const;
     const NodeList findNodes(const char* name) const;
+    const NodeList findNodes(const Type& type) const;
 
     // Find node by name ("" - text node of the current node).
     Node operator () (const std::string& name);
     Node operator () (std::string&& name);
     Node operator () (const char* name);
+    Node operator () (const Type& type);
     const Node operator () (const std::string& name) const;
     const Node operator () (std::string&& name) const;
     const Node operator () (const char* name) const;
+    const Node operator () (const Type& type) const;
 
     Node findNode(const std::string& name);
     Node findNode(std::string&& name);
     Node findNode(const char* name);
+    Node findNode(const Type& type);
     const Node findNode(const std::string& name) const;
     const Node findNode(std::string&& name) const;
     const Node findNode(const char* name) const;
+    const Node findNode(const Type& type) const;
 
     Node& operator += (const Node& root);
     Node& operator += (Node&& root);
@@ -80,7 +88,6 @@ public:
     Node& addNodes(std::vector<Node>&& node);
 
     Node& operator -= (const Node& root);
-    Node& operator -= (Node&& root);
 
     Node& eraseNode(const Node& node);
     Node& eraseNodes(const std::vector<Node>& node);

@@ -32,6 +32,7 @@ void test_fn1()
                 {"node1", "value1", Node::Type::ATTRIBUTE},
                 {"node2", "value2"},
                 {"node3", "value3"},
+                {"node4", "1123"},
                 {"Epmloyers", {
                     {"Epmloyer", {
                         {"name", "1"},
@@ -54,6 +55,16 @@ void test_fn1()
         node("node2") += { "nodex", {
             {"nested1", "nested2"}
         }};
+        assert(node("node2")[Node::Type::TEXT].size() == 1);
+        assert(node("node2")("nodex"));
+        assert(node("node2")("nodex").type() == Node::Type::ELEMENT);
+        assert(node("node2")("nodex")("nested1"));
+        assert(node("node2")("nodex")("nested1").type() == Node::Type::ELEMENT);
+        assert(node("node2")("nodex")("nested1")(""));
+        assert(node("node2")("nodex")("nested1")(Node::Type::TEXT));
+        assert(node("node2")("nodex")("nested1")[""].size() == 1);
+        assert(node("node2")("nodex")("nested1")[Node::Type::TEXT].size() == 1);
+
         node("node1").text("<aqwe><nested1/></aqwe>");
         auto employers = node("Epmloyers");
         if (employers) {
@@ -65,6 +76,32 @@ void test_fn1()
         node("Epmloyers")["Epmloyer"][0].value("new_my_value");
         node("node3").value(Node {"new node3", "asdqwe123"});
         assert(node);
+        assert(node("Epmloyers")[Node::Type::ELEMENT].size() == 3);
+        assert(node("Epmloyers")[Node::Type::TEXT].size() == 0);
+
+        auto new_node = Node {"", "text_new_node"};
+        assert(node("node4"));
+        assert(node("node4").nodes().size() == 1);
+        assert(node("node4").text() == "1123");
+        node("node4").addNode(std::move(new_node));
+        assert(node("node4").nodes().size() == 2);
+        assert(node("node4").text() == "1123text_new_node");
+        node("node4").text("replace_text");
+        assert(node("node4").text() == "replace_text");
+
+        assert(node.nodes().size() == 5);
+        auto new_node2 = Node {"", ""};
+        node.addNode(new_node2);
+        assert(node.nodes().size() == 5);
+
+        node -= new_node2;
+        assert(node.nodes().size() == 5);
+
+        auto new_node3 = Node {"new3", "data3"};
+        node += new_node3;
+        assert(node.nodes().size() == 6);
+        node -= new_node3;
+        assert(node.nodes().size() == 5);
     }
 
     {
