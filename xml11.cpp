@@ -905,11 +905,6 @@ NodeList Node::operator [] (const string& name)
     return findNodes(name);
 }
 
-NodeList Node::operator [] (string&& name)
-{
-    return findNodes(move(name));
-}
-
 NodeList Node::operator [] (const char* name)
 {
     return findNodes(name);
@@ -925,11 +920,6 @@ const NodeList Node::operator [] (const string& name) const
     return findNodes(name);
 }
 
-const NodeList Node::operator [] (string&& name) const
-{
-    return findNodes(move(name));
-}
-
 const NodeList Node::operator [] (const char* name) const
 {
     return findNodes(name);
@@ -941,24 +931,6 @@ const NodeList Node::operator [] (const Node::Type& type) const
 }
 
 NodeList Node::findNodes(const string& name)
-{
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(name)) {
-        result.emplace_back(node);
-    }
-    return result;
-}
-
-NodeList Node::findNodes(string&& name)
-{
-    NodeList result;
-    for (const auto& node : pimpl->findNodes(move(name))) {
-        result.emplace_back(node);
-    }
-    return result;
-}
-
-NodeList Node::findNodes(const char* name)
 {
     NodeList result;
     for (const auto& node : pimpl->findNodes(name)) {
@@ -983,32 +955,12 @@ const NodeList Node::findNodes(const string& name) const
     return const_cast<Node*>(this)->findNodes(name);
 }
 
-const NodeList Node::findNodes(string&& name) const
-{
-    return const_cast<Node*>(this)->findNodes(move(name));
-}
-
-const NodeList Node::findNodes(const char* name) const
-{
-    return const_cast<Node*>(this)->findNodes(name);
-}
-
 const NodeList Node::findNodes(const Type& type) const
 {
     return const_cast<Node*>(this)->findNodes(type);
 }
 
 Node Node::operator () (const string& name)
-{
-    return findNode(name);
-}
-
-Node Node::operator () (string&& name)
-{
-    return findNode(move(name));
-}
-
-Node Node::operator () (const char* name)
 {
     return findNode(name);
 }
@@ -1023,32 +975,12 @@ const Node Node::operator () (const string& name) const
     return findNode(name);
 }
 
-const Node Node::operator () (string&& name) const
-{
-    return findNode(move(name));
-}
-
-const Node Node::operator () (const char* name) const
-{
-    return findNode(name);
-}
-
 const Node Node::operator () (const Type& type) const
 {
     return findNode(type);
 }
 
 Node Node::findNode(const string& name)
-{
-    return pimpl->findNode(name);
-}
-
-Node Node::findNode(string&& name)
-{
-    return pimpl->findNode(move(name));
-}
-
-Node Node::findNode(const char* name)
 {
     return pimpl->findNode(name);
 }
@@ -1064,16 +996,6 @@ Node Node::findNode(const Type& type)
 }
 
 const Node Node::findNode(const string& name) const
-{
-    return const_cast<Node*>(this)->findNode(name);
-}
-
-const Node Node::findNode(string&& name) const
-{
-    return const_cast<Node*>(this)->findNode(move(name));
-}
-
-const Node Node::findNode(const char* name) const
 {
     return const_cast<Node*>(this)->findNode(name);
 }
