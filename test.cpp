@@ -138,7 +138,7 @@ void test_fn1()
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
             "<story>"
             "  11111"
-            "  <info true=\"1\">"
+            "  <info my_property=\"prop_value\">"
             "    <author>John Fleck</author>"
             "    <date>June 2, 2002</date>"
             "    <keyword>example</keyword>"
@@ -221,6 +221,9 @@ void test_fn1()
 
         // Get all nodes.
         assert(body.nodes().size() == 5);
+
+        // property
+        assert(node("info")("my_property").text() == "prop_value");
     }
 
     {
@@ -233,7 +236,7 @@ void test_fn1()
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 "<story>"
                 "  11111"
-                "  <info true=\"1\">"
+                "  <info my_property=\"prop_value\">"
                 "    <author>John Fleck</author>"
                 "    <date>June 2, 2002</date>"
                 "    <keyword>example</keyword>"
@@ -269,7 +272,7 @@ void test_fn1()
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 "<story>"
                 "  11111"
-                "  <info true=\"1\">"
+                "  <info my_property=\"prop_value\">"
                 "    <author>John Fleck</author>"
                 "    <date>June 2, 2002</date>"
                 "    <keyword>example</keyword>"
