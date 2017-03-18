@@ -982,6 +982,9 @@ const Node Node::operator () (const Type& type) const
 
 Node Node::findNode(const string& name)
 {
+    if (not *this) {
+        return Node {make_shared<NodeImpl>()};
+    }
     return pimpl->findNode(name);
 }
 
@@ -1027,6 +1030,9 @@ void Node::name(string name)
 
 string Node::text() const noexcept
 {
+    if (not *this) {
+        return "";
+    }
     return pimpl->text();
 }
 

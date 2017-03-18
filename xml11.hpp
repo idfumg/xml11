@@ -1,5 +1,5 @@
-#ifndef XML11_H
-#define XML11_H
+#ifndef XML11_HPP
+#define XML11_HPP
 
 #include <string>
 #include <memory>
@@ -105,4 +105,4 @@ Node operator "" _xml(const char* value, size_t size);
 
 } /* namespace xml11 */
 
-#endif // XML11_H
+#endif // XML11_HPP
