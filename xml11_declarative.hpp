@@ -6,7 +6,7 @@
 namespace xml11 {
 
 enum TagType {
-    NONE,
+    OPTIONAL,
     MANDATORY
 };
 
@@ -18,13 +18,13 @@ struct TagBase {
     operator bool() const { return valid; }
 
     std::string name;
-    TagType type {NONE};
+    TagType type {OPTIONAL};
     bool valid {false};
 };
 
 struct Tag : public TagBase {
     template <class U, class T>
-    Tag(U* refs, T&& name, const TagType& type = NONE)
+    Tag(U* refs, T&& name, const TagType& type = OPTIONAL)
         : TagBase {std::forward<T>(name), type}
     {
         refs->add(this);
@@ -35,7 +35,7 @@ struct Tag : public TagBase {
 
 struct Tags : public TagBase {
     template <class U, class T>
-    Tags(U* refs, T&& name, const TagType& type = NONE)
+    Tags(U* refs, T&& name, const TagType& type = OPTIONAL)
         : TagBase {std::forward<T>(name), type}
     {
         refs->add(this);
