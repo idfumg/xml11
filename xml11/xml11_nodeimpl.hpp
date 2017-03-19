@@ -5,7 +5,7 @@
 
 namespace xml11 {
 
-class NodeImpl {
+class NodeImpl final {
 public:
     NodeImpl() = default;
     NodeImpl(const NodeImpl& node) = default;

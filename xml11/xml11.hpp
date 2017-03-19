@@ -16,7 +16,7 @@ public:
         ATTRIBUTE
     };
 
-    class Xml11Exception : public std::runtime_error {
+    class Xml11Exception final : public std::runtime_error {
     public:
         using std::runtime_error::runtime_error;
     };

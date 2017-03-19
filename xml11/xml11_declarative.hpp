@@ -82,7 +82,7 @@ public:
         }
 
         if (not head and head.type == TagType::MANDATORY) {
-            throw std::runtime_error(
+            throw Node::Xml11Exception(
                 "Mandatory members '" + head.name + "' is missing.");
         }
     }
@@ -92,14 +92,14 @@ public:
         if (not root) {
             for (auto& tagRef : tagList) {
                 if (tagRef->type == TagType::MANDATORY) {
-                    throw std::runtime_error(
+                    throw Node::Xml11Exception(
                         "No Node received when mandatory members exists.");
                 }
             }
 
             for (auto& tagsRef : tagsList) {
                 if (tagsRef->type == TagType::MANDATORY) {
-                    throw std::runtime_error(
+                    throw Node::Xml11Exception(
                         "No Node received when mandatory members exists.");
                 }
             }
