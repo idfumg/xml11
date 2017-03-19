@@ -12,6 +12,7 @@ using std::endl;
 void test_fn1()
 {
     using namespace xml11;
+    using namespace xml11::literals;
 
     {
         const auto text =

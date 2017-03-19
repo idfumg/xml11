@@ -42,7 +42,6 @@ public:
     bool operator != (const Node& node) const noexcept;
     operator bool() const noexcept;
 
-    // Find nodes by name ("" - text nodes of the current node).
     NodeList operator [] (const std::string& name);
     NodeList operator [] (const char* name);
     NodeList operator [] (const Type& type);
@@ -55,7 +54,9 @@ public:
     const NodeList findNodes(const std::string& name) const;
     const NodeList findNodes(const Type& type) const;
 
-    // Find node by name ("" - text node of the current node).
+    NodeList findNodesXPath(const std::string& name);
+    const NodeList findNodesXPath(const std::string& name) const;
+
     Node operator () (const std::string& name);
     Node operator () (const Type& type);
     const Node operator () (const std::string& name) const;
@@ -66,6 +67,9 @@ public:
     const Node findNode(const std::string& name) const;
     const Node findNode(const Type& type) const;
 
+    Node findNodeXPath(const std::string& name);
+    const Node findNodeXPath(const std::string& name) const;
+
     Node& operator += (const Node& root);
     Node& operator += (Node&& root);
 
@@ -74,24 +78,24 @@ public:
     Node& addNode(std::string name);
     Node& addNode(std::string name, std::string value);
 
-    Node& addNodes(const std::vector<Node>& node);
-    Node& addNodes(std::vector<Node>&& node);
+    Node& addNodes(const NodeList& node);
+    Node& addNodes(NodeList&& node);
 
     Node& operator -= (const Node& root);
 
     Node& eraseNode(const Node& node);
-    Node& eraseNodes(const std::vector<Node>& node);
+    Node& eraseNodes(const NodeList& node);
 
     std::vector<Node> nodes();
     const std::vector<Node> nodes() const;
 
-    Node::Type type() const noexcept;
-    void type(const Node::Type type) noexcept;
+    Node::Type type() const;
+    void type(const Node::Type type);
 
-    std::string name() const noexcept;
+    std::string& name() const;
     void name(std::string name);
 
-    std::string text() const noexcept;
+    std::string& text() const;
     void text(std::string value);
 
     void value(std::string text);
@@ -102,7 +106,11 @@ private:
     std::shared_ptr<class NodeImpl> pimpl {nullptr};
 };
 
+namespace literals {
+
 Node operator "" _xml(const char* value, size_t size);
+
+} /* literals */
 
 } /* namespace xml11 */
 

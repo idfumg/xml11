@@ -1,6 +1,8 @@
 #include "xml11_libxml2.hpp"
 //#include "xml11_rapidxml.hpp"
 
+#include <iostream>
+
 namespace xml11 {
 
 Node::~Node() noexcept
@@ -204,41 +206,123 @@ const Node Node::findNode(const Type& type) const
     return const_cast<Node*>(this)->findNode(type);
 }
 
-Node::Type Node::type() const noexcept
-{
-    return pimpl->type();
+namespace {
+
+std::vector<std::string> split(const std::string &text, char sep) {
+    std::vector<std::string> tokens;
+    std::size_t start = 0, end = 0;
+    while ((end = text.find(sep, start)) != std::string::npos) {
+        tokens.push_back(text.substr(start, end - start));
+        start = end + 1;
+    }
+    tokens.emplace_back(text.substr(start));
+    return tokens;
 }
 
-void Node::type(const Node::Type type) noexcept
-{
-    pimpl->type(type);
 }
 
-std::string Node::name() const noexcept
+NodeList Node::findNodesXPath(const std::string& name)
 {
+    const auto parts = split(name, '/');
+    if (parts.size() > 1) {
+        Node node = *this;
+        for (size_t i = 0; i < parts.size() - 1; ++i) {
+            node = node.findNode(parts[i]);
+            if (not node) {
+                return {};
+            }
+        }
+        return node.findNodes(parts[parts.size() - 1]);
+    }
+    else {
+        return findNodes(parts[0]);
+    }
+}
+
+const NodeList Node::findNodesXPath(const std::string& name) const
+{
+    return const_cast<Node*>(this)->findNodesXPath(name);
+}
+
+Node Node::findNodeXPath(const std::string& name)
+{
+    Node node = *this;
+    for (const auto& part : split(name, '/')) {
+        node = node.findNode(part);
+        if (not node) {
+            return Node {std::make_shared<NodeImpl>()};
+        }
+    }
+    return node;
+}
+
+const Node Node::findNodeXPath(const std::string& name) const
+{
+    return const_cast<Node*>(this)->findNodeXPath(name);
+}
+
+Node::Type Node::type() const
+{
+    if (pimpl) {
+        return pimpl->type();
+    }
+    else {
+        throw Node::Xml11Exception("No type for not valid Node!");
+    }
+}
+
+void Node::type(const Node::Type type)
+{
+    if (pimpl) {
+        pimpl->type(type);
+    }
+    else {
+        throw Node::Xml11Exception("Can't set type for not valid Node!");
+    }
+}
+
+std::string& Node::name() const
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("No name for not valid Node!");
+    }
     return pimpl->name();
 }
 
 void Node::name(std::string name)
 {
-    pimpl->name(std::move(name));
+    if (pimpl) {
+        pimpl->name(std::move(name));
+    }
+    else {
+        throw Node::Xml11Exception("Can't set name for not valid Node!");
+    }
 }
 
-std::string Node::text() const noexcept
+std::string& Node::text() const
 {
-    if (not *this) {
-        return "";
+    if (not pimpl) {
+        throw Node::Xml11Exception("No text for not valid Node!");
     }
     return pimpl->text();
 }
 
 void Node::text(std::string value)
 {
-    pimpl->text(std::move(value));
+    if (pimpl) {
+        pimpl->text(std::move(value));
+    }
+    else {
+        throw Node::Xml11Exception("Can't set text for not valid Node!");
+    }
 }
 
 void Node::value(std::string text)
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't set value for not valid Node!");
+    }
+
     const auto nodes = pimpl->nodes();
     for (const auto& node : nodes) {
         pimpl->eraseNode(node);
@@ -261,120 +345,183 @@ void Node::value(std::string text)
 
 void Node::value(const Node& root)
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't set value for not valid Node!");
+    }
+
     const auto nodes = pimpl->nodes();
     for (const auto& node : nodes) {
         pimpl->eraseNode(node);
     }
 
-    if (root) {
-        addNode(root);
-    }
+    addNode(root);
 }
 
 void Node::value(Node&& root)
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't set value for not valid Node!");
+    }
+
     const auto nodes = pimpl->nodes();
     for (const auto& node : nodes) {
         pimpl->eraseNode(node);
     }
 
-    if (root) {
-        addNode(std::move(root));
-    }
+    addNode(std::move(root));
+    root.pimpl = nullptr;
 }
 
 Node& Node::operator += (const Node& node)
 {
-    if (node and pimpl) {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    if (node) {
         addNode(node);
     }
+
     return *this;
 }
 
 Node& Node::operator += (Node&& node)
 {
-    if (node and pimpl) {
-        addNode(std::move(node));
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
     }
+
+    if (node) {
+        addNode(std::move(node));
+        node.pimpl = nullptr;
+    }
+
     return *this;
 }
 
 Node& Node::addNode(const Node& node)
 {
-    if (node and pimpl) {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    if (node) {
         pimpl->addNode(node.pimpl);
     }
+
     return *this;
 }
 
 Node& Node::addNode(Node&& node)
 {
-    if (node and pimpl) {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    if (node) {
         pimpl->addNode(node.pimpl);
         node.pimpl = nullptr;
     }
+
     return *this;
 }
 
 Node& Node::addNode(std::string name)
 {
-    if (not name.empty() and pimpl) {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    if (not name.empty()) {
         pimpl->addNode(std::move(name));
     }
+
     return *this;
 }
 
 Node& Node::addNode(std::string name, std::string value)
 {
-    if (not (name.empty() and value.empty()) and pimpl) {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    if (not (name.empty() and value.empty())) {
         pimpl->addNode(std::move(name), std::move(value));
     }
+
     return *this;
 }
 
 Node& Node::addNodes(const NodeList& nodes)
 {
-    for (auto& node : nodes) {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add nodes to not valid Node!");
+    }
+
+    for (const auto& node : nodes) {
         addNode(node);
     }
+
     return *this;
 }
 
 Node& Node::addNodes(NodeList&& nodes)
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add nodes to not valid Node!");
+    }
+
     for (auto& node : nodes) {
         addNode(std::move(node));
     }
+
     return *this;
 }
 
 Node& Node::operator -= (const Node& root)
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase node to not valid Node!");
+    }
+
     eraseNode(root);
+
     return *this;
 }
 
 Node& Node::eraseNode(const Node& node)
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase node to not valid Node!");
+    }
+
     if (node) {
         pimpl->eraseNode(node.pimpl);
     }
+
     return *this;
 }
 
 Node& Node::eraseNodes(const NodeList& nodes)
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase nodes to not valid Node!");
+    }
+
     for (const auto& node : nodes) {
         eraseNode(node);
     }
+
     return *this;
 }
 
 NodeList Node::nodes()
 {
     std::vector<Node> result;
-    for (const auto& node : pimpl->nodes()) {
-        result.emplace_back(node);
+    if (pimpl) {
+        for (const auto& node : pimpl->nodes()) {
+            result.emplace_back(node);
+        }
     }
     return result;
 }
@@ -394,9 +541,13 @@ std::string Node::toString(const bool indent) const
     return ToXml(pimpl, indent);
 }
 
-Node operator "" _xml(const char* value, size_t)
+namespace literals {
+
+Node operator "" _xml(const char* value, size_t size)
 {
-    return Node::fromString(value);
+    return Node::fromString(std::string(value, size));
 }
+
+} /* literals */
 
 } /* namespace xml11 */

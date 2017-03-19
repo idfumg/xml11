@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace xml11;
+using namespace xml11::literals;
 
 struct Author final : public TagsRefs {
     explicit Author(const Node& node)
@@ -36,6 +37,8 @@ struct Story final : public TagsRefs {
     { parse(node); }
 
     Tags ebooks {this, "ebook", TagType::MANDATORY};
+    Tag author {this, "info/author", TagType::MANDATORY};
+    Tags paras {this, "body/para", TagType::MANDATORY};
     Info info;
     Body body;
 };
@@ -51,11 +54,15 @@ int main()
     for (const auto& value : story.ebooks.values) {
         cout << value << endl;
     }
+    cout << story.author.value << endl;
     if (story.info.id1)
         cout << story.info.id1.value << endl;
     cout << story.info.id2.value << endl;
     cout << story.info.author.id3.value << endl;
     for (const auto& value : story.body.params.values) {
+        cout << value << endl;
+    }
+    for (const auto& value : story.paras.values) {
         cout << value << endl;
     }
 

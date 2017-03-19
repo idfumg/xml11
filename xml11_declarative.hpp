@@ -58,7 +58,7 @@ public:
     void parse(const Node& root, Tag& head)
     {
         if (root) {
-            if (const auto node = root(head.name)) {
+            if (const auto node = root.findNodeXPath(head.name)) {
                 head.value = node.text();
                 head.valid = true;
             }
@@ -73,7 +73,7 @@ public:
     void parse(const Node& root, Tags& head)
     {
         if (root) {
-            for (const auto node : root[head.name]) {
+            for (const auto node : root.findNodesXPath(head.name)) {
                 head.values.emplace_back(node.text());
             }
             if (not head.values.empty()) {
@@ -83,7 +83,7 @@ public:
 
         if (not head and head.type == TagType::MANDATORY) {
             throw std::runtime_error(
-                "Mandatory member '" + head.name + "' is missing.");
+                "Mandatory members '" + head.name + "' is missing.");
         }
     }
 
