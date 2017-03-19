@@ -13,8 +13,12 @@ class Node {
 public:
     enum class Type : char {
         ELEMENT,
-        ATTRIBUTE,
-        TEXT
+        ATTRIBUTE
+    };
+
+    class Xml11Exception : public std::runtime_error {
+    public:
+        using std::runtime_error::runtime_error;
     };
 
 public:
@@ -93,9 +97,6 @@ public:
     void value(std::string text);
     void value(const Node& node);
     void value(Node&& node);
-
-    void error(std::string text);
-    const std::string& error() const noexcept;
 
 private:
     std::shared_ptr<class NodeImpl> pimpl {nullptr};

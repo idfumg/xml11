@@ -1,4 +1,5 @@
 #include "xml11.hpp"
+
 #include <cassert>
 #include <iostream>
 #include <set>
@@ -14,12 +15,12 @@ void test_fn1()
 
     {
         const auto text =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n";
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>";
 
         const auto node =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n"_xml;
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>"_xml;
 
         assert(node.toString(false) == text);
         assert(node[""].size() == 0);
@@ -55,15 +56,14 @@ void test_fn1()
         node("node2") += { "nodex", {
             {"nested1", "nested2"}
         }};
-        assert(node("node2")[Node::Type::TEXT].size() == 1);
+        assert(node);
+        assert(node("node2"));
+        assert(node("node2").text() == "value2");
         assert(node("node2")("nodex"));
         assert(node("node2")("nodex").type() == Node::Type::ELEMENT);
         assert(node("node2")("nodex")("nested1"));
         assert(node("node2")("nodex")("nested1").type() == Node::Type::ELEMENT);
-        assert(node("node2")("nodex")("nested1")(""));
-        assert(node("node2")("nodex")("nested1")(Node::Type::TEXT));
-        assert(node("node2")("nodex")("nested1")[""].size() == 1);
-        assert(node("node2")("nodex")("nested1")[Node::Type::TEXT].size() == 1);
+        assert(node("node2")("nodex")("nested1").text() == "nested2");
 
         node("node1").text("<aqwe><nested1/></aqwe>");
         auto employers = node("Epmloyers");
@@ -73,18 +73,22 @@ void test_fn1()
                 employer.value("<aqwe><nested1/></aqwe>");
             }
         }
+        assert(node("Epmloyers")["Epmloyer"][1]("aqwe"));
+        assert(node("Epmloyers")["Epmloyer"][1]("aqwe")("nested1"));
+
         node("Epmloyers")["Epmloyer"][0].value("new_my_value");
         node("node3").value(Node {"new node3", "asdqwe123"});
         assert(node);
         assert(node("Epmloyers")[Node::Type::ELEMENT].size() == 3);
-        assert(node("Epmloyers")[Node::Type::TEXT].size() == 0);
+        assert(node("Epmloyers").text() == "");
 
         auto new_node = Node {"", "text_new_node"};
         assert(node("node4"));
-        assert(node("node4").nodes().size() == 1);
+        assert(node("node4").nodes().size() == 0);
+
         assert(node("node4").text() == "1123");
         node("node4").addNode(std::move(new_node));
-        assert(node("node4").nodes().size() == 2);
+        assert(node("node4").nodes().size() == 0);
         assert(node("node4").text() == "1123text_new_node");
         node("node4").text("replace_text");
         assert(node("node4").text() == "replace_text");
@@ -105,17 +109,23 @@ void test_fn1()
     }
 
     {
-        const auto node =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<root><nested></nested></roo>"_xml;
-        assert(not node);
-        assert(node.error()=="Fatal error: Entity: line 2, column: 33: Opening and ending tag mismatch: root line 2 and roo\n\n");
+        try {
+            const auto node =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                "<root><nested></nested></roo>"_xml;
+            assert(false);
+        } catch (const Node::Xml11Exception& e) {
+            assert(true);
+        }
     }
 
     {
-        const auto node = "aqwe"_xml;
-        assert(not node);
-        assert(node.error()=="Fatal error: Entity: line 1, column: 1: Document is empty\n\n");
+        try {
+            const auto node = "aqwe"_xml;
+            assert(false);
+        } catch (const Node::Xml11Exception& e) {
+            assert(true);
+        }
     }
 
     {
@@ -137,13 +147,11 @@ void test_fn1()
         auto node =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
             "<story>"
-            "  11111"
             "  <info my_property=\"prop_value\">"
             "    <author>John Fleck</author>"
             "    <date>June 2, 2002</date>"
             "    <keyword>example</keyword>"
             "  </info>"
-            "  333333"
             "  <body>"
             "    <headline>This is the headline</headline>"
             "    <para>Para1</para>"
@@ -155,7 +163,6 @@ void test_fn1()
             "  </body>"
             "  <ebook/>"
             "  <ebook/>"
-            "  22222"
             "</story>"_xml;
 
         assert(node);
@@ -167,13 +174,12 @@ void test_fn1()
 
         // Check the node type.
         assert(node.type() == Node::Type::ELEMENT);
-        assert(node("").type() == Node::Type::TEXT);
+        assert(not node(""));
 
         // Set value to the node (replace exists text nodes).
-        assert(node[""].size() == 3);
+        assert(node[""].size() == 0);
         node.text("new_node_value");
-        assert(node[""].size() == 1);
-        assert(node[""][0].text() == "new_node_value");
+        assert(node[""].size() == 0);
         assert(node.text() == "new_node_value");
 
         // Select Node child nodes.
@@ -235,13 +241,11 @@ void test_fn1()
             nodes.push_back(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 "<story>"
-                "  11111"
                 "  <info my_property=\"prop_value\">"
                 "    <author>John Fleck</author>"
                 "    <date>June 2, 2002</date>"
                 "    <keyword>example</keyword>"
                 "  </info>"
-                "  333333"
                 "  <body>"
                 "    <headline>This is the headline</headline>"
                 "    <para>Para1</para>"
@@ -253,7 +257,6 @@ void test_fn1()
                 "  </body>"
                 "  <ebook/>"
                 "  <ebook/>"
-                "  22222"
                 "</story>"_xml);
         }
 
@@ -271,13 +274,11 @@ void test_fn1()
         const auto node =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 "<story>"
-                "  11111"
                 "  <info my_property=\"prop_value\">"
                 "    <author>John Fleck</author>"
                 "    <date>June 2, 2002</date>"
                 "    <keyword>example</keyword>"
                 "  </info>"
-                "  333333"
                 "  <body>"
                 "    <headline>This is the headline</headline>"
                 "    <para>Para1</para>"
@@ -289,7 +290,6 @@ void test_fn1()
                 "  </body>"
                 "  <ebook/>"
                 "  <ebook/>"
-                "  22222"
                 "</story>"_xml;
 
         const clock_t begin = clock();
@@ -297,7 +297,7 @@ void test_fn1()
 
         std::string result;
         for (size_t i = 0; i < TIMES; ++i) {
-            result += node.toString();
+            result += node.toString(false);
         }
 
         const clock_t end = clock();
