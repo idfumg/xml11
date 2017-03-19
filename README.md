@@ -9,11 +9,17 @@ of project code base and better maintability and the lowest level of errors.
 Also, the wrapper allows you to interchange internal implementation by
 select/write the one with a library you like.
 Currently, two implementation exists - libxml2 and rapidxml.
+Rapidxml is very fast and not required install anything.
+Libxml2 also fast parser and can get you more detailed information about errors.
 
 Wrapper saves order of elements and use hash table for find operations.
 It uses lightweight functions, move semantic when possible.
 
 Wrapper for libxml2 uses SAX for better performance/memory usage.
+
+For adding more implementation see xml11.cpp, xml11_rapidxml, xml11_libxml2, xml11_nodeimpl.
+
+For more information see tests, Makefile and xml11.hpp, xml11_declarative.hpp.
 
 ```c++
 
