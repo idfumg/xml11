@@ -94,7 +94,51 @@ int main() {
     const auto root = Node::fromString(text);
     assert(root);
 
+    // Also we have declarative style of coding if you want.
+    // It supports optional + mandatory params.
+    // Optional does not do anything if tag was not found.
+    // Mandatory params force to throw exception.
+    // All declarative tags use XPath methods for clarity of things.
+    // You do not have to seek over the code and find where your objects filled,
+    // try to not forget something anywhere and make mistakes.
+    // All tags will contain values of what you want to select.
+
+    struct Body final : public TagsRefs {
+        explicit Body(const Node& root)
+        {parse(root);}
+
+        Tags params {this, "para"};
+    };
+
+    struct Story final : public TagsRefs {
+        explicit Story(const Node& node)
+            : body {node("body")}
+        { parse(node); }
+
+        Tags ebooks {this, "ebook", TagType::MANDATORY};
+        Tag author {this, "info/author", TagType::MANDATORY};
+        Tags paras {this, "body/para", TagType::MANDATORY};
+        Body body;
+    };
+
+    Story story(root);
+
     return 0;
+}
+
+```
+
+If you care about parsing, serialization errors or access to text/value/type of not
+valid xml, you have to catch exceptions. All other operations is implicitly
+suppress everything and safe.
+
+```c++
+
+try {
+    NoRoot noRoot {Node::fromString("")};
+    assert(false);
+} catch (const Node::Xml11Exception& e) {
+    assert(true);
 }
 
 ```
