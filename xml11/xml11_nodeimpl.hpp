@@ -1,5 +1,5 @@
 #include "xml11_associativearray.hpp"
-#include "../xml11.hpp"
+#include "xml11.hpp"
 
 #include <algorithm>
 

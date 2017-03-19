@@ -1,5 +1,5 @@
 #include <iostream>
-#include "xml11_declarative.hpp"
+#include "xml11/xml11_declarative.hpp"
 
 using namespace std;
 using namespace xml11;
