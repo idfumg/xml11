@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 #include "xml11/xml11_declarative.hpp"
 
 using namespace std;
@@ -43,6 +44,11 @@ struct Story final : public TagsRefs {
     Body body;
 };
 
+struct NoRoot final : public TagsRefs {
+    explicit NoRoot(const Node& node) { parse(node); }
+    Tag foo {this, "foo", TagType::MANDATORY};
+};
+
 int main()
 {
     const auto node =
@@ -64,6 +70,13 @@ int main()
     }
     for (const auto& value : story.paras.values) {
         cout << value << endl;
+    }
+
+    try {
+        NoRoot noRoot {Node::fromString("")};
+        assert(false);
+    } catch (const Node::Xml11Exception& e) {
+        assert(true);
     }
 
     return 0;

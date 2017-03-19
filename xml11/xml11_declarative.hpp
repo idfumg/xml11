@@ -90,20 +90,8 @@ public:
     void parse(const Node& root)
     {
         if (not root) {
-            for (auto& tagRef : tagList) {
-                if (tagRef->type == TagType::MANDATORY) {
-                    throw Node::Xml11Exception(
-                        "No Node received when mandatory members exists.");
-                }
-            }
-
-            for (auto& tagsRef : tagsList) {
-                if (tagsRef->type == TagType::MANDATORY) {
-                    throw Node::Xml11Exception(
-                        "No Node received when mandatory members exists.");
-                }
-            }
-            return;
+            throw Node::Xml11Exception(
+                "No valid Node received when mandatory members exists.");
         }
 
         for (auto& tagRef : tagList) {
