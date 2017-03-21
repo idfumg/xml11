@@ -8,6 +8,8 @@
 namespace xml11 {
 
 using NodeList = std::vector<class Node>;
+using NameFilter = std::string (const std::string& name);
+using ValueFilter = std::string (const std::string& value);
 
 class Node {
 public:
@@ -23,7 +25,9 @@ public:
 
 public:
     static Node fromString(const std::string& text);
+    static Node fromString(const std::string& text, NameFilter, ValueFilter);
     std::string toString(const bool indent = true) const;
+    std::string toString(const bool indent, NameFilter, ValueFilter) const;
 
 public:
     ~Node() noexcept;

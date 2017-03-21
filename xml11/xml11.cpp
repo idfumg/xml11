@@ -1,5 +1,5 @@
-#include "xml11_libxml2.hpp"
-//#include "xml11_rapidxml.hpp"
+//#include "xml11_libxml2.hpp"
+#include "xml11_rapidxml.hpp"
 
 #include <iostream>
 
@@ -533,12 +533,24 @@ const NodeList Node::nodes() const
 
 Node Node::fromString(const std::string& text)
 {
-    return Node {ParseXml(text)};
+    return Node {ParseXml(text, nullptr, nullptr)};
+}
+
+Node Node::fromString(
+    const std::string& text, NameFilter nameFilter, ValueFilter valueFilter)
+{
+    return Node {ParseXml(text, nameFilter, valueFilter)};
 }
 
 std::string Node::toString(const bool indent) const
 {
-    return ToXml(pimpl, indent);
+    return ToXml(pimpl, indent, nullptr, nullptr);
+}
+
+std::string Node::toString(
+    const bool indent, NameFilter nameFilter, ValueFilter valueFilter) const
+{
+    return ToXml(pimpl, indent, nameFilter, valueFilter);
 }
 
 namespace literals {

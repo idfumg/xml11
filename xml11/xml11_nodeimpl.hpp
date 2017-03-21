@@ -5,6 +5,17 @@
 
 namespace xml11 {
 
+namespace {
+template <class T, class Fn>
+std::string GenerateString(T&& param, Fn fn)
+{
+    if (fn) {
+        return fn(std::forward<T>(param));
+    }
+    return std::forward<T>(param);
+}
+}
+
 class NodeImpl final {
 public:
     NodeImpl() = default;

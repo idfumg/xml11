@@ -9,6 +9,17 @@
 using std::cout;
 using std::endl;
 
+std::string ToLower(const std::string& str)
+{
+    if (str.empty())
+        return "";
+    std::string result(str);
+    for (auto& ch : result) {
+        ch = std::tolower(ch);
+    }
+    return result;
+}
+
 void test_fn1()
 {
     using namespace xml11;
@@ -309,6 +320,34 @@ void test_fn1()
              << TIMES << " times = " << elapsed_secs << " secs" << endl;
         cout << "Average one serialization time = "
              << elapsed_secs / TIMES << " secs" << endl;
+    }
+
+    {
+        const auto text =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            "<StorY>"
+            "  <iNfO my_property=\"prop_value\">"
+            "    <author>JOHN FLECK</author>"
+            "    <date>June 2, 2002</date>"
+            "    <keyword>example</keyword>"
+            "  </iNfO>"
+            "  <body>"
+            "    <headline>This is the headline</headline>"
+            "    <para>Para1</para>"
+            "    <para>Para2</para>"
+            "    <para>Para3</para>"
+            "    <nested1>"
+            "      <nested2>nested2 text фыв</nested2>"
+            "    </nested1>"
+            "  </body>"
+            "  <ebook/>"
+            "  <ebook/>"
+            "</StorY>";
+        const auto node = Node::fromString(text, ToLower, nullptr);
+        assert(node);
+        assert(node.name() == "story");
+        assert(node("info"));
+        assert(node("info")("author").toString(false, ToLower, ToLower) == "<?xml version=\"1.0\" encoding=\"UTF-8\"?><author>john fleck</author>");
     }
 }
 
