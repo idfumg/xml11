@@ -211,13 +211,13 @@ std::string ToXml(
         std::string name = root->name();
 
         if (nameFilter) {
-            name = nameFilter(name);
+            name = nameFilter(std::move(name));
         }
 
         std::string value = root->text();
 
         if (valueFilter) {
-            value = valueFilter(value);
+            value = valueFilter(std::move(value));
         }
 
         xml_node<>* root_node =
