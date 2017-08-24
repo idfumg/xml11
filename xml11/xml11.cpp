@@ -180,8 +180,8 @@ const Node Node::operator () (const Type& type) const
 
 Node Node::findNode(const std::string& name)
 {
-    if (not *this) {
-        return Node {std::make_shared<NodeImpl>()};
+    if (not pimpl) {
+        throw Node::Xml11Exception("No findNode for not valid Node!");
     }
     return pimpl->findNode(name);
 }
@@ -448,6 +448,9 @@ Node& Node::addNode(std::string name, std::string value)
     if (not (name.empty() and value.empty())) {
         pimpl->addNode(std::move(name), std::move(value));
     }
+    else if (not name.empty()) {
+        pimpl->addNode(std::move(name));
+    }
 
     return *this;
 }
@@ -481,7 +484,7 @@ Node& Node::addNodes(NodeList&& nodes)
 Node& Node::operator -= (const Node& root)
 {
     if (not pimpl) {
-        throw Node::Xml11Exception("Can't erase node to not valid Node!");
+        throw Node::Xml11Exception("Can't erase node from not valid Node!");
     }
 
     eraseNode(root);
@@ -492,7 +495,7 @@ Node& Node::operator -= (const Node& root)
 Node& Node::eraseNode(const Node& node)
 {
     if (not pimpl) {
-        throw Node::Xml11Exception("Can't erase node to not valid Node!");
+        throw Node::Xml11Exception("Can't erase node from not valid Node!");
     }
 
     if (node) {
@@ -505,7 +508,7 @@ Node& Node::eraseNode(const Node& node)
 Node& Node::eraseNodes(const NodeList& nodes)
 {
     if (not pimpl) {
-        throw Node::Xml11Exception("Can't erase nodes to not valid Node!");
+        throw Node::Xml11Exception("Can't erase nodes from not valid Node!");
     }
 
     for (const auto& node : nodes) {
@@ -544,12 +547,20 @@ Node Node::fromString(
 
 std::string Node::toString(const bool indent) const
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase nodes to not valid Node!");
+    }
+
     return ToXml(pimpl, indent, nullptr, nullptr);
 }
 
 std::string Node::toString(
     const bool indent, NameFilter nameFilter, ValueFilter valueFilter) const
 {
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't toString not valid Node!");
+    }
+
     return ToXml(pimpl, indent, nameFilter, valueFilter);
 }
 
