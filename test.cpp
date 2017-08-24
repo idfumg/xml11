@@ -118,6 +118,10 @@ void test_fn1()
         assert(node.nodes().size() == 6);
         node -= new_node3;
         assert(node.nodes().size() == 5);
+        node += Node {"int", 6};
+        assert(node.nodes().size() == 6);
+        assert(node.nodes().back().name() == "int");
+        assert(node.nodes().back().text() == "6");
     }
 
     {

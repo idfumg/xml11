@@ -40,6 +40,16 @@ public:
     Node(std::string name, const NodeList& nodes);
     Node(std::string name, NodeList&& nodes);
 
+    template<class T,
+             class=typename std::enable_if<
+                 decltype(std::to_string(T()), true)(true),
+             T>::type>
+    Node(std::string name, T&& value)
+        : Node {std::move(name), std::move(std::to_string(value))}
+    {
+
+    }
+
     Node& operator = (const Node& node) noexcept;
     Node& operator = (Node&& node) noexcept;
     bool operator == (const Node& node) const noexcept;
