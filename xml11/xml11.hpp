@@ -45,7 +45,7 @@ public:
                  decltype(std::to_string(T()), true)(true),
              T>::type>
     Node(std::string name, T&& value)
-        : Node {std::move(name), std::move(std::to_string(value))}
+        : Node {std::move(name), std::to_string(std::forward<T>(value))}
     {
 
     }
@@ -91,6 +91,15 @@ public:
     Node& addNode(Node&& node);
     Node& addNode(std::string name);
     Node& addNode(std::string name, std::string value);
+
+    template<class T,
+             class=typename std::enable_if<
+                 decltype(std::to_string(T()), true)(true),
+             T>::type>
+    Node& addNode(std::string name, T&& value)
+    {
+        return addNode(std::move(name), std::to_string(std::forward<T>(value)));
+    }
 
     Node& addNodes(const NodeList& node);
     Node& addNodes(NodeList&& node);
