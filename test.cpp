@@ -36,6 +36,8 @@ void test_fn1()
 
         assert(node.toString(false) == text);
         assert(node[""].size() == 0);
+        assert(node("info")("id1"));
+        assert(node("info")("id1").text() == "123456789");
     }
 
     {
@@ -65,6 +67,11 @@ void test_fn1()
                 }}
             }
         };
+
+        assert(node("Epmloyers")["Epmloyer"][2]("name"));
+        assert(node("Epmloyers")["Epmloyer"][2]("patronym"));
+        assert(node("Epmloyers")["Epmloyer"][2]("patronym").text() == "3");
+
         node("node2") += { "nodex", {
             {"nested1", "nested2"}
         }};
@@ -74,6 +81,7 @@ void test_fn1()
         assert(node("node2")("nodex"));
         assert(node("node2")("nodex").type() == Node::Type::ELEMENT);
         assert(node("node2")("nodex")("nested1"));
+        assert(!node("node2")("nodex")("nested1")("123")("asd"));
         assert(node("node2")("nodex")("nested1").type() == Node::Type::ELEMENT);
         assert(node("node2")("nodex")("nested1").text() == "nested2");
 
@@ -85,11 +93,13 @@ void test_fn1()
                 employer.value("<aqwe><nested1/></aqwe>");
             }
         }
+
         assert(node("Epmloyers")["Epmloyer"][1]("aqwe"));
         assert(node("Epmloyers")["Epmloyer"][1]("aqwe")("nested1"));
 
         node("Epmloyers")["Epmloyer"][0].value("new_my_value");
         node("node3").value(Node {"new node3", "asdqwe123"});
+        node.toString(true);
         assert(node);
         assert(node("Epmloyers")[Node::Type::ELEMENT].size() == 3);
         assert(node("Epmloyers").text() == "");
@@ -122,6 +132,7 @@ void test_fn1()
         assert(node.nodes().size() == 6);
         assert(node.nodes().back().name() == "int");
         assert(node.nodes().back().text() == "6");
+
     }
 
     {
@@ -352,6 +363,21 @@ void test_fn1()
         assert(node.name() == "story");
         assert(node("info"));
         assert(node("info")("author").toString(false, ToLower, ToLower) == "<?xml version=\"1.0\" encoding=\"UTF-8\"?><author>john fleck</author>");
+    }
+
+    {
+        Node root {"root"};
+        root.addNode("child1", "value1");
+        root.addNode("child2", "value2");
+
+        assert(root.nodes()[0].name() == "child1");
+        assert(root.nodes()[0].text() == "value1");
+        assert(root.nodes()[1].name() == "child2");
+        assert(root.nodes()[1].text() == "value2");
+
+        root.findNodeXPath("child1").addNode("subchild1", "subvalue1");
+        assert(root.findNodeXPath("child1/subchild1"));
+        assert(root.findNodeXPath("child1/subchild1").text() == "subvalue1");
     }
 }
 

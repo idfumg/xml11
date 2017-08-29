@@ -17,6 +17,8 @@ std::string GenerateString(T&& param, Fn fn)
 }
 
 class NodeImpl final {
+    using NameFilter = std::string (const std::string& name);
+
 public:
     NodeImpl() = default;
     NodeImpl(const NodeImpl& node) = default;
@@ -26,8 +28,7 @@ public:
 
     NodeImpl(std::string name)
         noexcept(noexcept(AssociativeArray<std::string, NodeImpl>()) &&
-                 noexcept(std::string()) &&
-                 noexcept(std::string().empty()))
+                 noexcept(std::string()))
         : m_name {std::move(name)}
     {
 
@@ -35,8 +36,7 @@ public:
 
     NodeImpl(std::string name, std::string text)
         noexcept(noexcept(AssociativeArray<std::string, NodeImpl>()) &&
-                 noexcept(std::string()) &&
-                 noexcept(std::string().empty()))
+                 noexcept(std::string()))
         : m_name {std::move(name)},
           m_text {std::move(text)}
     {
@@ -102,25 +102,45 @@ public:
     const std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name) const
 
     {
-        return m_nodes.findNodes(std::forward<T1>(name));
+        if (m_nameFilter) {
+            return m_nodes.findNodes(m_nameFilter(name));
+        }
+        else {
+            return m_nodes.findNodes(std::forward<T1>(name));
+        }
     }
 
     template <class T1>
     std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name)
     {
-        return m_nodes.findNodes(std::forward<T1>(name));
+        if (m_nameFilter) {
+            return m_nodes.findNodes(m_nameFilter(name));
+        }
+        else {
+            return m_nodes.findNodes(std::forward<T1>(name));
+        }
     }
 
     template <class T1>
     const std::shared_ptr<NodeImpl> findNode(T1&& name) const
     {
-        return m_nodes.findNode(std::forward<T1>(name));
+        if (m_nameFilter) {
+            return m_nodes.findNode(m_nameFilter(name));
+        }
+        else {
+            return m_nodes.findNode(std::forward<T1>(name));
+        }
     }
 
     template <class T1>
     std::shared_ptr<NodeImpl> findNode(T1&& name)
     {
-        return m_nodes.findNode(std::forward<T1>(name));
+        if (m_nameFilter) {
+            return m_nodes.findNode(m_nameFilter(name));
+        }
+        else {
+            return m_nodes.findNode(std::forward<T1>(name));
+        }
     }
 
     template <class T1>
@@ -226,11 +246,22 @@ public:
         return const_cast<NodeImpl*>(this)->nodes();
     }
 
+    void nameFilter(NameFilter nameFilter) noexcept
+    {
+        m_nameFilter = nameFilter;
+    }
+
+    NameFilter* nameFilter() const noexcept
+    {
+        return m_nameFilter;
+    }
+
 private:
     std::string m_name {};
     std::string m_text {};
     AssociativeArray<std::string, NodeImpl> m_nodes {};
     Node::Type m_type {Node::Type::ELEMENT};
+    NameFilter* m_nameFilter {nullptr};
 };
 
 } /* namespace xml11 */

@@ -42,22 +42,31 @@ public:
      * Main functions.
      ********************************************************************************/
 
-    template <class T1, class T2>
-    void insert(T1&& name, T2&& value)
-        noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
+    template<class V>
+    auto insert(const U& name, V&& value)
+        noexcept(noexcept(ValuesListT().push_back(ValuePointerT()))) ->
+        typename std::enable_if<
+            !std::is_same<typename std::decay<V>::type, typename std::decay<T>::type>::value,
+            void
+        >::type
+
     {
-        std::string name_copy = std::forward<T1>(name);
-        m_data.emplace_back(std::make_shared<T>(std::forward<T2>(value)));
-        m_assoc_data[move(name_copy)].emplace_back(m_data.back());
+        m_data.emplace_back(std::make_shared<T>(name, std::forward<V>(value)));
+        m_assoc_data[name].emplace_back(m_data.back());
     }
 
-    template <class T1>
-    void insert(T1&& name, ValuePointerT value)
+    void insert(const U& name, const T& value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
     {
-        std::string name_copy = std::forward<T1>(name);
-        m_data.emplace_back(move(value));
-        m_assoc_data[move(name_copy)].emplace_back(m_data.back());
+        m_data.emplace_back(std::make_shared<T>(value));
+        m_assoc_data[name].emplace_back(m_data.back());
+    }
+
+    void insert(const U& name, ValuePointerT value)
+        noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
+    {
+        m_data.emplace_back(value);
+        m_assoc_data[name].emplace_back(m_data.back());
     }
 
     void erase(const ValuePointerT& node)

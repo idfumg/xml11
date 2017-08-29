@@ -130,30 +130,36 @@ std::string ToXml(
     const xmlBufferPtr buffer = xmlBufferCreate();
     if (not buffer) {
         if (not error.empty()) {
-            throw Node::Xml11Exception(error);
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
         }
         else {
-            throw Node::Xml11Exception("xmlBufferCreate() error");
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + "xmlBufferCreate() error");
         }
     }
 
     const xmlTextWriterPtr writer = xmlNewTextWriterMemory(buffer, 0 /* compress */);
     if (not writer) {
         if (not error.empty()) {
-            throw Node::Xml11Exception(error);
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
         }
         else {
-            throw Node::Xml11Exception("xmlNewTextWriterMemory() error");
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + "xmlNewTextWriterMemory() error");
         }
     }
 
     int rc = xmlTextWriterStartDocument(writer, NULL/*version*/, "UTF-8", NULL/*standalone*/);
     if (rc < 0) {
         if (not error.empty()) {
-            throw Node::Xml11Exception(error);
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
         }
         else {
-            throw Node::Xml11Exception("xmlTextWriterStartDocument() error");
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + "xmlTextWriterStartDocument() error");
         }
     }
 
@@ -164,20 +170,24 @@ std::string ToXml(
     rc = WriteNodeToXml(root, writer, indent, nameFilter, valueFilter);
     if (rc < 0) {
         if (not error.empty()) {
-            throw Node::Xml11Exception(error);
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
         }
         else {
-            throw Node::Xml11Exception("WriteNodeToXml() error");
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + "WriteNodeToXml() error");
         }
     }
 
     rc = xmlTextWriterEndDocument(writer);
     if (rc < 0) {
         if (not error.empty()) {
-            throw Node::Xml11Exception(error);
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
         }
         else {
-            throw Node::Xml11Exception("xmlTextWriterEndDocument() error");
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + "xmlTextWriterEndDocument() error");
         }
     }
 
@@ -227,6 +237,9 @@ std::shared_ptr<NodeImpl> ParseXml(
 
     const auto root = std::make_shared<NodeImpl>(
         GenerateString(reinterpret_cast<const char*>(name), nameFilter));
+    if (nameFilter) {
+        root->nameFilter(nameFilter);
+    }
     xmlFree((void*)(name)); name = nullptr;
 
     for (ret = xmlTextReaderRead(reader); ret == 1; ret = xmlTextReaderRead(reader)) {
@@ -240,6 +253,9 @@ std::shared_ptr<NodeImpl> ParseXml(
                     GenerateString(reinterpret_cast<const char*>(name), nameFilter)
                 };
                 node.type(Node::Type::ELEMENT);
+                if (nameFilter) {
+                    node.nameFilter(nameFilter);
+                }
                 xmlFree((void*)(name)); name = nullptr;
 
                 if (xmlTextReaderHasAttributes(reader)) {
@@ -255,6 +271,9 @@ std::shared_ptr<NodeImpl> ParseXml(
                                     reinterpret_cast<const char*>(value), valueFilter)
                             };
                             prop.type(Node::Type::ATTRIBUTE);
+                            if (nameFilter) {
+                                prop.nameFilter(nameFilter);
+                            }
                             node.addNode(std::move(prop));
                         }
 
@@ -301,10 +320,12 @@ std::shared_ptr<NodeImpl> ParseXml(const std::string& text, NameFilter nameFilte
 
     if (not reader) {
         if (not error.empty()) {
-            throw Node::Xml11Exception(error);
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
         }
         else {
-            throw Node::Xml11Exception("xmlReaderForMemory() error");
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + "xmlReaderForMemory() error");
         }
     }
 
@@ -315,10 +336,12 @@ std::shared_ptr<NodeImpl> ParseXml(const std::string& text, NameFilter nameFilte
 
     if ((not node) or (node and not error.empty())) {
         if (not error.empty()) {
-            throw Node::Xml11Exception(error);
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
         }
         else {
-            throw Node::Xml11Exception("ParseXml() error");
+            throw Node::Xml11Exception(
+                std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + "ParseXml() error");
         }
     }
 

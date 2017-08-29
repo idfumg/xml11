@@ -1,7 +1,5 @@
-//#include "xml11_libxml2.hpp"
-#include "xml11_rapidxml.hpp"
-
-#include <iostream>
+#include "xml11_libxml2.hpp"
+//#include "xml11_rapidxml.hpp"
 
 namespace xml11 {
 
@@ -181,7 +179,7 @@ const Node Node::operator () (const Type& type) const
 Node Node::findNode(const std::string& name)
 {
     if (not pimpl) {
-        throw Node::Xml11Exception("No findNode for not valid Node!");
+        return Node {std::make_shared<NodeImpl>()};
     }
     return pimpl->findNode(name);
 }
