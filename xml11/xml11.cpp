@@ -404,6 +404,10 @@ Node& Node::addNode(const Node& node)
     }
 
     if (node) {
+        if (pimpl->nameFilter()) {
+            node.pimpl->nameFilter(pimpl->nameFilter());
+            node.pimpl->name(pimpl->nameFilter()(node.pimpl->name()));
+        }
         pimpl->addNode(node.pimpl);
     }
 
@@ -417,6 +421,10 @@ Node& Node::addNode(Node&& node)
     }
 
     if (node) {
+        if (pimpl->nameFilter()) {
+            node.pimpl->nameFilter(pimpl->nameFilter());
+            node.pimpl->name(pimpl->nameFilter()(node.pimpl->name()));
+        }
         pimpl->addNode(node.pimpl);
         node.pimpl = nullptr;
     }
@@ -431,7 +439,14 @@ Node& Node::addNode(std::string name)
     }
 
     if (not name.empty()) {
-        pimpl->addNode(std::move(name));
+        if (pimpl->nameFilter()) {
+            Node node {pimpl->nameFilter()(std::move(name))};
+            node.pimpl->nameFilter(pimpl->nameFilter());
+            addNode(std::move(node));
+        }
+        else {
+            pimpl->addNode(std::move(name));
+        }
     }
 
     return *this;
@@ -444,10 +459,17 @@ Node& Node::addNode(std::string name, std::string value)
     }
 
     if (not (name.empty() and value.empty())) {
-        pimpl->addNode(std::move(name), std::move(value));
+        if (pimpl->nameFilter()) {
+            Node node {pimpl->nameFilter()(std::move(name)), std::move(value)};
+            node.pimpl->nameFilter(pimpl->nameFilter());
+            addNode(std::move(node));
+        }
+        else {
+            pimpl->addNode(std::move(name), std::move(value));
+        }
     }
     else if (not name.empty()) {
-        pimpl->addNode(std::move(name));
+        addNode(std::move(name));
     }
 
     return *this;
