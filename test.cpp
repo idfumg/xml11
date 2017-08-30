@@ -358,11 +358,11 @@ void test_fn1()
             "  <ebook/>"
             "  <ebook/>"
             "</StorY>";
-        const auto node = Node::fromString(text, ToLower, nullptr);
+        const auto node = Node::fromString(text);
         assert(node);
-        assert(node.name() == "story");
+        assert(node.name() == "StorY");
         assert(node("info"));
-        assert(node("info")("author").toString(false, ToLower, ToLower) == "<?xml version=\"1.0\" encoding=\"UTF-8\"?><author>john fleck</author>");
+        assert(node("info")("author").toString(false) == "<?xml version=\"1.0\" encoding=\"UTF-8\"?><author>JOHN FLECK</author>");
     }
 
     {

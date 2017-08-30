@@ -404,10 +404,6 @@ Node& Node::addNode(const Node& node)
     }
 
     if (node) {
-        if (pimpl->nameFilter()) {
-            node.pimpl->nameFilter(pimpl->nameFilter());
-            node.pimpl->name(pimpl->nameFilter()(node.pimpl->name()));
-        }
         pimpl->addNode(node.pimpl);
     }
 
@@ -421,10 +417,6 @@ Node& Node::addNode(Node&& node)
     }
 
     if (node) {
-        if (pimpl->nameFilter()) {
-            node.pimpl->nameFilter(pimpl->nameFilter());
-            node.pimpl->name(pimpl->nameFilter()(node.pimpl->name()));
-        }
         pimpl->addNode(node.pimpl);
         node.pimpl = nullptr;
     }
@@ -439,14 +431,7 @@ Node& Node::addNode(std::string name)
     }
 
     if (not name.empty()) {
-        if (pimpl->nameFilter()) {
-            Node node {pimpl->nameFilter()(std::move(name))};
-            node.pimpl->nameFilter(pimpl->nameFilter());
-            addNode(std::move(node));
-        }
-        else {
-            pimpl->addNode(std::move(name));
-        }
+        pimpl->addNode(std::move(name));
     }
 
     return *this;
@@ -459,14 +444,7 @@ Node& Node::addNode(std::string name, std::string value)
     }
 
     if (not (name.empty() and value.empty())) {
-        if (pimpl->nameFilter()) {
-            Node node {pimpl->nameFilter()(std::move(name)), std::move(value)};
-            node.pimpl->nameFilter(pimpl->nameFilter());
-            addNode(std::move(node));
-        }
-        else {
-            pimpl->addNode(std::move(name), std::move(value));
-        }
+        pimpl->addNode(std::move(name), std::move(value));
     }
     else if (not name.empty()) {
         addNode(std::move(name));
@@ -554,34 +532,37 @@ const NodeList Node::nodes() const
     return const_cast<Node*>(this)->nodes();
 }
 
-Node Node::fromString(const std::string& text)
-{
-    return Node {ParseXml(text, nullptr, nullptr)};
-}
-
 Node Node::fromString(
-    const std::string& text, NameFilter nameFilter, ValueFilter valueFilter)
+    const std::string& text, const bool isCaseInsensitive, ValueFilter valueFilter)
 {
-    return Node {ParseXml(text, nameFilter, valueFilter)};
+    return Node {ParseXml(text, isCaseInsensitive, valueFilter)};
 }
 
-std::string Node::toString(const bool indent) const
-{
-    if (not pimpl) {
-        throw Node::Xml11Exception("Can't erase nodes to not valid Node!");
-    }
-
-    return ToXml(pimpl, indent, nullptr, nullptr);
-}
-
-std::string Node::toString(
-    const bool indent, NameFilter nameFilter, ValueFilter valueFilter) const
+std::string Node::toString(const bool indent, ValueFilter valueFilter) const
 {
     if (not pimpl) {
         throw Node::Xml11Exception("Can't toString not valid Node!");
     }
 
-    return ToXml(pimpl, indent, nameFilter, valueFilter);
+    return ToXml(pimpl, indent, valueFilter);
+}
+
+void Node::isCaseInsensitive(const bool isCaseInsensitive)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't set isCaseInsensitive with not valid Node!");
+    }
+
+    return pimpl->isCaseInsensitive(isCaseInsensitive);
+}
+
+bool Node::isCaseInsensitive() const
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't get isCaseInsensitive with not valid Node!");
+    }
+
+    return pimpl->isCaseInsensitive();
 }
 
 namespace literals {

@@ -12,8 +12,8 @@ enum TagType {
 
 struct TagBase {
     template <class T>
-    TagBase(T&& name, const TagType& type)
-        : name {std::forward<T>(name)}, type {type} {}
+    TagBase(T&& name_, const TagType& type_)
+        : name {std::forward<T>(name_)}, type {type_} {}
 
     operator bool() const { return valid; }
 
@@ -24,24 +24,24 @@ struct TagBase {
 
 struct Tag : public TagBase {
     template <class U, class T>
-    Tag(U* refs, T&& name, const TagType& type = OPTIONAL)
-        : TagBase {std::forward<T>(name), type}
+    Tag(U* refs, T&& name_, const TagType& type_ = OPTIONAL)
+        : TagBase {std::forward<T>(name_), type_}
     {
         refs->add(this);
     }
 
-    std::string value;
+    std::string value {};
 };
 
 struct Tags : public TagBase {
     template <class U, class T>
-    Tags(U* refs, T&& name, const TagType& type = OPTIONAL)
-        : TagBase {std::forward<T>(name), type}
+    Tags(U* refs, T&& name_, const TagType& type_ = OPTIONAL)
+        : TagBase {std::forward<T>(name_), type_}
     {
         refs->add(this);
     }
 
-    std::vector<std::string> values;
+    std::vector<std::string> values {};
 };
 
 class TagsRefs {
@@ -104,8 +104,8 @@ public:
     }
 
 private:
-    std::vector<Tag*> tagList;
-    std::vector<Tags*> tagsList;
+    std::vector<Tag*> tagList {};
+    std::vector<Tags*> tagsList {};
 };
 
 } /* namespace xml11 */

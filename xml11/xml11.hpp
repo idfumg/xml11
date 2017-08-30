@@ -8,7 +8,6 @@
 namespace xml11 {
 
 using NodeList = std::vector<class Node>;
-using NameFilter = std::string (const std::string& name);
 using ValueFilter = std::string (const std::string& value);
 
 class Node {
@@ -24,10 +23,8 @@ public:
     };
 
 public:
-    static Node fromString(const std::string& text);
-    static Node fromString(const std::string& text, NameFilter, ValueFilter);
-    std::string toString(const bool indent = true) const;
-    std::string toString(const bool indent, NameFilter, ValueFilter) const;
+    static Node fromString(const std::string& text, const bool isCaseInsensitive=true, ValueFilter valueFilter = nullptr);
+    std::string toString(const bool indent = true, ValueFilter valueFilter = nullptr) const;
 
 public:
     ~Node() noexcept;
@@ -124,6 +121,9 @@ public:
     void value(std::string text);
     void value(const Node& node);
     void value(Node&& node);
+
+    void isCaseInsensitive(const bool isCaseInsensitive);
+    bool isCaseInsensitive() const;
 
 private:
     std::shared_ptr<class NodeImpl> pimpl {nullptr};

@@ -1,6 +1,16 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
+
+namespace {
+template<class T>
+inline auto to_lower(T s) -> decltype(T().begin(), T())
+{
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return s;
+}
+}
 
 template <class U, class T>
 struct AssociativeArray {
@@ -13,21 +23,28 @@ public:
     using ThisType = AssociativeArray<U, T>;
 
 public:
-    AssociativeArray()
+    AssociativeArray(const bool isCaseInsensitive = true)
         noexcept(noexcept(NamesValuesT()) &&
                  noexcept(ValuesListT()))
-        : m_data{}, m_assoc_data{}
+        : m_data{}, m_assoc_data{}, m_isCaseInsensitive{isCaseInsensitive}
     {
 
     }
 
-    AssociativeArray(std::initializer_list<std::pair<U, T>> list)
+    AssociativeArray(std::initializer_list<std::pair<U, T>> list,
+                     const bool isCaseInsensitive = true)
         noexcept(noexcept(ValuesListT().emplace_back(std::make_shared<T>(T()))) &&
                  noexcept(NamesValuesT()[U()]))
+        : m_isCaseInsensitive{isCaseInsensitive}
     {
         for (auto&& p : list) {
             m_data.emplace_back(std::make_shared<T>(move(p.second)));
-            m_assoc_data[move(p.first)].emplace_back(m_data.back());
+            if (m_isCaseInsensitive) {
+                m_assoc_data[to_lower(p.first)].emplace_back(m_data.back());
+            }
+            else {
+                m_assoc_data[move(p.first)].emplace_back(m_data.back());
+            }
         }
     }
 
@@ -52,21 +69,42 @@ public:
 
     {
         m_data.emplace_back(std::make_shared<T>(name, std::forward<V>(value)));
-        m_assoc_data[name].emplace_back(m_data.back());
+
+        if (m_isCaseInsensitive) {
+            m_data.back()->isCaseInsensitive(true);
+            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
+        }
+        else {
+            m_assoc_data[name].emplace_back(m_data.back());
+        }
     }
 
     void insert(const U& name, const T& value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
     {
         m_data.emplace_back(std::make_shared<T>(value));
-        m_assoc_data[name].emplace_back(m_data.back());
+
+        if (m_isCaseInsensitive) {
+            m_data.back()->isCaseInsensitive(true);
+            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
+        }
+        else {
+            m_assoc_data[name].emplace_back(m_data.back());
+        }
     }
 
     void insert(const U& name, ValuePointerT value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
     {
         m_data.emplace_back(value);
-        m_assoc_data[name].emplace_back(m_data.back());
+
+        if (m_isCaseInsensitive) {
+            m_data.back()->isCaseInsensitive(true);
+            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
+        }
+        else {
+            m_assoc_data[name].emplace_back(m_data.back());
+        }
     }
 
     void erase(const ValuePointerT& node)
@@ -104,7 +142,12 @@ public:
         noexcept(noexcept(NamesValuesT().find(U())) &&
                  noexcept(NamesValuesT().end()))
     {
-        const auto it = m_assoc_data.find(std::forward<T1>(name));
+        auto name_lower = std::forward<T1>(name);
+        if (m_isCaseInsensitive) {
+            name_lower = to_lower(name);
+        }
+
+        const auto it = m_assoc_data.find(name_lower);
         if (it != m_assoc_data.end()) {
             return it->second;
         }
@@ -245,7 +288,18 @@ public:
         return not (*this == right);
     }
 
+    void isCaseInsensitive(const bool isCaseInsensitive)
+    {
+        m_isCaseInsensitive = isCaseInsensitive;
+    }
+
+    bool isCaseInsensitive() const
+    {
+        return m_isCaseInsensitive;
+    }
+
 private:
     ValuesListT m_data;
     NamesValuesT m_assoc_data;
+    bool m_isCaseInsensitive {true};
 };

@@ -7,7 +7,7 @@ namespace xml11 {
 
 namespace {
 template <class T, class Fn>
-std::string GenerateString(T&& param, Fn fn)
+std::string GenerateString(T&& param, Fn fn = nullptr)
 {
     if (fn) {
         return fn(std::forward<T>(param));
@@ -17,8 +17,6 @@ std::string GenerateString(T&& param, Fn fn)
 }
 
 class NodeImpl final {
-    using NameFilter = std::string (const std::string& name);
-
 public:
     NodeImpl() = default;
     NodeImpl(const NodeImpl& node) = default;
@@ -100,47 +98,26 @@ public:
 
     template <class T1>
     const std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name) const
-
     {
-        if (m_nameFilter) {
-            return m_nodes.findNodes(m_nameFilter(name));
-        }
-        else {
-            return m_nodes.findNodes(std::forward<T1>(name));
-        }
+        return m_nodes.findNodes(std::forward<T1>(name));
     }
 
     template <class T1>
     std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name)
     {
-        if (m_nameFilter) {
-            return m_nodes.findNodes(m_nameFilter(name));
-        }
-        else {
-            return m_nodes.findNodes(std::forward<T1>(name));
-        }
+        return m_nodes.findNodes(std::forward<T1>(name));
     }
 
     template <class T1>
     const std::shared_ptr<NodeImpl> findNode(T1&& name) const
     {
-        if (m_nameFilter) {
-            return m_nodes.findNode(m_nameFilter(name));
-        }
-        else {
-            return m_nodes.findNode(std::forward<T1>(name));
-        }
+        return m_nodes.findNode(std::forward<T1>(name));
     }
 
     template <class T1>
     std::shared_ptr<NodeImpl> findNode(T1&& name)
     {
-        if (m_nameFilter) {
-            return m_nodes.findNode(m_nameFilter(name));
-        }
-        else {
-            return m_nodes.findNode(std::forward<T1>(name));
-        }
+        return m_nodes.findNode(std::forward<T1>(name));
     }
 
     template <class T1>
@@ -246,14 +223,14 @@ public:
         return const_cast<NodeImpl*>(this)->nodes();
     }
 
-    void nameFilter(NameFilter nameFilter) noexcept
+    void isCaseInsensitive(const bool isCaseInsensitive)
     {
-        m_nameFilter = nameFilter;
+        return m_nodes.isCaseInsensitive(isCaseInsensitive);
     }
 
-    NameFilter* nameFilter() const noexcept
+    bool isCaseInsensitive() const
     {
-        return m_nameFilter;
+        return m_nodes.isCaseInsensitive();
     }
 
 private:
@@ -261,7 +238,6 @@ private:
     std::string m_text {};
     AssociativeArray<std::string, NodeImpl> m_nodes {};
     Node::Type m_type {Node::Type::ELEMENT};
-    NameFilter* m_nameFilter {nullptr};
 };
 
 } /* namespace xml11 */
