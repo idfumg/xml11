@@ -564,9 +564,42 @@ Node& Node::operator -= (const Node& root)
         throw Node::Xml11Exception("Can't erase node from not valid Node!");
     }
 
-    eraseNode(root);
+    if (root) {
+        eraseNode(root);
+    }
 
     return *this;
+}
+
+Node& Node::operator -= (Node&& root)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase node from not valid Node!");
+    }
+
+    if (root) {
+        eraseNode(root);
+    }
+
+    return *this;
+}
+
+Node& Node::operator -= (const NodeList& nodes)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase node from not valid Node!");
+    }
+
+    return eraseNodes(nodes);
+}
+
+Node& Node::operator -= (NodeList&& nodes)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase node from not valid Node!");
+    }
+
+    return eraseNodes(std::move(nodes));
 }
 
 Node& Node::eraseNode(const Node& node)
@@ -582,6 +615,19 @@ Node& Node::eraseNode(const Node& node)
     return *this;
 }
 
+Node& Node::eraseNode(Node&& node)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase node from not valid Node!");
+    }
+
+    if (node) {
+        pimpl->eraseNode(std::move(node.pimpl));
+    }
+
+    return *this;
+}
+
 Node& Node::eraseNodes(const NodeList& nodes)
 {
     if (not pimpl) {
@@ -590,6 +636,19 @@ Node& Node::eraseNodes(const NodeList& nodes)
 
     for (const auto& node : nodes) {
         eraseNode(node);
+    }
+
+    return *this;
+}
+
+Node& Node::eraseNodes(NodeList&& nodes)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't erase nodes from not valid Node!");
+    }
+
+    for (auto& node : nodes) {
+        eraseNode(std::move(node));
     }
 
     return *this;

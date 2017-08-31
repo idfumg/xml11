@@ -173,6 +173,11 @@ public:
     Node findNodeXPath(const std::string& name);
     const Node findNodeXPath(const std::string& name) const;
 
+    Node& operator -= (const Node& root);
+    Node& operator -= (Node&& root);
+    Node& operator -= (const NodeList& nodes);
+    Node& operator -= (NodeList&& nodes);
+
     Node& operator += (const Node& root);
     Node& operator += (Node&& root);
     Node& operator += (const NodeList& nodes);
@@ -199,10 +204,10 @@ public:
     Node& addNodes(const NodeList& node);
     Node& addNodes(NodeList&& node);
 
-    Node& operator -= (const Node& root);
-
     Node& eraseNode(const Node& node);
+    Node& eraseNode(Node&& node);
     Node& eraseNodes(const NodeList& node);
+    Node& eraseNodes(NodeList&& nodes);
 
     std::vector<Node> nodes();
     const std::vector<Node> nodes() const;
