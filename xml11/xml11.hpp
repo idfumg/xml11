@@ -77,7 +77,10 @@ public:
              class=typename std::enable_if<
                  decltype(*std::declval<T&>(), true)(true) &&
                  decltype(std::to_string(*std::declval<T&>()), true)(true) &&
-                 !std::is_same<std::string, typename std::decay<decltype(*std::declval<T&>())>::type>::value &&
+                 !std::is_same<
+                     std::string,
+                     typename std::decay<decltype(*std::declval<T&>())>::type
+                 >::value &&
                  !std::is_same<std::string, typename std::decay<T>::type>::value &&
                  !std::is_same<char*, typename std::decay<T>::type>::value,
                  T
@@ -101,7 +104,10 @@ public:
     template<class T,
              class=typename std::enable_if<
                  decltype(*std::declval<T&>(), true)(true) &&
-                 std::is_same<std::string, typename std::decay<decltype(*std::declval<T&>())>::type>::value &&
+                 std::is_same<
+                     std::string,
+                     typename std::decay<decltype(*std::declval<T&>())>::type
+                 >::value &&
                  !std::is_same<std::string, typename std::decay<T>::type>::value &&
                  !std::is_same<char*, typename std::decay<T>::type>::value,
                  T
