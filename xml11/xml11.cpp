@@ -26,6 +26,18 @@ Node::Node(Node&& node) noexcept
     node.pimpl = nullptr;
 }
 
+Node::Node(std::string name, const Node& node)
+    : Node {std::move(name)}
+{
+    addNode(node);
+}
+
+Node::Node(std::string name, Node&& node)
+    : Node {std::move(name)}
+{
+    addNode(std::move(node));
+}
+
 Node::Node(std::string name)
 {
     if (not name.empty()) {
@@ -42,20 +54,24 @@ Node::Node(std::string name, std::string value)
 
 Node::Node(std::string name, std::string value, const Node::Type type)
 {
-    if (not (name.empty() and value.empty())) {
+    if (type == Type::OPTIONAL and value.empty()) {
+        return;
+    }
+
+    if (not name.empty()) {
         pimpl = std::make_shared<NodeImpl>(std::move(name), std::move(value));
         pimpl->type(type);
     }
 }
 
 Node::Node(std::string name, const NodeList& nodes)
-    : Node {name}
+    : Node {std::move(name)}
 {
     addNodes(nodes);
 }
 
 Node::Node(std::string name, NodeList&& nodes)
-    : Node {name}
+    : Node {std::move(name)}
 {
     addNodes(std::move(nodes));
 }
@@ -397,6 +413,28 @@ Node& Node::operator += (Node&& node)
     return *this;
 }
 
+Node& Node::operator += (const NodeList& nodes)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    addNodes(nodes);
+
+    return *this;
+}
+
+Node& Node::operator += (NodeList&& nodes)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    addNodes(std::move(nodes));
+
+    return *this;
+}
+
 Node& Node::addNode(const Node& node)
 {
     if (not pimpl) {
@@ -443,11 +481,47 @@ Node& Node::addNode(std::string name, std::string value)
         throw Node::Xml11Exception("Can't add node to not valid Node!");
     }
 
-    if (not (name.empty() and value.empty())) {
+    if (not name.empty()) {
         pimpl->addNode(std::move(name), std::move(value));
     }
-    else if (not name.empty()) {
-        addNode(std::move(name));
+
+    return *this;
+}
+
+Node& Node::addNode(std::string name, std::string value, const Node::Type type)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add node to not valid Node!");
+    }
+
+    if (type == Type::OPTIONAL and value.empty()) {
+        return *this;
+    }
+
+    return addNode({std::move(name), std::move(value), type});
+}
+
+Node& Node::addAttribute(std::string name)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add attribute to not valid Node!");
+    }
+
+    if (not name.empty()) {
+        addNode({std::move(name), "", Type::ATTRIBUTE});
+    }
+
+    return *this;
+}
+
+Node& Node::addAttribute(std::string name, std::string value)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't add attribute to not valid Node!");
+    }
+
+    if (not name.empty()) {
+        addNode({std::move(name), std::move(value), Type::ATTRIBUTE});
     }
 
     return *this;
@@ -460,7 +534,9 @@ Node& Node::addNodes(const NodeList& nodes)
     }
 
     for (const auto& node : nodes) {
-        addNode(node);
+        if (node) {
+            addNode(node);
+        }
     }
 
     return *this;
@@ -473,7 +549,10 @@ Node& Node::addNodes(NodeList&& nodes)
     }
 
     for (auto& node : nodes) {
-        addNode(std::move(node));
+        if (node) {
+            addNode(std::move(node));
+            node.pimpl = nullptr;
+        }
     }
 
     return *this;

@@ -14,7 +14,8 @@ class Node {
 public:
     enum class Type : char {
         ELEMENT,
-        ATTRIBUTE
+        ATTRIBUTE,
+        OPTIONAL
     };
 
     class Xml11Exception final : public std::runtime_error {
@@ -32,15 +33,44 @@ public:
     Node(const Node& node) noexcept;
     Node(Node&& node) noexcept;
     Node(std::string name);
+    Node(std::string name, const Node& node);
+    Node(std::string name, Node&& node);
     Node(std::string name, std::string value);
     Node(std::string name, std::string value, const Type type);
     Node(std::string name, const NodeList& nodes);
     Node(std::string name, NodeList&& nodes);
 
+    static void AddNode(Node&)
+    {
+
+    }
+
+    template<class Head, class... Tail>
+    static void AddNode(Node& node, Head&& head, Tail&& ...tail)
+    {
+        node += std::forward<Head>(head);
+        AddNode(node, std::forward<Tail>(tail)...);
+    }
+
+    template<class... Tail>
+    Node(std::string name, const NodeList& nodes, Tail&& ...tail)
+        : Node(std::move(name), nodes)
+    {
+        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
+    }
+
+    template<class... Tail>
+    Node(std::string name, const Node& node, Tail&& ...tail)
+        : Node(std::move(name), node)
+    {
+        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
+    }
+
     template<class T,
              class=typename std::enable_if<
                  decltype(std::to_string(T()), true)(true),
-             T>::type>
+                 void
+             >::type>
     Node(std::string name, T&& value)
         : Node {std::move(name), std::to_string(std::forward<T>(value))}
     {
@@ -83,11 +113,14 @@ public:
 
     Node& operator += (const Node& root);
     Node& operator += (Node&& root);
+    Node& operator += (const NodeList& nodes);
+    Node& operator += (NodeList&& nodes);
 
     Node& addNode(const Node& node);
     Node& addNode(Node&& node);
     Node& addNode(std::string name);
     Node& addNode(std::string name, std::string value);
+    Node& addNode(std::string name, std::string value, const Node::Type type);
 
     template<class T,
              class=typename std::enable_if<
@@ -97,6 +130,9 @@ public:
     {
         return addNode(std::move(name), std::to_string(std::forward<T>(value)));
     }
+
+    Node& addAttribute(std::string name);
+    Node& addAttribute(std::string name, std::string value);
 
     Node& addNodes(const NodeList& node);
     Node& addNodes(NodeList&& node);

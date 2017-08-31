@@ -72,9 +72,13 @@ void test_fn1()
         assert(node("Epmloyers")["Epmloyer"][2]("patronym"));
         assert(node("Epmloyers")["Epmloyer"][2]("patronym").text() == "3");
 
-        node("node2") += { "nodex", {
-            {"nested1", "nested2"}
-        }};
+        node("node2") += { "nodex",
+            NodeList {
+                {"nested1", "nested2"}
+            },
+            Node {"as", "asd"}
+        };
+
         assert(node);
         assert(node("node2"));
         assert(node("node2").text() == "value2");
