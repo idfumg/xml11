@@ -89,6 +89,9 @@ public:
         if (value) {
             this->value(std::to_string(*value));
         }
+        else {
+            this->pimpl = nullptr;
+        }
     }
 
     /*
@@ -110,6 +113,9 @@ public:
     {
         if (value) {
             this->value(*value);
+        }
+        else {
+            this->pimpl = nullptr;
         }
     }
 
