@@ -40,6 +40,9 @@ public:
     Node(std::string name, const NodeList& nodes);
     Node(std::string name, NodeList&& nodes);
 
+    /*
+     * We can instantly create new node with random length parameters of Nodes and NodeLists.
+     */
     static void AddNode(Node&)
     {
 
@@ -66,9 +69,56 @@ public:
         AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
     }
 
+    /*
+     * We can optionally create optional value or pointer, if it valid.
+     * If it is not a string it will be converted to the string.
+     */
     template<class T,
              class=typename std::enable_if<
-                 decltype(std::to_string(T()), true)(true),
+                 decltype(*std::declval<T&>(), true)(true) &&
+                 decltype(std::to_string(*std::declval<T&>()), true)(true) &&
+                 !std::is_same<std::string, typename std::decay<decltype(*std::declval<T&>())>::type>::value &&
+                 !std::is_same<std::string, typename std::decay<T>::type>::value &&
+                 !std::is_same<char*, typename std::decay<T>::type>::value,
+                 T
+             >::type,
+             class=void>
+    Node(std::string name, const T& value)
+        : Node {std::move(name)}
+    {
+        if (value) {
+            this->value(std::to_string(*value));
+        }
+    }
+
+    /*
+     * We can optionally create optional value or pointer, if it valid.
+     * This function works if optional value contains the string.
+     */
+    template<class T,
+             class=typename std::enable_if<
+                 decltype(*std::declval<T&>(), true)(true) &&
+                 std::is_same<std::string, typename std::decay<decltype(*std::declval<T&>())>::type>::value &&
+                 !std::is_same<std::string, typename std::decay<T>::type>::value &&
+                 !std::is_same<char*, typename std::decay<T>::type>::value,
+                 T
+             >::type,
+             class=void,
+             class=void>
+    Node(std::string name, const T& value)
+        : Node {std::move(name)}
+    {
+        if (value) {
+            this->value(*value);
+        }
+    }
+
+    /*
+     * We can create Node from everything that can be represented as string.
+     */
+    template<class T,
+             class=typename std::enable_if<
+                 decltype(std::to_string(std::declval<T&>()), true)(true),
                  void
              >::type>
     Node(std::string name, T&& value)
