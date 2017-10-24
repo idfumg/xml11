@@ -209,8 +209,8 @@ public:
     Node& eraseNodes(const NodeList& node);
     Node& eraseNodes(NodeList&& nodes);
 
-    std::vector<Node> nodes();
-    const std::vector<Node> nodes() const;
+    NodeList nodes();
+    const NodeList nodes() const;
 
     Node::Type type() const;
     void type(const Node::Type type);

@@ -121,15 +121,17 @@ void ErrorHandler(void *ctx, const xmlErrorPtr error) {
     result += '\n';
 }
 
-std::string ToXml(
+std::string ToXml_(
     const std::shared_ptr<NodeImpl>& root,
     const bool indent,
-    ValueFilter valueFilter)
+    ValueFilter valueFilter,
+    xmlBufferPtr buffer,
+    xmlTextWriterPtr writer)
 {
     std::string error;
     xmlSetStructuredErrorFunc(&error, reinterpret_cast<xmlStructuredErrorFunc>(ErrorHandler));
 
-    const xmlBufferPtr buffer = xmlBufferCreate();
+    buffer = xmlBufferCreate();
     if (not buffer) {
         if (not error.empty()) {
             throw Node::Xml11Exception(
@@ -141,7 +143,7 @@ std::string ToXml(
         }
     }
 
-    const xmlTextWriterPtr writer = xmlNewTextWriterMemory(buffer, 0 /* compress */);
+    writer = xmlNewTextWriterMemory(buffer, 0 /* compress */);
     if (not writer) {
         if (not error.empty()) {
             throw Node::Xml11Exception(
@@ -195,14 +197,48 @@ std::string ToXml(
 
     std::string result(reinterpret_cast<const char*>(buffer->content));
 
-    xmlFreeTextWriter(writer);
-    xmlBufferFree(buffer);
-
     if (not indent) {
         result.erase(std::remove(result.begin(), result.end(), '\n'), result.end());
     }
 
     return result;
+}
+
+void RestoreGlobalData(
+    const xmlBufferPtr buffer,
+    const xmlTextWriterPtr writer)
+{
+    xmlSetStructuredErrorFunc(NULL, NULL);
+
+    if (writer) {
+        xmlFreeTextWriter(writer);
+    }
+
+    if (buffer) {
+        xmlBufferFree(buffer);
+    }
+
+    if (xmlGetLastError()) {
+        xmlResetLastError();
+    }
+}
+
+std::string ToXml(
+    const std::shared_ptr<NodeImpl>& root,
+    const bool indent,
+    ValueFilter valueFilter)
+{
+    xmlBufferPtr buffer {nullptr};
+    xmlTextWriterPtr writer {nullptr};
+
+    try {
+        return ToXml_(root, indent, valueFilter, buffer, writer);
+    } catch (const std::exception& e) {
+        RestoreGlobalData(buffer, writer);
+        throw e;
+    }
+    RestoreGlobalData(buffer, writer);
+    return "";
 }
 
 NodeImpl& FindLastByDepth(NodeImpl& root, size_t depth)

@@ -656,7 +656,7 @@ Node& Node::eraseNodes(NodeList&& nodes)
 
 NodeList Node::nodes()
 {
-    std::vector<Node> result;
+    NodeList result;
     if (pimpl) {
         for (const auto& node : pimpl->nodes()) {
             result.emplace_back(node);
