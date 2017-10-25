@@ -254,6 +254,43 @@ NodeImpl& FindLastByDepth(NodeImpl& root, size_t depth)
     return *node;
 }
 
+void FetchAllAttributes(
+    NodeImpl& node,
+    const xmlTextReaderPtr reader,
+    const bool isCaseInsensitive,
+    ValueFilter valueFilter)
+{
+    xmlChar* name = nullptr;
+    xmlChar* value = nullptr;
+
+    if (xmlTextReaderHasAttributes(reader)) {
+        while (xmlTextReaderMoveToNextAttribute(reader)) {
+            name = xmlTextReaderName(reader);
+            value = xmlTextReaderValue(reader);
+
+            if (name and value) {
+                NodeImpl prop {
+                    reinterpret_cast<const char*>(name),
+                        GenerateString(
+                            reinterpret_cast<const char*>(value), valueFilter)
+                };
+                prop.type(Node::Type::ATTRIBUTE);
+                prop.isCaseInsensitive(isCaseInsensitive);
+                node.addNode(std::move(prop));
+            }
+
+            if (name) {
+                xmlFree(reinterpret_cast<void*>(name)); name = nullptr;
+            }
+
+            if (value) {
+                xmlFree(reinterpret_cast<void*>(value)); value = nullptr;
+            }
+        }
+        xmlTextReaderMoveToElement(reader);
+    }
+}
+
 std::shared_ptr<NodeImpl> ParseXml(
     const xmlTextReaderPtr reader,
     const bool isCaseInsensitive,
@@ -278,6 +315,8 @@ std::shared_ptr<NodeImpl> ParseXml(
     root->isCaseInsensitive(isCaseInsensitive);
     xmlFree(reinterpret_cast<void*>(name)); name = nullptr;
 
+    FetchAllAttributes(*root, reader, isCaseInsensitive, valueFilter);
+
     for (ret = xmlTextReaderRead(reader); ret == 1; ret = xmlTextReaderRead(reader)) {
         nodeType = xmlTextReaderNodeType(reader);
 
@@ -292,32 +331,7 @@ std::shared_ptr<NodeImpl> ParseXml(
                 node.isCaseInsensitive(isCaseInsensitive);
                 xmlFree(reinterpret_cast<void*>(name)); name = nullptr;
 
-                if (xmlTextReaderHasAttributes(reader)) {
-                    while (xmlTextReaderMoveToNextAttribute(reader)) {
-                        name = xmlTextReaderName(reader);
-                        value = xmlTextReaderValue(reader);
-
-                        if (name and value) {
-                            NodeImpl prop {
-                                reinterpret_cast<const char*>(name),
-                                GenerateString(
-                                    reinterpret_cast<const char*>(value), valueFilter)
-                            };
-                            prop.type(Node::Type::ATTRIBUTE);
-                            prop.isCaseInsensitive(isCaseInsensitive);
-                            node.addNode(std::move(prop));
-                        }
-
-                        if (name) {
-                            xmlFree(reinterpret_cast<void*>(name)); name = nullptr;
-                        }
-
-                        if (value) {
-                            xmlFree(reinterpret_cast<void*>(value)); value = nullptr;
-                        }
-                    }
-                    xmlTextReaderMoveToElement(reader);
-                }
+                FetchAllAttributes(node, reader, isCaseInsensitive, valueFilter);
 
                 auto& lastNode = FindLastByDepth(*root, xmlTextReaderDepth(reader));
                 lastNode.addNode(std::move(node));
