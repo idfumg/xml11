@@ -233,7 +233,7 @@ std::string ToXml(
 
     try {
         return ToXml_(root, indent, valueFilter, buffer, writer);
-    } catch (const std::exception& e) {
+    } catch (const Node::Xml11Exception& e) {
         RestoreGlobalData(buffer, writer);
         throw e;
     }
@@ -351,10 +351,11 @@ std::shared_ptr<NodeImpl> ParseXml(
     return ret != 0 ? nullptr : root;
 }
 
-std::shared_ptr<NodeImpl> ParseXml(
+std::shared_ptr<NodeImpl> ParseXml_(
     const std::string& text,
     const bool isCaseInsensitive,
-    ValueFilter valueFilter)
+    ValueFilter valueFilter,
+    xmlTextReaderPtr reader)
 {
     if (text.empty()) {
         return nullptr;
@@ -363,7 +364,7 @@ std::shared_ptr<NodeImpl> ParseXml(
     std::string error;
     xmlSetStructuredErrorFunc(&error, reinterpret_cast<xmlStructuredErrorFunc>(ErrorHandler));
 
-    const xmlTextReaderPtr reader =
+    reader =
         xmlReaderForMemory(text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS);
 
     if (not reader) {
@@ -377,10 +378,7 @@ std::shared_ptr<NodeImpl> ParseXml(
         }
     }
 
-    auto node = ParseXml(reader, isCaseInsensitive, valueFilter);
-
-    xmlFreeTextReader(reader);
-    xmlCleanupParser();
+    const auto node = ParseXml(reader, isCaseInsensitive, valueFilter);
 
     if ((not node) or (node and not error.empty())) {
         if (not error.empty()) {
@@ -394,6 +392,39 @@ std::shared_ptr<NodeImpl> ParseXml(
     }
 
     return node;
+}
+
+void RestoreGlobalDataReader(
+    const xmlTextReaderPtr reader)
+{
+    xmlSetStructuredErrorFunc(NULL, NULL);
+
+    if (reader) {
+        xmlFreeTextReader(reader);
+    }
+
+    if (xmlGetLastError()) {
+        xmlResetLastError();
+    }
+
+    xmlCleanupParser();
+}
+
+std::shared_ptr<NodeImpl> ParseXml(
+    const std::string& text,
+    const bool isCaseInsensitive,
+    ValueFilter valueFilter)
+{
+    xmlTextReaderPtr reader {nullptr};
+
+    try {
+        return ParseXml_(text, isCaseInsensitive, valueFilter, reader);
+    } catch (const Node::Xml11Exception& e) {
+        RestoreGlobalDataReader(reader);
+        throw e;
+    }
+    RestoreGlobalDataReader(reader);
+    return {};
 }
 
 } /* anonymous namespace */
