@@ -209,6 +209,8 @@ void RestoreGlobalData(
     const xmlTextWriterPtr writer)
 {
     xmlSetStructuredErrorFunc(NULL, NULL);
+    xmlSetGenericErrorFunc(NULL, NULL);
+    initGenericErrorDefaultFunc(NULL);
 
     if (writer) {
         xmlFreeTextWriter(writer);
@@ -219,8 +221,11 @@ void RestoreGlobalData(
     }
 
     if (xmlGetLastError()) {
+        xmlResetError(xmlGetLastError());
         xmlResetLastError();
     }
+
+    xmlCleanupParser();
 }
 
 std::string ToXml(
@@ -230,14 +235,17 @@ std::string ToXml(
 {
     xmlBufferPtr buffer {nullptr};
     xmlTextWriterPtr writer {nullptr};
+    xmlInitParser();
 
     try {
-        return ToXml_(root, indent, valueFilter, buffer, writer);
+        const auto result = ToXml_(root, indent, valueFilter, buffer, writer);
+        RestoreGlobalData(buffer, writer);
+        return result;
     } catch (const Node::Xml11Exception& e) {
         RestoreGlobalData(buffer, writer);
         throw e;
     }
-    RestoreGlobalData(buffer, writer);
+
     return "";
 }
 
@@ -398,12 +406,15 @@ void RestoreGlobalDataReader(
     const xmlTextReaderPtr reader)
 {
     xmlSetStructuredErrorFunc(NULL, NULL);
+    xmlSetGenericErrorFunc(NULL, NULL);
+    initGenericErrorDefaultFunc(NULL);
 
     if (reader) {
         xmlFreeTextReader(reader);
     }
 
     if (xmlGetLastError()) {
+        xmlResetError(xmlGetLastError());
         xmlResetLastError();
     }
 
@@ -416,14 +427,17 @@ std::shared_ptr<NodeImpl> ParseXml(
     ValueFilter valueFilter)
 {
     xmlTextReaderPtr reader {nullptr};
+    xmlInitParser();
 
     try {
-        return ParseXml_(text, isCaseInsensitive, valueFilter, reader);
+        const auto result = ParseXml_(text, isCaseInsensitive, valueFilter, reader);
+        RestoreGlobalDataReader(reader);
+        return result;
     } catch (const Node::Xml11Exception& e) {
         RestoreGlobalDataReader(reader);
         throw e;
     }
-    RestoreGlobalDataReader(reader);
+
     return {};
 }
 
