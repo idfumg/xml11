@@ -354,6 +354,15 @@ std::shared_ptr<NodeImpl> ParseXml(
                     reinterpret_cast<const char*>(value), valueFilter);
             }
         }
+        else if (nodeType == XML_CDATA_SECTION_NODE) {
+            value = xmlTextReaderValue(reader);
+
+            if (value) {
+                auto& lastNode = FindLastByDepth(*root, xmlTextReaderDepth(reader));
+                lastNode.text() += "<![CDATA[" + GenerateString(
+                    reinterpret_cast<const char*>(value), valueFilter) + "]]>";
+            }
+        }
     }
 
     return ret != 0 ? nullptr : root;
