@@ -43,15 +43,51 @@ public:
     /*
      * We can instantly create new node with random length parameters of Nodes and NodeLists.
      */
+
     static void AddNode(Node&)
     {
 
     }
 
+    template<
+        class Head,
+        class = typename std::enable_if<
+            std::is_same<
+                Node,
+                typename std::decay<decltype(*std::declval<Head&>())>::type
+            >::value,
+            void
+        >::type,
+        class = void>
+    static void AddNode(Node& node, Head&& head)
+    {
+        node += *std::forward<Head>(head);
+    }
+
+    static void AddNode(Node& node, const Node& head)
+    {
+        node += head;
+    }
+
+    static void AddNode(Node& node, Node&& head)
+    {
+        node += std::move(head);
+    }
+
+    static void AddNode(Node& node, const NodeList& head)
+    {
+        node += head;
+    }
+
+    static void AddNode(Node& node, NodeList&& head)
+    {
+        node += std::move(head);
+    }
+
     template<class Head, class... Tail>
     static void AddNode(Node& node, Head&& head, Tail&& ...tail)
     {
-        node += std::forward<Head>(head);
+        AddNode(node, std::forward<Head>(head));
         AddNode(node, std::forward<Tail>(tail)...);
     }
 
@@ -63,8 +99,22 @@ public:
     }
 
     template<class... Tail>
+    Node(std::string name, NodeList&& nodes, Tail&& ...tail)
+        : Node(std::move(name), std::move(nodes))
+    {
+        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
+    }
+
+    template<class... Tail>
     Node(std::string name, const Node& node, Tail&& ...tail)
         : Node(std::move(name), node)
+    {
+        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
+    }
+
+    template<class... Tail>
+    Node(std::string name, Node&& node, Tail&& ...tail)
+        : Node(std::move(name), std::move(node))
     {
         AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
     }
@@ -73,19 +123,21 @@ public:
      * We can optionally create optional value or pointer, if it valid.
      * If it is not a string it will be converted to the string.
      */
-    template<class T,
-             class=typename std::enable_if<
-                 decltype(*std::declval<T&>(), true)(true) &&
-                 decltype(std::to_string(*std::declval<T&>()), true)(true) &&
-                 !std::is_same<
-                     std::string,
-                     typename std::decay<decltype(*std::declval<T&>())>::type
-                 >::value &&
-                 !std::is_same<std::string, typename std::decay<T>::type>::value &&
-                 !std::is_same<char*, typename std::decay<T>::type>::value,
-                 T
-             >::type,
-             class=void>
+    template<
+        class T,
+        class=typename std::enable_if<
+            decltype(*std::declval<T&>(), true)(true) &&
+            decltype(std::to_string(*std::declval<T&>()), true)(true) &&
+            !std::is_same<
+                std::string,
+                typename std::decay<decltype(*std::declval<T&>())>::type
+                >::value &&
+            !std::is_same<std::string, typename std::decay<T>::type>::value &&
+            !std::is_same<char*, typename std::decay<T>::type>::value,
+            void
+        >::type,
+        class=void
+    >
     Node(std::string name, const T& value)
         : Node {std::move(name)}
     {
@@ -101,24 +153,58 @@ public:
      * We can optionally create optional value or pointer, if it valid.
      * This function works if optional value contains the string.
      */
-    template<class T,
-             class=typename std::enable_if<
-                 decltype(*std::declval<T&>(), true)(true) &&
-                 std::is_same<
-                     std::string,
-                     typename std::decay<decltype(*std::declval<T&>())>::type
-                 >::value &&
-                 !std::is_same<std::string, typename std::decay<T>::type>::value &&
-                 !std::is_same<char*, typename std::decay<T>::type>::value,
-                 T
-             >::type,
-             class=void,
-             class=void>
-    Node(std::string name, const T& value)
+    template<
+        class T,
+        class=typename std::enable_if<
+            decltype(*std::declval<T&>(), true)(true) &&
+            std::is_same<
+                std::string,
+                typename std::decay<decltype(*std::declval<T&>())>::type
+                >::value &&
+            !std::is_same<std::string, typename std::decay<T>::type>::value &&
+            !std::is_same<char*, typename std::decay<T>::type>::value,
+            void
+        >::type,
+        class=void,
+        class=void
+    >
+    Node(std::string name, T&& value)
         : Node {std::move(name)}
     {
         if (value) {
             this->value(*value);
+        }
+        else {
+            this->pimpl = nullptr;
+        }
+    }
+
+    template<
+        class T,
+        class=typename std::enable_if<
+            decltype(*std::declval<T&>(), true)(true) &&
+            (std::is_same<
+                 Node,
+                 typename std::decay<decltype(*std::declval<T&>())>::type
+             >::value
+             ||
+             std::is_same<
+                 NodeList,
+                 typename std::decay<decltype(*std::declval<T&>())>::type
+             >::value) &&
+            !std::is_same<std::string, typename std::decay<T>::type>::value &&
+            !std::is_same<char*, typename std::decay<T>::type>::value,
+            void
+        >::type,
+        class=void,
+        class=void,
+        class=void
+    >
+    Node(std::string name, T&& value)
+        : Node {std::move(name)}
+    {
+        if (value) {
+            this->value(*std::forward<T>(value));
         }
         else {
             this->pimpl = nullptr;
