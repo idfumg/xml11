@@ -5,6 +5,7 @@
 #include <set>
 #include <cstring>
 #include <ctime>
+#include <optional>
 
 using std::cout;
 using std::endl;
@@ -264,10 +265,12 @@ void test_fn1()
     }
 
     {
-        const clock_t begin = clock();
         constexpr auto TIMES = 100000;
-
         std::vector<Node> nodes;
+        nodes.reserve(TIMES);
+
+        const clock_t begin = clock();
+
         for (size_t i = 0; i < TIMES; ++i) {
             nodes.push_back(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -382,6 +385,47 @@ void test_fn1()
         root.findNodeXPath("child1").addNode("subchild1", "subvalue1");
         assert(root.findNodeXPath("child1/subchild1"));
         assert(root.findNodeXPath("child1/subchild1").text() == "subvalue1");
+    }
+
+    {
+        const std::optional<std::string> optionalString = "123";
+        const std::optional<Node> nonValidOptionalNode{};
+        const std::optional<Node> validOptionalNode  = Node {
+            "OptionalNode", "OptionalNodeValue"
+        };
+
+        Node root {
+            "root",
+            {
+                {"node1", "value1", Node::Type::ATTRIBUTE},
+                {"node2", "value2"},
+                {"node3", "value3"},
+                {"node4", "1123"},
+                {"Epmloyers", {
+                    {"Epmloyer", {
+                        {"name", "1"},
+                        {"surname", "2"},
+                        {"patronym", "3"}
+                    }},
+                    {"Epmloyer", {
+                        {"name", "1"},
+                        {"surname", "2"},
+                        {"patronym", "3"}
+                    }},
+                    {"Epmloyer", {
+                        {"name", "1"},
+                        {"surname", "2"},
+                        {"patronym", "3", Node::Type::ATTRIBUTE}
+                    }}
+                }},
+                {"OptionalString", optionalString},
+            },
+            nonValidOptionalNode,
+            validOptionalNode,
+        };
+
+        assert(root("OptionalString").text() == "123");
+        assert(root("OptionalNode").text() == "OptionalNodeValue");
     }
 }
 

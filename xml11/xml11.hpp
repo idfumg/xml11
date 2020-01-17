@@ -61,7 +61,9 @@ public:
         class = void>
     static void AddNode(Node& node, Head&& head)
     {
-        node += *std::forward<Head>(head);
+        if (head) {
+            node += *std::forward<Head>(head);
+        }
     }
 
     static void AddNode(Node& node, const Node& head)
