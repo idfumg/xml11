@@ -43,8 +43,7 @@ void test_fn1()
 
     {
         Node node {
-            "root",
-            {
+            "root", {
                 {"node1", "value1", Node::Type::ATTRIBUTE},
                 {"node2", "value2"},
                 {"node3", "value3"},
@@ -73,7 +72,7 @@ void test_fn1()
         assert(node("Epmloyers")["Epmloyer"][2]("patronym"));
         assert(node("Epmloyers")["Epmloyer"][2]("patronym").text() == "3");
 
-        node("node2") += { "nodex",
+        node("node2") += Node{ "nodex",
             NodeList {
                 {"nested1", "nested2"}
             },
@@ -388,44 +387,134 @@ void test_fn1()
     }
 
     {
-        const std::optional<std::string> optionalString = "123";
+        const Node root {"root", Node{"node3", "value3"}};
+        assert(root("node3").text() == "value3");
+    }
+
+    {
+        const Node root {"root", {{"node3", "value3"}}};
+        assert(root("node3").text() == "value3");
+    }
+
+    {
+        const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}}};
+        assert(root("node4").text() == "value4");
+    }
+
+    {
+        const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}, {"node5", "value5"}}};
+        assert(root("node5").text() == "value5");
+    }
+
+    {
+        const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}}, Node{"node5", "value5"}};
+        assert(root("node5").text() == "value5");
+    }
+
+    {
+        const Node root {"root", {{"node3", "value3"}}, Node{"node4", "value4"}, Node{"node5", "value5"}};
+        assert(root("node5").text() == "value5");
+    }
+
+    {
+        const Node root {"root", 5};
+        assert(root.text() == "5");
+    }
+
+    {
+        const Node root {"root", {{"node3", "value3"}}, Node{"node5", 5}};
+        assert(root("node5").text() == "5");
+    }
+
+    {
+        const Node root {"root", {{"node3", 3}}, Node{"node5", 5}};
+        assert(root("node3").text() == "3");
+        assert(root("node5").text() == "5");
+    }
+
+    {
         const std::optional<Node> nonValidOptionalNode{};
-        const std::optional<Node> validOptionalNode  = Node {
-            "OptionalNode", "OptionalNodeValue"
-        };
+        const Node root {"root", {{"node3", 3}}, nonValidOptionalNode};
+        assert(root("node3").text() == "3");
+    }
 
-        Node root {
-            "root",
-            {
-                {"node1", "value1", Node::Type::ATTRIBUTE},
-                {"node2", "value2"},
-                {"node3", "value3"},
-                {"node4", "1123"},
-                {"Epmloyers", {
-                    {"Epmloyer", {
-                        {"name", "1"},
-                        {"surname", "2"},
-                        {"patronym", "3"}
-                    }},
-                    {"Epmloyer", {
-                        {"name", "1"},
-                        {"surname", "2"},
-                        {"patronym", "3"}
-                    }},
-                    {"Epmloyer", {
-                        {"name", "1"},
-                        {"surname", "2"},
-                        {"patronym", "3", Node::Type::ATTRIBUTE}
-                    }}
-                }},
-                {"OptionalString", optionalString},
-            },
-            nonValidOptionalNode,
-            validOptionalNode,
-        };
-
-        assert(root("OptionalString").text() == "123");
+    {
+        const std::optional<Node> validOptionalNode  = Node {"OptionalNode", "OptionalNodeValue"};
+        const Node root {"root", {{"node3", 3}}, validOptionalNode};
+        assert(root("node3").text() == "3");
         assert(root("OptionalNode").text() == "OptionalNodeValue");
+    }
+
+    {
+        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
+        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
+        const Node root {"root", {validOptionalNode4, validOptionalNode5}};
+        assert(root("OptionalNode4").text() == "4");
+        assert(root("OptionalNode5").text() == "5");
+    }
+
+    {
+        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
+        const Node root {"root", {validOptionalNode4}};
+        assert(root("OptionalNode4").text() == "4");
+    }
+
+    {
+        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
+        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
+        const Node root {"root", NodeList{{"node3", 3}}, validOptionalNode4, validOptionalNode5};
+        assert(root("OptionalNode4").text() == "4");
+        assert(root("OptionalNode5").text() == "5");
+    }
+
+    {
+        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
+        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
+        const Node root {"root", {validOptionalNode4, validOptionalNode5}, NodeList{{"node3", 3}}};
+        assert(root("OptionalNode4").text() == "4");
+        assert(root("OptionalNode5").text() == "5");
+    }
+
+    {
+        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
+        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
+        const Node root {"root", Node{"node3", 3}, validOptionalNode4, validOptionalNode5};
+        assert(root("node3").text() == "3");
+        assert(root("OptionalNode4").text() == "4");
+        assert(root("OptionalNode5").text() == "5");
+    }
+
+    {
+        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
+        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
+        const Node root {"root", {{"node3", 3}}, validOptionalNode4, validOptionalNode5};
+        assert(root("node3").text() == "3");
+        assert(root("OptionalNode4").text() == "4");
+        assert(root("OptionalNode5").text() == "5");
+    }
+
+    {
+        const Node root {"root", {{"node3", 3}, {"SeveralStrings", "firstString", "secondString"}}};
+        assert(root("node3").text() == "3");
+        assert(root("SeveralStrings").text() == "secondString");
+    }
+
+    {
+        const std::optional<std::string> validOptional  = "3";
+        const Node root {"root", Node{"node3", validOptional}};
+        assert(root("node3").text() == "3");
+    }
+
+    {
+        const std::optional<std::string> validOptional  = "3";
+        const Node root {"root", {{"node3", validOptional}, {"node4", "4"}}};
+        assert(root("node3").text() == "3");
+    }
+
+    {
+        const std::optional<std::string> validOptional  = "3";
+        const Node root {"root", {{"node4", "4"}, {"node3", validOptional}}};
+        assert(root("node3").text() == "3");
     }
 }
 

@@ -4,8 +4,51 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <iostream>
 
 namespace xml11 {
+
+namespace detail {
+
+using mp_true = std::integral_constant<bool, true>;
+using mp_false = std::integral_constant<bool, false>;
+template<class... T> struct mp_list {};
+
+template<class T>
+struct mp_empty_impl;
+
+template<template<class...> class L>
+struct mp_empty_impl<L<>> : mp_true {};
+
+template<template<class...> class L, class T1, class... T>
+struct mp_empty_impl<L<T1, T...>> : mp_false {};
+
+template<class ... T> using mp_empty = typename mp_empty_impl<mp_list<T...>>::type;
+
+} // namespace detail
+
+template<class ... T> using mp_empty = std::is_same<detail::mp_empty<T...>, detail::mp_true>;
+template<class T, class U> using mp_same = std::is_same<typename std::decay<T>::type, U>;
+template<class T, class U> using mp_same_from_opt = std::is_same<typename std::decay<decltype(*std::declval<T&>())>::type, U>;
+template<class T> using mp_integral = std::is_integral<typename std::decay<T>::type>;
+
+template<class T, class = typename std::enable_if<decltype(*std::declval<T&>(), true)(true), void>::type>
+struct mp_like_pointer_impl {
+    static const bool value = true;
+};
+template<class T> using mp_like_pointer = mp_like_pointer_impl<T>;
+
+template<class T, class = typename std::enable_if<decltype(std::to_string(std::declval<T&>()), true)(true), void>::type>
+struct mp_can_be_string_impl {
+    static const bool value = true;
+};
+template<class T> using mp_can_be_string = mp_can_be_string_impl<T>;
+
+template<class T, class = typename std::enable_if<decltype(std::to_string(*std::declval<T&>()), true)(true), void>::type>
+struct mp_can_be_string_from_opt_impl {
+    static const bool value = true;
+};
+template<class T> using mp_can_be_string_from_opt = mp_can_be_string_from_opt_impl<T>;
 
 using NodeList = std::vector<class Node>;
 using ValueFilter = std::string (const std::string& value);
@@ -13,9 +56,9 @@ using ValueFilter = std::string (const std::string& value);
 class Node {
 public:
     enum class Type : char {
-        ELEMENT,
-        ATTRIBUTE,
-        OPTIONAL
+        ELEMENT = 0,
+        ATTRIBUTE = 1,
+        OPTIONAL = 2,
     };
 
     class Xml11Exception final : public std::runtime_error {
@@ -26,6 +69,156 @@ public:
 public:
     static Node fromString(const std::string& text, const bool isCaseInsensitive=true, ValueFilter valueFilter = nullptr);
     std::string toString(const bool indent = true, ValueFilter valueFilter = nullptr) const;
+
+public:
+    static void AddNode(Node&) noexcept
+    {
+
+    }
+
+    static void AddNode_(Node&) noexcept
+    {
+
+    }
+
+    template<
+        class Head,
+        class = typename std::enable_if<
+            mp_like_pointer<Head>::value,
+            void
+        >::type,
+        class = void
+    >
+    static void AddNode_(Node& node, Head&& head)
+    {
+        if (head) {
+            AddNode_(node, *std::forward<Head>(head));
+        }
+    }
+
+    template<
+        class T,
+        class = typename std::enable_if<
+            mp_same<T, std::string>::value,
+            void
+        >::type,
+        class = void,
+        class = void
+    >
+    static void AddNode_(Node& node, T&& value)
+    {
+        node.addNode(std::forward<T>(value));
+    }
+
+    template<
+        class T,
+        class = typename std::enable_if<
+            !mp_same<T, Node>::value &&
+            !mp_same<T, NodeList>::value &&
+            !mp_same<T, std::string>::value &&
+            !mp_same<T, char*>::value &&
+            mp_can_be_string<T>::value,
+            void
+        >::type
+    >
+    static void AddNode_(Node& node, T&& value)
+    {
+        node.text(std::to_string(std::forward<T>(value)));
+    }
+
+    template<std::size_t N>
+    static void AddNode_(Node& node, const char(&value)[N])
+    {
+        node.text(value);
+    }
+
+    static void AddNode_(Node& node, const Node::Type type)
+    {
+        node.type(type);
+    }
+
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            mp_same<T, Node>::value,
+            void
+        >::type
+    >
+    static void AddNode_(Node& node, T&& head)
+    {
+        node.addNode(std::forward<T>(head));
+    }
+
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            mp_same<T, NodeList>::value,
+            void
+        >::type,
+        class = void
+    >
+    static void AddNode_(Node& node, T&& head)
+    {
+        node.addNodes(std::forward<T>(head));
+    }
+
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            mp_like_pointer<T>::value,
+            void
+        >::type
+    >
+    static void AddNode_(Node& node, std::initializer_list<T>&& list)
+    {
+        for (auto&& item : list) {
+            AddNode_(node, std::move<T>(item));
+        }
+    }
+
+    template<
+        class T,
+        class = typename std::enable_if<
+            mp_same<T, Node>::value,
+            void
+        >::type
+    >
+    static void AddNode_(Node& node, std::initializer_list<T>&& list)
+    {
+        AddNode_(node, NodeList(std::move<T>(list)));
+    }
+
+    template<
+        class T,
+        class = typename std::enable_if<
+            mp_same<T, NodeList>::value,
+            void
+        >::type,
+        class = void
+    >
+    static void AddNode_(Node& node, std::initializer_list<T>&& list)
+    {
+        for (const auto& item : list) {
+            AddNode_(node, std::move<T>(item));
+        }
+    }
+
+    template<class Head, class... Tail>
+    static void AddNode_(Node& node, Head&& head, Tail&& ...tail)
+    {
+        AddNode_(node, std::forward<Head>(head));
+        AddNode_(node, std::forward<Tail>(tail)...);
+    }
+
+    template<class Head, class... Tail>
+    static void AddNode(Node& node, Head&& head, Tail&& ...tail)
+    {
+        AddNode_(node, std::forward<Head>(head));
+        AddNode_(node, std::forward<Tail>(tail)...);
+    }
 
 public:
     ~Node() noexcept;
@@ -40,191 +233,171 @@ public:
     Node(std::string name, const NodeList& nodes);
     Node(std::string name, NodeList&& nodes);
 
-    /*
-     * We can instantly create new node with random length parameters of Nodes and NodeLists.
-     */
-
-    static void AddNode(Node&)
+    Node(std::string name, std::initializer_list<Node>&& list)
+        : Node(std::move(name), NodeList(std::move(list)))
     {
 
     }
 
     template<
-        class Head,
+        class ... Args,
         class = typename std::enable_if<
-            std::is_same<
-                Node,
-                typename std::decay<decltype(*std::declval<Head&>())>::type
-            >::value,
+            !mp_empty<Args...>::value,
             void
-        >::type,
-        class = void>
-    static void AddNode(Node& node, Head&& head)
+        >::type
+    >
+    Node(std::string name, std::initializer_list<Node>&& list, Args&& ... args)
+        : Node(std::move(name), NodeList(std::move(list)))
     {
-        if (head) {
-            node += *std::forward<Head>(head);
+        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+    }
+
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            mp_like_pointer<T>::value &&
+            mp_empty<Args...>::value,
+            void
+        >::type
+    >
+    Node(std::string name, std::initializer_list<T>&& list)
+        : Node(std::move(name))
+    {
+        for (const auto& item : list) {
+            AddNode(*const_cast<Node*>(this), std::forward<decltype(item)>(item));
         }
     }
 
-    static void AddNode(Node& node, const Node& head)
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            mp_like_pointer<T>::value &&
+            !mp_empty<Args...>::value,
+            void
+        >::type
+    >
+    Node(std::string name, std::initializer_list<T>&& list, Args&& ... args)
+        : Node(std::move(name), std::move(list))
     {
-        node += head;
+        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
     }
 
-    static void AddNode(Node& node, Node&& head)
+    template<
+        class ... Args,
+        class = typename std::enable_if<
+            !mp_empty<Args...>::value,
+            void
+        >::type
+    >
+    Node(std::string name, std::string value, Args&& ... args)
+        : Node(std::move(name), std::move(value))
     {
-        node += std::move(head);
+        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
     }
 
-    static void AddNode(Node& node, const NodeList& head)
+    template<
+        class ... Args,
+        class = typename std::enable_if<
+            !mp_empty<Args...>::value,
+            void
+        >::type
+    >
+    Node(std::string name, std::string value, const Type type, Args&& ... args)
+        : Node(std::move(name), std::move(value), type)
     {
-        node += head;
+        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
     }
 
-    static void AddNode(Node& node, NodeList&& head)
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            (mp_same<T, Node>::value || mp_same<T, NodeList>::value) &&
+            !mp_empty<Args...>::value,
+            void
+        >::type,
+        class = void
+    >
+    Node(std::string name, T&& value, Args&& ... args)
+        : Node(std::move(name), std::forward<T>(value))
     {
-        node += std::move(head);
+        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
     }
 
-    template<class Head, class... Tail>
-    static void AddNode(Node& node, Head&& head, Tail&& ...tail)
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            mp_integral<T>::value &&
+            mp_empty<Args...>::value,
+            void
+        >::type
+    >
+    Node(std::string name, T&& value)
+        : Node(std::move(name), std::to_string(std::forward<T>(value)))
     {
-        AddNode(node, std::forward<Head>(head));
-        AddNode(node, std::forward<Tail>(tail)...);
+
     }
 
-    template<class... Tail>
-    Node(std::string name, const NodeList& nodes, Tail&& ...tail)
-        : Node(std::move(name), nodes)
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
+            mp_integral<T>::value &&
+            !mp_empty<Args...>::value,
+            void
+        >::type
+    >
+    Node(std::string name, T&& value, Args&& ... args)
+        : Node(std::move(name), std::to_string(std::forward<T>(value)))
     {
-        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
+        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
     }
 
-    template<class... Tail>
-    Node(std::string name, NodeList&& nodes, Tail&& ...tail)
-        : Node(std::move(name), std::move(nodes))
-    {
-        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
-    }
-
-    template<class... Tail>
-    Node(std::string name, const Node& node, Tail&& ...tail)
-        : Node(std::move(name), node)
-    {
-        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
-    }
-
-    template<class... Tail>
-    Node(std::string name, Node&& node, Tail&& ...tail)
-        : Node(std::move(name), std::move(node))
-    {
-        AddNode(*const_cast<Node*>(this), std::forward<Tail>(tail)...);
-    }
-
-    /*
-     * We can optionally create optional value or pointer, if it valid.
-     * If it is not a string it will be converted to the string.
-     */
     template<
         class T,
         class=typename std::enable_if<
-            decltype(*std::declval<T&>(), true)(true) &&
-            decltype(std::to_string(*std::declval<T&>()), true)(true) &&
-            !std::is_same<
-                std::string,
-                typename std::decay<decltype(*std::declval<T&>())>::type
-                >::value &&
-            !std::is_same<std::string, typename std::decay<T>::type>::value &&
-            !std::is_same<char*, typename std::decay<T>::type>::value,
-            void
+            !mp_same_from_opt<T, std::string>::value &&
+            !mp_same<T, std::string>::value &&
+            !mp_same<T, char*>::value &&
+            mp_can_be_string_from_opt<T>::value,
+            T
         >::type,
         class=void
     >
-    Node(std::string name, const T& value)
-        : Node {std::move(name)}
+    Node(std::string name, const T& param)
+        : Node(std::move(name))
     {
-        if (value) {
-            this->value(std::to_string(*value));
+        if (param) {
+            this->value(std::to_string(*param));
         }
         else {
             this->pimpl = nullptr;
         }
     }
 
-    /*
-     * We can optionally create optional value or pointer, if it valid.
-     * This function works if optional value contains the string.
-     */
     template<
         class T,
         class=typename std::enable_if<
-            decltype(*std::declval<T&>(), true)(true) &&
-            std::is_same<
-                std::string,
-                typename std::decay<decltype(*std::declval<T&>())>::type
-                >::value &&
-            !std::is_same<std::string, typename std::decay<T>::type>::value &&
-            !std::is_same<char*, typename std::decay<T>::type>::value,
-            void
+            mp_same_from_opt<T, std::string>::value &&
+            !mp_same<T, std::string>::value &&
+            !mp_same<T, char*>::value,
+            T
         >::type,
         class=void,
         class=void
     >
-    Node(std::string name, T&& value)
-        : Node {std::move(name)}
+    Node(std::string name, const T& param)
+        : Node(std::move(name))
     {
-        if (value) {
-            this->value(*value);
+        if (param) {
+            this->value(*param);
         }
         else {
             this->pimpl = nullptr;
         }
-    }
-
-    template<
-        class T,
-        class=typename std::enable_if<
-            decltype(*std::declval<T&>(), true)(true) &&
-            (std::is_same<
-                 Node,
-                 typename std::decay<decltype(*std::declval<T&>())>::type
-             >::value
-             ||
-             std::is_same<
-                 NodeList,
-                 typename std::decay<decltype(*std::declval<T&>())>::type
-             >::value) &&
-            !std::is_same<std::string, typename std::decay<T>::type>::value &&
-            !std::is_same<char*, typename std::decay<T>::type>::value,
-            void
-        >::type,
-        class=void,
-        class=void,
-        class=void
-    >
-    Node(std::string name, T&& value)
-        : Node {std::move(name)}
-    {
-        if (value) {
-            this->value(*std::forward<T>(value));
-        }
-        else {
-            this->pimpl = nullptr;
-        }
-    }
-
-    /*
-     * We can create Node from everything that can be represented as string.
-     */
-    template<class T,
-             class=typename std::enable_if<
-                 decltype(std::to_string(std::declval<T&>()), true)(true),
-                 void
-             >::type>
-    Node(std::string name, T&& value)
-        : Node {std::move(name), std::to_string(std::forward<T>(value))}
-    {
-
     }
 
     Node& operator = (const Node& node) noexcept;
@@ -277,10 +450,13 @@ public:
     Node& addNode(std::string name, std::string value);
     Node& addNode(std::string name, std::string value, const Node::Type type);
 
-    template<class T,
-             class=typename std::enable_if<
-                 decltype(std::to_string(T()), true)(true),
-             T>::type>
+    template<
+        class T,
+        class=typename std::enable_if<
+            mp_can_be_string<T>::value,
+            T
+        >::type
+    >
     Node& addNode(std::string name, T&& value)
     {
         return addNode(std::move(name), std::to_string(std::forward<T>(value)));
