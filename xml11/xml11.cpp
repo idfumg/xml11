@@ -675,7 +675,9 @@ Node Node::fromString(
     const std::string& text, const bool isCaseInsensitive, ValueFilter valueFilter_)
 {
     Node node {ParseXml(text, isCaseInsensitive, valueFilter_)};
-    node.valueFilter(valueFilter_);
+    if (node) {
+        node.valueFilter(valueFilter_);
+    }
     return node;
 }
 
@@ -709,7 +711,7 @@ bool Node::isCaseInsensitive() const
 void Node::valueFilter(ValueFilter valueFilter)
 {
     if (not pimpl) {
-        throw Node::Xml11Exception("Can't get valueFilter with not valid Node!");
+        throw Node::Xml11Exception("Can't set valueFilter with not valid Node!");
     }
 
     return pimpl->valueFilter(valueFilter);
