@@ -4,8 +4,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <iostream>
-#include <algorithm>
+#include <functional>
 
 namespace xml11 {
 
