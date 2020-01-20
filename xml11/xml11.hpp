@@ -25,30 +25,30 @@ struct mp_empty_impl<L<T1, T...>> : mp_false {};
 
 template<class ... T> using mp_empty = typename mp_empty_impl<mp_list<T...>>::type;
 
+template<class T, class = typename std::enable_if<decltype(*std::declval<T&>(), true)(true), void>::type>
+struct mp_like_pointer_impl {
+    static const bool value = true;
+};
+
+template<class T, class = typename std::enable_if<decltype(std::to_string(std::declval<T&>()), true)(true), void>::type>
+struct mp_can_be_string_impl {
+    static const bool value = true;
+};
+
+template<class T, class = typename std::enable_if<decltype(std::to_string(*std::declval<T&>()), true)(true), void>::type>
+struct mp_can_be_string_from_opt_impl {
+    static const bool value = true;
+};
+
 } // namespace detail
 
 template<class ... T> using mp_empty = std::is_same<detail::mp_empty<T...>, detail::mp_true>;
 template<class T, class U> using mp_same = std::is_same<typename std::decay<T>::type, U>;
 template<class T, class U> using mp_same_from_opt = std::is_same<typename std::decay<decltype(*std::declval<T&>())>::type, U>;
 template<class T> using mp_integral = std::is_integral<typename std::decay<T>::type>;
-
-template<class T, class = typename std::enable_if<decltype(*std::declval<T&>(), true)(true), void>::type>
-struct mp_like_pointer_impl {
-    static const bool value = true;
-};
-template<class T> using mp_like_pointer = mp_like_pointer_impl<T>;
-
-template<class T, class = typename std::enable_if<decltype(std::to_string(std::declval<T&>()), true)(true), void>::type>
-struct mp_can_be_string_impl {
-    static const bool value = true;
-};
-template<class T> using mp_can_be_string = mp_can_be_string_impl<T>;
-
-template<class T, class = typename std::enable_if<decltype(std::to_string(*std::declval<T&>()), true)(true), void>::type>
-struct mp_can_be_string_from_opt_impl {
-    static const bool value = true;
-};
-template<class T> using mp_can_be_string_from_opt = mp_can_be_string_from_opt_impl<T>;
+template<class T> using mp_like_pointer = detail::mp_like_pointer_impl<T>;
+template<class T> using mp_can_be_string = detail::mp_can_be_string_impl<T>;
+template<class T> using mp_can_be_string_from_opt = detail::mp_can_be_string_from_opt_impl<T>;
 
 using NodeList = std::vector<class Node>;
 using ValueFilter = std::string (const std::string& value);
