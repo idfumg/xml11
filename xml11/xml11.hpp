@@ -107,7 +107,7 @@ public:
     >
     static void AddNode_(Node& node, T&& value)
     {
-        node.addNode(std::forward<T>(value));
+        node.text(std::forward<T>(value));
     }
 
     template<
