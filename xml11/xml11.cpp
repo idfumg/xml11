@@ -1,3 +1,4 @@
+#include "xml11.hpp"
 #include "xml11_libxml2.hpp"
 //#include "xml11_rapidxml.hpp"
 
@@ -671,18 +672,20 @@ const NodeList Node::nodes() const
 }
 
 Node Node::fromString(
-    const std::string& text, const bool isCaseInsensitive, ValueFilter valueFilter)
+    const std::string& text, const bool isCaseInsensitive, ValueFilter valueFilter_)
 {
-    return Node {ParseXml(text, isCaseInsensitive, valueFilter)};
+    Node node {ParseXml(text, isCaseInsensitive, valueFilter_)};
+    node.valueFilter(valueFilter_);
+    return node;
 }
 
-std::string Node::toString(const bool indent, ValueFilter valueFilter) const
+std::string Node::toString(const bool indent, ValueFilter valueFilter_) const
 {
     if (not pimpl) {
         throw Node::Xml11Exception("Can't toString not valid Node!");
     }
 
-    return ToXml(pimpl, indent, valueFilter);
+    return ToXml(pimpl, indent, valueFilter_);
 }
 
 void Node::isCaseInsensitive(const bool isCaseInsensitive)
@@ -701,6 +704,33 @@ bool Node::isCaseInsensitive() const
     }
 
     return pimpl->isCaseInsensitive();
+}
+
+void Node::valueFilter(ValueFilter valueFilter)
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't get valueFilter with not valid Node!");
+    }
+
+    return pimpl->valueFilter(valueFilter);
+}
+
+ValueFilter Node::valueFilter() const
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't get valueFilter with not valid Node!");
+    }
+
+    return pimpl->valueFilter();
+}
+
+Node Node::clone(ValueFilter valueFilter_) const
+{
+    if (not pimpl) {
+        throw Node::Xml11Exception("Can't get isCaseInsensitive with not valid Node!");
+    }
+
+    return Node::fromString(this->toString(false, valueFilter_), isCaseInsensitive(), valueFilter());
 }
 
 namespace literals {

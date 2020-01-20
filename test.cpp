@@ -516,6 +516,16 @@ void test_fn1()
         const Node root {"root", {{"node4", "4"}, {"node3", validOptional}}};
         assert(root("node3").text() == "3");
     }
+
+    {
+        const std::optional<std::string> validOptional  = "3";
+        auto root = std::make_unique<Node>(Node{"root", {{"node4", "4"}, {"node3", validOptional}}});
+        assert((*root)("node3").text() == "3");
+
+        const auto cloned = root->clone(nullptr);
+        root.reset();
+        assert(cloned("node3").text() == "3");
+    }
 }
 
 int main()

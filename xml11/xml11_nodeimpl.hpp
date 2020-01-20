@@ -233,11 +233,22 @@ public:
         return m_nodes.isCaseInsensitive();
     }
 
+    void valueFilter(ValueFilter valueFilter_)
+    {
+        m_valueFilter = valueFilter_;
+    }
+
+    ValueFilter valueFilter() const
+    {
+        return m_valueFilter;
+    }
+
 private:
     std::string m_name {};
     std::string m_text {};
     AssociativeArray<std::string, NodeImpl> m_nodes {};
     Node::Type m_type {Node::Type::ELEMENT};
+    mutable ValueFilter m_valueFilter{nullptr};
 };
 
 } /* namespace xml11 */

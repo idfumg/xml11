@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 namespace xml11 {
 
@@ -51,7 +52,7 @@ template<class T> using mp_can_be_string = detail::mp_can_be_string_impl<T>;
 template<class T> using mp_can_be_string_from_opt = detail::mp_can_be_string_from_opt_impl<T>;
 
 using NodeList = std::vector<class Node>;
-using ValueFilter = std::string (const std::string& value);
+using ValueFilter = std::function<std::string (const std::string& value)>;
 
 class Node {
 public:
@@ -67,8 +68,8 @@ public:
     };
 
 public:
-    static Node fromString(const std::string& text, const bool isCaseInsensitive=true, ValueFilter valueFilter = nullptr);
-    std::string toString(const bool indent = true, ValueFilter valueFilter = nullptr) const;
+    static Node fromString(const std::string& text, const bool isCaseInsensitive=true, ValueFilter valueFilter_ = nullptr);
+    std::string toString(const bool indent = true, ValueFilter valueFilter_ = nullptr) const;
 
 public:
     static void AddNode(Node&) noexcept
@@ -491,6 +492,11 @@ public:
 
     void isCaseInsensitive(const bool isCaseInsensitive);
     bool isCaseInsensitive() const;
+
+    void valueFilter(ValueFilter valueFilter);
+    ValueFilter valueFilter() const;
+
+    Node clone(ValueFilter valueFilter_ = nullptr) const;
 
 private:
     std::shared_ptr<class NodeImpl> pimpl {nullptr};
