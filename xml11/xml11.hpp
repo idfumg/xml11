@@ -222,6 +222,7 @@ public:
 
 public:
     ~Node() noexcept;
+    Node() noexcept;
     Node(const std::shared_ptr<class NodeImpl>& node) noexcept;
     Node(const Node& node) noexcept;
     Node(Node&& node) noexcept;

@@ -9,6 +9,12 @@ Node::~Node() noexcept
 
 }
 
+Node::Node() noexcept
+: pimpl {nullptr}
+{
+
+}
+
 Node::Node(const std::shared_ptr<class NodeImpl>& node) noexcept
     : pimpl {node}
 {
