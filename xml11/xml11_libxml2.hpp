@@ -62,10 +62,18 @@ int WriteNodeToXml(
 
     for (const auto& node : root->nodes()) {
         if (node->type() == Node::Type::ATTRIBUTE) {
-            rc = xmlTextWriterWriteAttribute(
-                writer,
-                reinterpret_cast<const xmlChar*>(node->name().c_str()),
-                reinterpret_cast<const xmlChar*>(GenerateString(node->text(), valueFilter).c_str()));
+            if (valueFilter) {
+                rc = xmlTextWriterWriteAttribute(
+                    writer,
+                    reinterpret_cast<const xmlChar*>(node->name().c_str()),
+                    reinterpret_cast<const xmlChar*>(GenerateString(node->text(), valueFilter).c_str()));
+            }
+            else {
+                rc = xmlTextWriterWriteAttribute(
+                    writer,
+                    reinterpret_cast<const xmlChar*>(node->name().c_str()),
+                    reinterpret_cast<const xmlChar*>(node->text().c_str()));
+            }
 
             if (rc < 0) {
                 return -1;
@@ -83,9 +91,16 @@ int WriteNodeToXml(
     }
 
     if (not root->text().empty()) {
-        rc = xmlTextWriterWriteRaw(
-            writer,
-            reinterpret_cast<const xmlChar*>(GenerateString(root->text(), valueFilter).c_str()));
+        if (valueFilter) {
+            rc = xmlTextWriterWriteRaw(
+                writer,
+                reinterpret_cast<const xmlChar*>(GenerateString(root->text(), valueFilter).c_str()));
+        }
+        else {
+            rc = xmlTextWriterWriteRaw(
+                writer,
+                reinterpret_cast<const xmlChar*>(root->text().c_str()));
+        }
 
         if (rc < 0) {
             return -1;
@@ -279,12 +294,8 @@ std::string ToXml(
 NodeImpl& FindLastByDepth(NodeImpl& root, size_t depth)
 {
     auto* node = &root;
-    while (depth-- - 1) {
-        if (not node->nodes().empty()) {
-            if (node->nodes().back()) {
-                node = &*node->nodes().back();
-            }
-        }
+    for (depth -= 1; depth and not node->nodes().empty() and node->nodes().back(); --depth) {
+        node = &*node->nodes().back();
     }
     return *node;
 }
@@ -301,13 +312,24 @@ void FetchAllAttributes(
             cleanup_xml2_string xmlChar* value = xmlTextReaderValue(reader);
 
             if (name and value) {
-                NodeImpl prop {
-                    reinterpret_cast<const char*>(name),
-                    GenerateString(reinterpret_cast<const char*>(value), valueFilter)
-                };
-                prop.type(Node::Type::ATTRIBUTE);
-                prop.isCaseInsensitive(isCaseInsensitive);
-                node.addNode(std::move(prop));
+                if (valueFilter) {
+                    NodeImpl prop {
+                        reinterpret_cast<const char*>(name),
+                        GenerateString(reinterpret_cast<const char*>(value), valueFilter)
+                    };
+                    prop.type(Node::Type::ATTRIBUTE);
+                    prop.isCaseInsensitive(isCaseInsensitive);
+                    node.addNode(std::move(prop));
+                }
+                else {
+                    NodeImpl prop {
+                        reinterpret_cast<const char*>(name),
+                        reinterpret_cast<const char*>(value),
+                    };
+                    prop.type(Node::Type::ATTRIBUTE);
+                    prop.isCaseInsensitive(isCaseInsensitive);
+                    node.addNode(std::move(prop));
+                }
             }
         }
         xmlTextReaderMoveToElement(reader);
@@ -361,8 +383,12 @@ std::shared_ptr<NodeImpl> ParseXml(
 
             if (value) {
                 auto& lastNode = FindLastByDepth(*root, xmlTextReaderDepth(reader));
-                lastNode.text() += GenerateString(
-                    reinterpret_cast<const char*>(value), valueFilter);
+                if (valueFilter) {
+                    lastNode.text() += GenerateString(reinterpret_cast<const char*>(value), valueFilter);
+                }
+                else {
+                    lastNode.text() += reinterpret_cast<const char*>(value);
+                }
             }
         }
         else if (nodeType == XML_CDATA_SECTION_NODE) {
@@ -370,8 +396,14 @@ std::shared_ptr<NodeImpl> ParseXml(
 
             if (value) {
                 auto& lastNode = FindLastByDepth(*root, xmlTextReaderDepth(reader));
-                lastNode.text() += "<![CDATA[" + GenerateString(
-                    reinterpret_cast<const char*>(value), valueFilter) + "]]>";
+                lastNode.text() += "<![CDATA[";
+                if (valueFilter) {
+                    lastNode.text() += GenerateString(reinterpret_cast<const char*>(value), valueFilter);
+                }
+                else {
+                    lastNode.text() += reinterpret_cast<const char*>(value);
+                }
+                lastNode.text() += "]]>";
             }
         }
     }
