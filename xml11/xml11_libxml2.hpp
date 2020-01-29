@@ -126,16 +126,16 @@ void ErrorHandler(void *ctx, const xmlErrorPtr error)
 
     switch (error->level) {
     case XML_ERR_NONE:
-        result = "";
+        result += "";
         break;
     case XML_ERR_WARNING:
-        result = "Warning: ";
+        result += "Warning: ";
         break;
     case XML_ERR_ERROR:
-        result = "Error: ";
+        result += "Error: ";
         break;
     case XML_ERR_FATAL:
-        result = "Fatal error: ";
+        result += "Fatal error: ";
         break;
     }
 
