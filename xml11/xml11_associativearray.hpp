@@ -94,7 +94,21 @@ public:
         }
     }
 
-    void insert(const U& name, ValuePointerT value)
+    void insert(const U& name, ValuePointerT&& value)
+        noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
+    {
+        m_data.emplace_back(std::move(value));
+
+        if (m_isCaseInsensitive) {
+            m_data.back()->isCaseInsensitive(true);
+            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
+        }
+        else {
+            m_assoc_data[name].emplace_back(m_data.back());
+        }
+    }
+
+    void insert(const U& name, const ValuePointerT& value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
     {
         m_data.emplace_back(value);

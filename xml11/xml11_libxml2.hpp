@@ -3,46 +3,39 @@
 #include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
 
+#include <iostream>
+
 namespace xml11 {
 
 namespace {
 
-void free_xml2_reader_(void* ptr) noexcept
-{
-    if (ptr and *static_cast<void**>(ptr)) {
-        xmlFreeTextReader(*static_cast<xmlTextReaderPtr*>(ptr));
-        ptr = nullptr;
-    }
-}
+// void free_xml2_reader_(void* ptr) noexcept
+// {
+//     if (ptr and *static_cast<void**>(ptr)) {
+//         xmlFreeTextReader(*static_cast<xmlTextReaderPtr*>(ptr));
+//         ptr = nullptr;
+//     }
+// }
 
-void free_xml2_writer_(void* ptr) noexcept
-{
-    if (ptr and *static_cast<void**>(ptr)) {
-        xmlFreeTextWriter(*static_cast<xmlTextWriterPtr*>(ptr));
-        ptr = nullptr;
-    }
-}
+// void free_xml2_writer_(void* ptr) noexcept
+// {
+//     if (ptr and *static_cast<void**>(ptr)) {
+//         xmlFreeTextWriter(*static_cast<xmlTextWriterPtr*>(ptr));
+//         ptr = nullptr;
+//     }
+// }
 
-void free_xml2_buffer_(void* ptr) noexcept
-{
-    if (ptr and *static_cast<void**>(ptr)) {
-        xmlBufferFree(*static_cast<xmlBufferPtr*>(ptr));
-        ptr = nullptr;
-    }
-}
+// void free_xml2_buffer_(void* ptr) noexcept
+// {
+//     if (ptr and *static_cast<void**>(ptr)) {
+//         xmlBufferFree(*static_cast<xmlBufferPtr*>(ptr));
+//         ptr = nullptr;
+//     }
+// }
 
-void free_xml2_string_(void* ptr) noexcept
-{
-    if (ptr and *static_cast<void**>(ptr)) {
-        xmlFree(*static_cast<xmlChar**>(ptr));
-        ptr = nullptr;
-    }
-}
-
-#define cleanup_xml2_reader __attribute__((cleanup(free_xml2_reader_)))
-#define cleanup_xml2_writer __attribute__((cleanup(free_xml2_writer_)))
-#define cleanup_xml2_buffer __attribute__((cleanup(free_xml2_buffer_)))
-#define cleanup_xml2_string __attribute__((cleanup(free_xml2_string_)))
+// #define cleanup_xml2_reader __attribute__((cleanup(free_xml2_reader_)))
+// #define cleanup_xml2_writer __attribute__((cleanup(free_xml2_writer_)))
+// #define cleanup_xml2_buffer __attribute__((cleanup(free_xml2_buffer_)))
 
 int WriteNodeToXml(
     const std::shared_ptr<NodeImpl>& root,
@@ -185,7 +178,10 @@ std::string ToXml_(
     std::string error;
     xmlSetStructuredErrorFunc(&error, reinterpret_cast<xmlStructuredErrorFunc>(ErrorHandler));
 
-    cleanup_xml2_buffer xmlBufferPtr buffer = xmlBufferCreate();
+    static xmlBufferPtr buffer = xmlBufferCreateSize(BASE_BUFFER_SIZE);
+    xmlBufferEmpty(buffer);
+    xmlBufferSetAllocationScheme(buffer, XML_BUFFER_ALLOC_DOUBLEIT);
+
     if (not buffer) {
         if (not error.empty()) {
             throw Node::Xml11Exception(
@@ -197,7 +193,8 @@ std::string ToXml_(
         }
     }
 
-    cleanup_xml2_writer xmlTextWriterPtr writer = xmlNewTextWriterMemory(buffer, 0 /* compress */);
+    //cleanup_xml2_writer xmlTextWriterPtr writer = xmlNewTextWriterMemory(buffer, 0 /* compress */);
+    static xmlTextWriterPtr writer = xmlNewTextWriterMemory(buffer, 0 /* compress */);
     if (not writer) {
         if (not error.empty()) {
             throw Node::Xml11Exception(
@@ -308,14 +305,17 @@ void FetchAllAttributes(
 {
     if (xmlTextReaderHasAttributes(reader)) {
         while (xmlTextReaderMoveToNextAttribute(reader)) {
-            cleanup_xml2_string xmlChar* name = xmlTextReaderName(reader);
-            cleanup_xml2_string xmlChar* value = xmlTextReaderValue(reader);
+            const xmlChar* name = xmlTextReaderConstName(reader);
+            const xmlChar* value = xmlTextReaderConstValue(reader);
 
             if (name and value) {
                 if (valueFilter) {
                     NodeImpl prop {
-                        reinterpret_cast<const char*>(name),
-                        GenerateString(reinterpret_cast<const char*>(value), valueFilter)
+                        {reinterpret_cast<const char*>(name), static_cast<size_t>(xmlStrlen(name))},
+                        GenerateString(
+                            std::string(reinterpret_cast<const char*>(value),
+                                        static_cast<size_t>(xmlStrlen(value))),
+                            valueFilter)
                     };
                     prop.type(Node::Type::ATTRIBUTE);
                     prop.isCaseInsensitive(isCaseInsensitive);
@@ -323,8 +323,8 @@ void FetchAllAttributes(
                 }
                 else {
                     NodeImpl prop {
-                        reinterpret_cast<const char*>(name),
-                        reinterpret_cast<const char*>(value),
+                        {reinterpret_cast<const char*>(name), static_cast<size_t>(xmlStrlen(name))},
+                        {reinterpret_cast<const char*>(value), static_cast<size_t>(xmlStrlen(value))},
                     };
                     prop.type(Node::Type::ATTRIBUTE);
                     prop.isCaseInsensitive(isCaseInsensitive);
@@ -348,13 +348,14 @@ std::shared_ptr<NodeImpl> ParseXml(
         return nullptr;
     }
 
-    cleanup_xml2_string xmlChar* rootName = xmlTextReaderName(reader);
+    const xmlChar* rootName = xmlTextReaderConstName(reader);
 
     if (not rootName) {
         return nullptr;
     }
 
-    const auto root = std::make_shared<NodeImpl>(reinterpret_cast<const char*>(rootName));
+    const auto root = std::make_shared<NodeImpl>(
+        std::string{reinterpret_cast<const char*>(rootName), static_cast<size_t>(xmlStrlen(rootName))});
     root->isCaseInsensitive(isCaseInsensitive);
 
     FetchAllAttributes(*root, reader, isCaseInsensitive, valueFilter);
@@ -363,11 +364,11 @@ std::shared_ptr<NodeImpl> ParseXml(
         nodeType = xmlTextReaderNodeType(reader);
 
         if (nodeType == XML_ELEMENT_NODE) {
-            cleanup_xml2_string xmlChar* name = xmlTextReaderName(reader);
+            const xmlChar* name = xmlTextReaderConstName(reader);
 
             if (name) {
                 NodeImpl node {
-                    reinterpret_cast<const char*>(name)
+                    {reinterpret_cast<const char*>(name), static_cast<size_t>(xmlStrlen(name))},
                 };
                 node.type(Node::Type::ELEMENT);
                 node.isCaseInsensitive(isCaseInsensitive);
@@ -378,30 +379,36 @@ std::shared_ptr<NodeImpl> ParseXml(
                 lastNode.addNode(std::move(node));
             }
         }
-        else if (nodeType == XML_TEXT_NODE) {
-            cleanup_xml2_string xmlChar* value = xmlTextReaderValue(reader);
+        else if (nodeType == XML_TEXT_NODE and xmlTextReaderHasValue(reader)) {
+            const xmlChar* value = xmlTextReaderConstValue(reader);
 
             if (value) {
                 auto& lastNode = FindLastByDepth(*root, xmlTextReaderDepth(reader));
                 if (valueFilter) {
-                    lastNode.text() += GenerateString(reinterpret_cast<const char*>(value), valueFilter);
+                    lastNode.text().append(GenerateString(
+                                               std::string(reinterpret_cast<const char*>(value),
+                                                           static_cast<size_t>(xmlStrlen(value))),
+                                               valueFilter));
                 }
                 else {
-                    lastNode.text() += reinterpret_cast<const char*>(value);
+                    lastNode.text().append(reinterpret_cast<const char*>(value), xmlStrlen(value));
                 }
             }
         }
-        else if (nodeType == XML_CDATA_SECTION_NODE) {
-            cleanup_xml2_string xmlChar* value = xmlTextReaderValue(reader);
+        else if (nodeType == XML_CDATA_SECTION_NODE and xmlTextReaderHasValue(reader)) {
+            const xmlChar* value = xmlTextReaderValue(reader);
 
             if (value) {
                 auto& lastNode = FindLastByDepth(*root, xmlTextReaderDepth(reader));
                 lastNode.text() += "<![CDATA[";
                 if (valueFilter) {
-                    lastNode.text() += GenerateString(reinterpret_cast<const char*>(value), valueFilter);
+                    lastNode.text().append(GenerateString(
+                        std::string(reinterpret_cast<const char*>(value),
+                                    static_cast<size_t>(xmlStrlen(value))),
+                        valueFilter));
                 }
                 else {
-                    lastNode.text() += reinterpret_cast<const char*>(value);
+                    lastNode.text().append(reinterpret_cast<const char*>(value), xmlStrlen(value));
                 }
                 lastNode.text() += "]]>";
             }
@@ -423,8 +430,16 @@ std::shared_ptr<NodeImpl> ParseXml_(
     std::string error;
     xmlSetStructuredErrorFunc(&error, reinterpret_cast<xmlStructuredErrorFunc>(ErrorHandler));
 
-    cleanup_xml2_reader xmlTextReaderPtr reader =
-        xmlReaderForMemory(text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS);
+    // cleanup_xml2_reader xmlTextReaderPtr reader =
+    //     xmlReaderForMemory(text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS);
+
+    static xmlTextReaderPtr reader = nullptr;
+    if (reader == nullptr) {
+        reader = xmlReaderForMemory(text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS);
+    }
+    else { // reuse xml text reader
+        xmlReaderNewMemory(reader, text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS);
+    }
 
     if (not reader) {
         if (not error.empty()) {
