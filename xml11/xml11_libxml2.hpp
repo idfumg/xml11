@@ -264,7 +264,7 @@ std::string ToXml_(
 
     const auto buffer = GetXmlBuffer(useCaching);
 
-    if (not buffer) {
+    if (not buffer or not *buffer) {
         if (not error.empty()) {
             throw Node::Xml11Exception(
                 std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
@@ -279,7 +279,7 @@ std::string ToXml_(
 
     const auto writer = GetXmlWriter(useCaching, buffer);
 
-    if (not writer) {
+    if (not writer or not *writer) {
         if (not error.empty()) {
             throw Node::Xml11Exception(
                 std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
@@ -494,7 +494,7 @@ std::shared_ptr<NodeImpl> ParseXml_(
 
     const auto reader = GetXmlReader(useCaching, text);
 
-    if (not reader) {
+    if (not reader or not *reader) {
         if (not error.empty()) {
             throw Node::Xml11Exception(
                 std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": " + error);
