@@ -67,8 +67,16 @@ public:
     };
 
 public:
-    static Node fromString(const std::string& text, const bool isCaseInsensitive=true, ValueFilter valueFilter_ = nullptr);
-    std::string toString(const bool indent = true, ValueFilter valueFilter_ = nullptr) const;
+    static Node fromString(
+        const std::string& text,
+        const bool isCaseInsensitive=true,
+        ValueFilter valueFilter_ = nullptr,
+        const bool useCaching = true);
+
+    std::string toString(
+        const bool indent = true,
+        ValueFilter valueFilter_ = nullptr,
+        const bool useCaching = true) const;
 
 public:
     static void AddNode(Node&) noexcept

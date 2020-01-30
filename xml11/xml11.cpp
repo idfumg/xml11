@@ -678,22 +678,28 @@ const NodeList Node::nodes() const
 }
 
 Node Node::fromString(
-    const std::string& text, const bool isCaseInsensitive, ValueFilter valueFilter_)
+    const std::string& text,
+    const bool isCaseInsensitive,
+    ValueFilter valueFilter_,
+    const bool useCaching)
 {
-    Node node {ParseXml(text, isCaseInsensitive, valueFilter_)};
+    Node node {ParseXml(text, isCaseInsensitive, valueFilter_, useCaching)};
     if (node) {
         node.valueFilter(valueFilter_);
     }
     return node;
 }
 
-std::string Node::toString(const bool indent, ValueFilter valueFilter_) const
+std::string Node::toString(
+    const bool indent,
+    ValueFilter valueFilter_,
+    const bool useCaching) const
 {
     if (not pimpl) {
         throw Node::Xml11Exception("Can't toString not valid Node!");
     }
 
-    return ToXml(pimpl, indent, valueFilter_);
+    return ToXml(pimpl, indent, valueFilter_, useCaching);
 }
 
 void Node::isCaseInsensitive(const bool isCaseInsensitive)
