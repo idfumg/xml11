@@ -345,7 +345,7 @@ std::string ToXml(
     ValueFilter valueFilter,
     const bool useCaching)
 {
-    InitLibrary();
+    const auto library = InitLibrary();
     return ToXml_(root, indent, valueFilter, useCaching);
 }
 
@@ -527,7 +527,7 @@ std::shared_ptr<NodeImpl> ParseXml(
     ValueFilter valueFilter,
     const bool useCaching)
 {
-    InitLibrary();
+    const auto library = InitLibrary();
     return ParseXml_(text, isCaseInsensitive, valueFilter, useCaching);
 }
 
