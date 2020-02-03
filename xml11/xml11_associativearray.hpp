@@ -147,7 +147,7 @@ public:
     }
 
     template <class T1>
-    const ValuesListT findNodes(T1&& name) const
+    const ValuesListT findNodes(T1&& name) const noexcept
     {
         return const_cast<ThisType>(this)->findNodes(std::forward<T1>(name));
     }
@@ -170,13 +170,13 @@ public:
     }
 
     template <class T1>
-    const ValuePointerT findNode(T1&& name) const
+    const ValuePointerT findNode(T1&& name) const noexcept
     {
         return const_cast<ThisType>(this)->findNode(std::forward<T1>(name));
     }
 
     template <class T1>
-    ValuePointerT findNode(T1&& name)
+    ValuePointerT findNode(T1&& name) noexcept
     {
         const auto nodes = findNodes(std::forward<T1>(name));
         if (nodes.empty())
@@ -210,7 +210,7 @@ public:
     }
 
     template <class T1>
-    ValuesListT operator[] (T1&& name)
+    ValuesListT operator[] (T1&& name) noexcept
     {
         return findNodes(std::forward<T1>(name));
     }
@@ -279,12 +279,12 @@ public:
         return m_data.front();
     }
 
-    ValuesListT& nodes()
+    ValuesListT& nodes() noexcept
     {
         return m_data;
     }
 
-    const ValuesListT& nodes() const
+    const ValuesListT& nodes() const noexcept
     {
         return m_data;
     }
@@ -303,12 +303,12 @@ public:
         return not (*this == right);
     }
 
-    void isCaseInsensitive(const bool isCaseInsensitive)
+    void isCaseInsensitive(const bool isCaseInsensitive) noexcept
     {
         m_isCaseInsensitive = isCaseInsensitive;
     }
 
-    bool isCaseInsensitive() const
+    bool isCaseInsensitive() const noexcept
     {
         return m_isCaseInsensitive;
     }

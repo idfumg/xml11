@@ -415,49 +415,49 @@ public:
     bool operator != (const Node& node) const noexcept;
     operator bool() const noexcept;
 
-    NodeList operator [] (const std::string& name);
-    NodeList operator [] (const char* name);
-    NodeList operator [] (const Type& type);
-    const NodeList operator [] (const std::string& name) const;
-    const NodeList operator [] (const char* name) const;
-    const NodeList operator [] (const Type& type) const;
+    NodeList operator [] (const std::string& name) noexcept;
+    NodeList operator [] (const char* name) noexcept;
+    NodeList operator [] (const Type& type) noexcept;
+    const NodeList operator [] (const std::string& name) const noexcept;
+    const NodeList operator [] (const char* name) const noexcept;
+    const NodeList operator [] (const Type& type) const noexcept;
 
-    NodeList findNodes(const std::string& name);
-    NodeList findNodes(const Type& type);
-    const NodeList findNodes(const std::string& name) const;
-    const NodeList findNodes(const Type& type) const;
+    NodeList findNodes(const std::string& name) noexcept;
+    NodeList findNodes(const Type& type) noexcept;
+    const NodeList findNodes(const std::string& name) const noexcept;
+    const NodeList findNodes(const Type& type) const noexcept;
 
-    NodeList findNodesXPath(const std::string& name);
-    const NodeList findNodesXPath(const std::string& name) const;
+    NodeList findNodesXPath(const std::string& name) noexcept;
+    const NodeList findNodesXPath(const std::string& name) const noexcept;
 
-    Node operator () (const std::string& name);
-    Node operator () (const Type& type);
-    const Node operator () (const std::string& name) const;
-    const Node operator () (const Type& type) const;
+    Node operator () (const std::string& name) noexcept;
+    Node operator () (const Type& type) noexcept;
+    const Node operator () (const std::string& name) const noexcept;
+    const Node operator () (const Type& type) const noexcept;
 
-    Node findNode(const std::string& name);
-    Node findNode(const Type& type);
-    const Node findNode(const std::string& name) const;
-    const Node findNode(const Type& type) const;
+    Node findNode(const std::string& name) noexcept;
+    Node findNode(const Type& type) noexcept;
+    const Node findNode(const std::string& name) const noexcept;
+    const Node findNode(const Type& type) const noexcept;
 
-    Node findNodeXPath(const std::string& name);
-    const Node findNodeXPath(const std::string& name) const;
+    Node findNodeXPath(const std::string& name) noexcept;
+    const Node findNodeXPath(const std::string& name) const noexcept;
 
-    Node& operator -= (const Node& root);
-    Node& operator -= (Node&& root);
-    Node& operator -= (const NodeList& nodes);
-    Node& operator -= (NodeList&& nodes);
+    Node& operator -= (const Node& root) noexcept;
+    Node& operator -= (Node&& root) noexcept;
+    Node& operator -= (const NodeList& nodes) noexcept;
+    Node& operator -= (NodeList&& nodes) noexcept;
 
-    Node& operator += (const Node& root);
-    Node& operator += (Node&& root);
-    Node& operator += (const NodeList& nodes);
-    Node& operator += (NodeList&& nodes);
+    Node& operator += (const Node& root) noexcept;
+    Node& operator += (Node&& root) noexcept;
+    Node& operator += (const NodeList& nodes) noexcept;
+    Node& operator += (NodeList&& nodes) noexcept;
 
-    Node& addNode(const Node& node);
-    Node& addNode(Node&& node);
-    Node& addNode(std::string name);
-    Node& addNode(std::string name, std::string value);
-    Node& addNode(std::string name, std::string value, const Node::Type type);
+    Node& addNode(const Node& node) noexcept;
+    Node& addNode(Node&& node) noexcept;
+    Node& addNode(std::string name) noexcept;
+    Node& addNode(std::string name, std::string value) noexcept;
+    Node& addNode(std::string name, std::string value, const Node::Type type) noexcept;
 
     template<
         class T,
@@ -466,43 +466,43 @@ public:
             T
         >::type
     >
-    Node& addNode(std::string name, T&& value)
+    Node& addNode(std::string name, T&& value) noexcept
     {
         return addNode(std::move(name), std::to_string(std::forward<T>(value)));
     }
 
-    Node& addAttribute(std::string name);
-    Node& addAttribute(std::string name, std::string value);
+    Node& addAttribute(std::string name) noexcept;
+    Node& addAttribute(std::string name, std::string value) noexcept;
 
-    Node& addNodes(const NodeList& node);
-    Node& addNodes(NodeList&& node);
+    Node& addNodes(const NodeList& node) noexcept;
+    Node& addNodes(NodeList&& node) noexcept;
 
-    Node& eraseNode(const Node& node);
-    Node& eraseNode(Node&& node);
-    Node& eraseNodes(const NodeList& node);
-    Node& eraseNodes(NodeList&& nodes);
+    Node& eraseNode(const Node& node) noexcept;
+    Node& eraseNode(Node&& node) noexcept;
+    Node& eraseNodes(const NodeList& node) noexcept;
+    Node& eraseNodes(NodeList&& nodes) noexcept;
 
-    NodeList nodes();
-    const NodeList nodes() const;
+    NodeList nodes() noexcept;
+    const NodeList nodes() const noexcept;
 
-    Node::Type type() const;
-    void type(const Node::Type type);
+    Node::Type type() const noexcept;
+    void type(const Node::Type type) noexcept;
 
-    std::string& name() const;
-    void name(std::string name);
+    std::string& name() const noexcept;
+    void name(std::string name) noexcept;
 
-    std::string& text() const;
-    void text(std::string value);
+    std::string& text() const noexcept;
+    void text(std::string value) noexcept;
 
-    void value(std::string text);
-    void value(const Node& node);
-    void value(Node&& node);
+    void value(std::string text) noexcept;
+    void value(const Node& node) noexcept;
+    void value(Node&& node) noexcept;
 
-    void isCaseInsensitive(const bool isCaseInsensitive);
-    bool isCaseInsensitive() const;
+    void isCaseInsensitive(const bool isCaseInsensitive) noexcept;
+    bool isCaseInsensitive() const noexcept;
 
-    void valueFilter(ValueFilter valueFilter);
-    ValueFilter valueFilter() const;
+    void valueFilter(ValueFilter valueFilter) noexcept;
+    ValueFilter valueFilter() const noexcept;
 
     Node clone(ValueFilter valueFilter_ = nullptr) const;
 

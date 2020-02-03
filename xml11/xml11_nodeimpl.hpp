@@ -46,7 +46,7 @@ public:
      ********************************************************************************/
 
     template <class T1, class T2>
-    void addNode(T1&& name, T2&& value)
+    void addNode(T1&& name, T2&& value) noexcept
     {
         if (name.empty()) {
             m_text += std::forward<T2>(value);
@@ -56,7 +56,7 @@ public:
         }
     }
 
-    void addNode(const std::shared_ptr<NodeImpl>& node)
+    void addNode(const std::shared_ptr<NodeImpl>& node) noexcept
     {
         if (node->name().empty()) {
             m_text += node->text();
@@ -66,7 +66,7 @@ public:
         }
     }
 
-    void addNode(std::shared_ptr<NodeImpl>&& node)
+    void addNode(std::shared_ptr<NodeImpl>&& node) noexcept
     {
         if (node->name().empty()) {
             m_text += std::move(node->text());
@@ -76,7 +76,7 @@ public:
         }
     }
 
-    void addNode(const NodeImpl& node)
+    void addNode(const NodeImpl& node) noexcept
     {
         if (node.name().empty()) {
             m_text += node.text();
@@ -86,7 +86,7 @@ public:
         }
     }
 
-    void addNode(NodeImpl&& node)
+    void addNode(NodeImpl&& node) noexcept
     {
         if (node.name().empty()) {
             m_text += std::move(node.text());
@@ -97,31 +97,31 @@ public:
     }
 
     template <class T1>
-    const std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name) const
+    const std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name) const noexcept
     {
         return m_nodes.findNodes(std::forward<T1>(name));
     }
 
     template <class T1>
-    std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name)
+    std::vector<std::shared_ptr<NodeImpl> > findNodes(T1&& name) noexcept
     {
         return m_nodes.findNodes(std::forward<T1>(name));
     }
 
     template <class T1>
-    const std::shared_ptr<NodeImpl> findNode(T1&& name) const
+    const std::shared_ptr<NodeImpl> findNode(T1&& name) const noexcept
     {
         return m_nodes.findNode(std::forward<T1>(name));
     }
 
     template <class T1>
-    std::shared_ptr<NodeImpl> findNode(T1&& name)
+    std::shared_ptr<NodeImpl> findNode(T1&& name) noexcept
     {
         return m_nodes.findNode(std::forward<T1>(name));
     }
 
     template <class T1>
-    void eraseNode(T1&& node)
+    void eraseNode(T1&& node) noexcept
     {
         m_nodes.erase(std::forward<T1>(node));
     }
@@ -223,22 +223,22 @@ public:
         return const_cast<NodeImpl*>(this)->nodes();
     }
 
-    void isCaseInsensitive(const bool isCaseInsensitive)
+    void isCaseInsensitive(const bool isCaseInsensitive) noexcept
     {
         return m_nodes.isCaseInsensitive(isCaseInsensitive);
     }
 
-    bool isCaseInsensitive() const
+    bool isCaseInsensitive() const noexcept
     {
         return m_nodes.isCaseInsensitive();
     }
 
-    void valueFilter(ValueFilter valueFilter_)
+    void valueFilter(ValueFilter valueFilter_) noexcept
     {
         m_valueFilter = valueFilter_;
     }
 
-    ValueFilter valueFilter() const
+    ValueFilter valueFilter() const noexcept
     {
         return m_valueFilter;
     }

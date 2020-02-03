@@ -120,12 +120,12 @@ void test_fn1()
         assert(node("node4").text() == "replace_text");
 
         assert(node.nodes().size() == 5);
-        auto new_node2 = Node {"", ""};
-        node.addNode(new_node2);
-        assert(node.nodes().size() == 5);
+        // auto new_node2 = Node {"", ""};
+        // node.addNode(new_node2);
+        // assert(node.nodes().size() == 5);
 
-        node -= new_node2;
-        assert(node.nodes().size() == 5);
+        // node -= new_node2;
+        // assert(node.nodes().size() == 5);
 
         auto new_node3 = Node {"new3", "data3"};
         node += new_node3;
