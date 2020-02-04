@@ -1,10 +1,3 @@
-#include "xml11_associativearray.hpp"
-#include "xml11.hpp"
-
-#include <algorithm>
-
-namespace xml11 {
-
 namespace {
 template <class T, class Fn>
 std::string GenerateString(T&& param, Fn fn = nullptr)
@@ -250,5 +243,3 @@ private:
     Node::Type m_type {Node::Type::ELEMENT};
     mutable ValueFilter m_valueFilter{nullptr};
 };
-
-} /* namespace xml11 */

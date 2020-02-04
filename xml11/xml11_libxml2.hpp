@@ -1,9 +1,5 @@
-#include "xml11_nodeimpl.hpp"
-
 #include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
-
-#include <iostream>
 
 namespace xml11 {
 

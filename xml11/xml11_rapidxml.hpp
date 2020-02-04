@@ -1,8 +1,6 @@
-#include "xml11_nodeimpl.hpp"
-
 #define RAPIDXML_NO_STREAMS
 
-#include "../external/rapidxml/rapidxml.hpp"
+#include <rapidxml.hpp>
 
 namespace rapidxml { namespace internal {
 template<class OutIt, class Ch>
@@ -33,7 +31,7 @@ template<class OutIt, class Ch>
 inline OutIt print_pi_node(OutIt out, const rapidxml::xml_node<Ch> *node, int flags, int indent);
 }}
 
-#include "../external/rapidxml/rapidxml_print.hpp"
+#include <rapidxml_print.hpp>
 
 namespace xml11 {
 

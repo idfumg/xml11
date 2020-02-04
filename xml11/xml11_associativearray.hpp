@@ -1,9 +1,3 @@
-#include <memory>
-#include <unordered_map>
-#include <vector>
-#include <algorithm>
-#include <ctype.h>
-
 namespace {
 template<class T>
 inline auto to_lower(T s) -> decltype(T().begin(), T())

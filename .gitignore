@@ -2,3 +2,4 @@ test
 test_declarative
 *.o
 a.out
+*.*~
