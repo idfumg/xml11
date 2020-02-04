@@ -15,8 +15,15 @@ namespace xml11 {
 
 } /* namespace xml11 */
 
+#ifndef USE_XML11_RAPIDXML
+
 #include "xml11_libxml2.hpp"
-// #include "xml11_rapidxml.hpp"
+
+#else
+
+#include "xml11_rapidxml.hpp"
+
+#endif
 
 namespace xml11 {
 
