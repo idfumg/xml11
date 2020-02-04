@@ -6,8 +6,6 @@
 #include <vector>
 #include <functional>
 #include <unordered_map>
-#include <algorithm>
-#include <ctype.h>
 
 namespace xml11 {
 
