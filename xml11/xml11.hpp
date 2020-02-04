@@ -11,7 +11,7 @@
 
 namespace xml11 {
 
-#include <xml11_node.hpp>
+#include "xml11_node.hpp"
 #include "xml11_associativearray.hpp"
 #include "xml11_nodeimpl.hpp"
 
