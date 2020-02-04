@@ -29,7 +29,7 @@ void test_fn1()
     {
         const auto text =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>";
+            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n";
 
         const auto node =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -368,7 +368,7 @@ void test_fn1()
         assert(node);
         assert(node.name() == "StorY");
         assert(node("info"));
-        assert(node("info")("author").toString(false) == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<author>JOHN FLECK</author>");
+        assert(node("info")("author").toString(false) == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<author>JOHN FLECK</author>\n");
     }
 
     {

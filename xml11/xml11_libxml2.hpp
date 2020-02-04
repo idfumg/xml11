@@ -17,48 +17,49 @@ using BufferTypePtr = std::shared_ptr<BufferType>;
 using WriterTypePtr = std::shared_ptr<WriterType>;
 using ReaderTypePtr = std::shared_ptr<ReaderType>;
 
-struct InitLibrary {
-    InitLibrary() noexcept {
-        xmlInitParser();
-    }
-    ~InitLibrary() noexcept {
-        if (xmlGetLastError()) {
-            xmlResetError(xmlGetLastError());
-            xmlResetLastError();
-        }
+void InitializeParser() noexcept
+{
+    xmlInitParser();
+}
 
-        xmlSetStructuredErrorFunc(NULL, NULL);
-        xmlSetGenericErrorFunc(NULL, NULL);
-        initGenericErrorDefaultFunc(NULL);
-        xmlCleanupParser();
+void CleanupParser() noexcept
+{
+    if (xmlGetLastError()) {
+        xmlResetError(xmlGetLastError());
+        xmlResetLastError();
     }
-};
 
-void FreeXmlBuffer(const BufferType* buffer) noexcept
+    xmlSetStructuredErrorFunc(NULL, NULL);
+    xmlSetGenericErrorFunc(NULL, NULL);
+    initGenericErrorDefaultFunc(NULL);
+    xmlCleanupParser();
+}
+
+template<class T, class Fn>
+void ReleaseMemory(const T* buffer, Fn fn) noexcept
 {
     if (buffer) {
-        xmlBufferFree(*buffer);
+        if (*buffer) {
+            fn(*buffer);
+        }
         delete buffer;
         buffer = nullptr;
     }
 }
 
+void FreeXmlBuffer(const BufferType* buffer) noexcept
+{
+    ReleaseMemory(buffer, xmlBufferFree);
+}
+
 void FreeXmlWriter(const WriterType* writer) noexcept
 {
-    if (writer) {
-        xmlFreeTextWriter(*writer);
-        delete writer;
-        writer = nullptr;
-    }
+    ReleaseMemory(writer, xmlFreeTextWriter);
 }
 
 void FreeXmlReader(const ReaderType* reader) noexcept
 {
-    if (reader) {
-        xmlFreeTextReader(*reader);
-        delete reader;
-        reader = nullptr;
-    }
+    ReleaseMemory(reader, xmlFreeTextReader);
 }
 
 BufferType* CreateBuffer() noexcept
@@ -125,12 +126,7 @@ int WriteNodeToXml(
         return -1;
     }
 
-    if (indent) {
-        xmlTextWriterSetIndent(writer, 1 /*indent*/);
-    }
-    else {
-        xmlTextWriterSetIndent(writer, 0 /*indent*/);
-    }
+    xmlTextWriterSetIndent(writer, indent ? 1 : 0 /*indent*/);
 
     for (const auto& node : root->nodes()) {
         if (node->type() == Node::Type::ATTRIBUTE) {
@@ -184,12 +180,7 @@ int WriteNodeToXml(
         return -1;
     }
 
-    if (indent) {
-        xmlTextWriterSetIndent(writer, 1 /*indent*/);
-    }
-    else {
-        xmlTextWriterSetIndent(writer, 0 /*indent*/);
-    }
+    xmlTextWriterSetIndent(writer, indent ? 1 : 0 /*indent*/);
 
     return 0;
 }
@@ -302,12 +293,7 @@ std::string ToXml_(
         }
     }
 
-    if (indent) {
-        xmlTextWriterSetIndentString(*writer, reinterpret_cast<const xmlChar*>("  "));
-    }
-    else {
-        xmlTextWriterSetIndentString(*writer, reinterpret_cast<const xmlChar*>(""));
-    }
+    xmlTextWriterSetIndentString(*writer, reinterpret_cast<const xmlChar*>(indent ? "  " : ""));
 
     rc = WriteNodeToXml(root, *writer, indent, valueFilter);
     if (rc < 0) {
@@ -333,10 +319,8 @@ std::string ToXml_(
         }
     }
 
-    std::string result(reinterpret_cast<const std::string::value_type*>(xmlBufferContent(*buffer)),
+    return std::string(reinterpret_cast<const std::string::value_type*>(xmlBufferContent(*buffer)),
                        xmlBufferLength(*buffer));
-    while (::isspace(result.back())) result.pop_back();
-    return result; // copy elision
 }
 
 std::string ToXml(
@@ -345,8 +329,15 @@ std::string ToXml(
     ValueFilter valueFilter,
     const bool useCaching)
 {
-    const auto library = InitLibrary();
-    return ToXml_(root, indent, valueFilter, useCaching);
+    try {
+        InitializeParser();
+        const auto result = ToXml_(root, indent, valueFilter, useCaching);
+        CleanupParser();
+        return result;
+    } catch (...) {
+        CleanupParser();
+        throw;
+    }
 }
 
 NodeImpl& FindLastByDepth(NodeImpl& root, size_t depth)
@@ -527,8 +518,15 @@ std::shared_ptr<NodeImpl> ParseXml(
     ValueFilter valueFilter,
     const bool useCaching)
 {
-    const auto library = InitLibrary();
-    return ParseXml_(text, isCaseInsensitive, valueFilter, useCaching);
+    try {
+        InitializeParser();
+        const auto result = ParseXml_(text, isCaseInsensitive, valueFilter, useCaching);
+        CleanupParser();
+        return result;
+    } catch (...) {
+        CleanupParser();
+        throw;
+    }
 }
 
 } /* anonymous namespace */
