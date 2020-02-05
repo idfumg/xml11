@@ -1,3 +1,33 @@
+#pragma once
+
+enum class NodeType : char {
+    ELEMENT = 0,
+    ATTRIBUTE = 1,
+    OPTIONAL = 2,
+};
+
+using ValueFilter = std::function<std::string (const std::string& value)>;
+
+namespace {
+
+template <class T, class Fn>
+static inline std::string GenerateString(T&& param, Fn fn = nullptr)
+{
+    if (fn) {
+        return fn(std::forward<T>(param));
+    }
+    return std::forward<T>(param);
+}
+
+} // anonymous namespace
+
+class Node;
+using NodeList = std::vector<class Node>;
+
+#include "xml11_nodeimpl.hpp"
+
+namespace {
+
 namespace detail {
 
 using mp_true = std::integral_constant<bool, true>;
@@ -40,41 +70,71 @@ template<class T> using mp_like_pointer = detail::mp_like_pointer_impl<T>;
 template<class T> using mp_can_be_string = detail::mp_can_be_string_impl<T>;
 template<class T> using mp_can_be_string_from_opt = detail::mp_can_be_string_from_opt_impl<T>;
 
-using NodeList = std::vector<class Node>;
-using ValueFilter = std::function<std::string (const std::string& value)>;
+static inline std::vector<std::string> split(const std::string &text, char sep) noexcept
+{
+    std::vector<std::string> tokens;
+    std::size_t start = 0, end = 0;
+    while ((end = text.find(sep, start)) != std::string::npos) {
+        tokens.push_back(text.substr(start, end - start));
+        start = end + 1;
+    }
+    tokens.emplace_back(text.substr(start));
+    return tokens;
+}
+
+} // anonymous namespace
+
+std::shared_ptr<class NodeImpl> ParseXmlFromText(
+    const std::string& text,
+    const bool isCaseInsensitive,
+    const ValueFilter& valueFilter,
+    const bool useCaching);
+
+std::string ConvertXmlToText(
+    const std::shared_ptr<class NodeImpl>& root,
+    const bool indent,
+    const ValueFilter& valueFilter,
+    const bool useCaching);
 
 class Node {
 public:
-    enum class Type : char {
-        ELEMENT = 0,
-        ATTRIBUTE = 1,
-        OPTIONAL = 2,
-    };
-
     class Xml11Exception final : public std::runtime_error {
     public:
         using std::runtime_error::runtime_error;
     };
 
 public:
-    static Node fromString(
+    static inline Node fromString(
         const std::string& text,
-        const bool isCaseInsensitive=true,
-        ValueFilter valueFilter_ = nullptr,
-        const bool useCaching = false);
+        const bool isCaseInsensitive = true,
+        const ValueFilter valueFilter_ = nullptr,
+        const bool useCaching = false)
+    {
+        Node node {ParseXmlFromText(text, isCaseInsensitive, valueFilter_, useCaching)};
+        if (node) {
+            node.valueFilter(valueFilter_);
+        }
+        return node;
+    }
 
-    std::string toString(
+    inline std::string toString(
         const bool indent = true,
-        ValueFilter valueFilter_ = nullptr,
-        const bool useCaching = false) const;
+        const ValueFilter valueFilter = nullptr,
+        const bool useCaching = false) const
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [toString]");
+        }
+        return ConvertXmlToText(pimpl, indent, valueFilter, useCaching);
+    }
 
 public:
-    static void AddNode(Node&) noexcept
+    static inline void AddNode(Node&) noexcept
     {
 
     }
 
-    static void AddNode_(Node&) noexcept
+    static inline void AddNode_(Node&) noexcept
     {
 
     }
@@ -84,10 +144,10 @@ public:
         class = typename std::enable_if<
             mp_like_pointer<Head>::value,
             void
-        >::type,
+            >::type,
         class = void
-    >
-    static void AddNode_(Node& node, Head&& head)
+        >
+    static inline void AddNode_(Node& node, Head&& head)
     {
         if (head) {
             AddNode_(node, *std::forward<Head>(head));
@@ -99,11 +159,11 @@ public:
         class = typename std::enable_if<
             mp_same<T, std::string>::value,
             void
-        >::type,
+            >::type,
         class = void,
         class = void
-    >
-    static void AddNode_(Node& node, T&& value)
+        >
+    static inline void AddNode_(Node& node, T&& value)
     {
         node.text(std::forward<T>(value));
     }
@@ -117,20 +177,20 @@ public:
             !mp_same<T, char*>::value &&
             mp_can_be_string<T>::value,
             void
-        >::type
-    >
-    static void AddNode_(Node& node, T&& value)
+            >::type
+        >
+    static inline void AddNode_(Node& node, T&& value)
     {
         node.text(std::to_string(std::forward<T>(value)));
     }
 
     template<std::size_t N>
-    static void AddNode_(Node& node, const char(&value)[N])
+    static inline void AddNode_(Node& node, const char(&value)[N])
     {
         node.text(value);
     }
 
-    static void AddNode_(Node& node, const Node::Type type)
+    static inline void AddNode_(Node& node, const NodeType type)
     {
         node.type(type);
     }
@@ -141,9 +201,9 @@ public:
         class = typename std::enable_if<
             mp_same<T, Node>::value,
             void
-        >::type
-    >
-    static void AddNode_(Node& node, T&& head)
+            >::type
+        >
+    static inline void AddNode_(Node& node, T&& head)
     {
         node.addNode(std::forward<T>(head));
     }
@@ -154,10 +214,10 @@ public:
         class = typename std::enable_if<
             mp_same<T, NodeList>::value,
             void
-        >::type,
+            >::type,
         class = void
-    >
-    static void AddNode_(Node& node, T&& head)
+        >
+    static inline void AddNode_(Node& node, T&& head)
     {
         node.addNodes(std::forward<T>(head));
     }
@@ -168,9 +228,9 @@ public:
         class = typename std::enable_if<
             mp_like_pointer<T>::value,
             void
-        >::type
-    >
-    static void AddNode_(Node& node, std::initializer_list<T>&& list)
+            >::type
+        >
+    static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
     {
         for (auto&& item : list) {
             AddNode_(node, std::move<T>(item));
@@ -182,9 +242,9 @@ public:
         class = typename std::enable_if<
             mp_same<T, Node>::value,
             void
-        >::type
-    >
-    static void AddNode_(Node& node, std::initializer_list<T>&& list)
+            >::type
+        >
+    static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
     {
         AddNode_(node, NodeList(std::move<T>(list)));
     }
@@ -194,10 +254,10 @@ public:
         class = typename std::enable_if<
             mp_same<T, NodeList>::value,
             void
-        >::type,
+            >::type,
         class = void
-    >
-    static void AddNode_(Node& node, std::initializer_list<T>&& list)
+        >
+    static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
     {
         for (const auto& item : list) {
             AddNode_(node, std::move<T>(item));
@@ -205,34 +265,122 @@ public:
     }
 
     template<class Head, class... Tail>
-    static void AddNode_(Node& node, Head&& head, Tail&& ...tail)
+    static inline void AddNode_(Node& node, Head&& head, Tail&& ...tail)
     {
         AddNode_(node, std::forward<Head>(head));
         AddNode_(node, std::forward<Tail>(tail)...);
     }
 
     template<class Head, class... Tail>
-    static void AddNode(Node& node, Head&& head, Tail&& ...tail)
+    static inline void AddNode(Node& node, Head&& head, Tail&& ...tail)
     {
         AddNode_(node, std::forward<Head>(head));
         AddNode_(node, std::forward<Tail>(tail)...);
     }
 
 public:
-    ~Node() noexcept;
-    Node() noexcept;
-    Node(const std::shared_ptr<class NodeImpl>& node) noexcept;
-    Node(const Node& node) noexcept;
-    Node(Node&& node) noexcept;
-    Node(std::string name);
-    Node(std::string name, const Node& node);
-    Node(std::string name, Node&& node);
-    Node(std::string name, std::string value);
-    Node(std::string name, std::string value, const Type type);
-    Node(std::string name, const NodeList& nodes);
-    Node(std::string name, NodeList&& nodes);
+    inline ~Node() noexcept
+    {
 
-    Node(std::string name, std::initializer_list<Node>&& list)
+    }
+
+    inline Node() noexcept
+        : pimpl {nullptr}
+    {
+
+    }
+
+    inline Node(const std::shared_ptr<class NodeImpl>& node) noexcept
+        : pimpl {node}
+    {
+
+    }
+
+    inline Node(const Node& node) noexcept
+        : pimpl {node.pimpl}
+    {
+
+    }
+
+    inline Node(Node&& node) noexcept
+        : pimpl {std::move(node.pimpl)}
+    {
+        node.pimpl = nullptr;
+    }
+
+    inline Node(std::string name)
+    {
+        if (not name.empty()) {
+            pimpl = std::make_shared<NodeImpl>(std::move(name));
+        }
+        if (not pimpl) {
+            throw Xml11Exception("Can't create a Node instance!");
+        }
+    }
+
+    inline Node(std::string name, const Node& node)
+        : Node {std::move(name)}
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Can't create a Node instance!");
+        }
+        addNode(node);
+    }
+
+    inline Node(std::string name, Node&& node)
+        : Node {std::move(name)}
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Can't create a Node instance!");
+        }
+        addNode(std::move(node));
+    }
+
+    inline Node(std::string name, std::string value)
+    {
+        if (not (name.empty() and value.empty())) {
+            pimpl = std::make_shared<NodeImpl>(std::move(name), std::move(value));
+        }
+        if (not pimpl) {
+            throw Xml11Exception("Can't create a Node instance!");
+        }
+    }
+
+    inline Node(std::string name, std::string value, const NodeType type)
+    {
+        if (type == NodeType::OPTIONAL and value.empty()) {
+            return;
+        }
+
+        if (not name.empty()) {
+            pimpl = std::make_shared<NodeImpl>(std::move(name), std::move(value));
+            pimpl->type(type);
+        }
+
+        if (not pimpl) {
+            throw Xml11Exception("Can't create a Node instance!");
+        }
+    }
+
+    inline Node(std::string name, const NodeList& nodes)
+        : Node {std::move(name)}
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Can't create a Node instance!");
+        }
+        addNodes(nodes);
+    }
+
+    inline Node(std::string name, NodeList&& nodes)
+        : Node {std::move(name)}
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Can't create a Node instance!");
+        }
+        addNodes(std::move(nodes));
+    }
+
+    inline Node(std::string name, std::initializer_list<Node>&& list)
         : Node(std::move(name), NodeList(std::move(list)))
     {
 
@@ -243,9 +391,9 @@ public:
         class = typename std::enable_if<
             !mp_empty<Args...>::value,
             void
-        >::type
-    >
-    Node(std::string name, std::initializer_list<Node>&& list, Args&& ... args)
+            >::type
+        >
+    inline Node(std::string name, std::initializer_list<Node>&& list, Args&& ... args)
         : Node(std::move(name), NodeList(std::move(list)))
     {
         AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
@@ -258,9 +406,9 @@ public:
             mp_like_pointer<T>::value &&
             mp_empty<Args...>::value,
             void
-        >::type
-    >
-    Node(std::string name, std::initializer_list<T>&& list)
+            >::type
+        >
+    inline Node(std::string name, std::initializer_list<T>&& list)
         : Node(std::move(name))
     {
         for (const auto& item : list) {
@@ -275,9 +423,9 @@ public:
             mp_like_pointer<T>::value &&
             !mp_empty<Args...>::value,
             void
-        >::type
-    >
-    Node(std::string name, std::initializer_list<T>&& list, Args&& ... args)
+            >::type
+        >
+    inline Node(std::string name, std::initializer_list<T>&& list, Args&& ... args)
         : Node(std::move(name), std::move(list))
     {
         AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
@@ -288,9 +436,9 @@ public:
         class = typename std::enable_if<
             !mp_empty<Args...>::value,
             void
-        >::type
-    >
-    Node(std::string name, std::string value, Args&& ... args)
+            >::type
+        >
+    inline Node(std::string name, std::string value, Args&& ... args)
         : Node(std::move(name), std::move(value))
     {
         AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
@@ -301,9 +449,9 @@ public:
         class = typename std::enable_if<
             !mp_empty<Args...>::value,
             void
-        >::type
-    >
-    Node(std::string name, std::string value, const Type type, Args&& ... args)
+            >::type
+        >
+    inline Node(std::string name, std::string value, const NodeType type, Args&& ... args)
         : Node(std::move(name), std::move(value), type)
     {
         AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
@@ -313,13 +461,32 @@ public:
         class T,
         class ... Args,
         class = typename std::enable_if<
+            mp_like_pointer<T>::value,
+            void
+            >::type,
+        class = void,
+        class = void
+        >
+    inline Node(std::string name, T&& param, const NodeType type, Args&& ... args)
+        : Node(std::move(name), std::forward<T>(param))
+    {
+        if (!!(*this)) {
+            this->type(type);
+            AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+        }
+    }
+
+    template<
+        class T,
+        class ... Args,
+        class = typename std::enable_if<
             (mp_same<T, Node>::value || mp_same<T, NodeList>::value) &&
             !mp_empty<Args...>::value,
             void
-        >::type,
+            >::type,
         class = void
-    >
-    Node(std::string name, T&& value, Args&& ... args)
+        >
+    inline Node(std::string name, T&& value, Args&& ... args)
         : Node(std::move(name), std::forward<T>(value))
     {
         AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
@@ -332,9 +499,9 @@ public:
             mp_integral<T>::value &&
             mp_empty<Args...>::value,
             void
-        >::type
-    >
-    Node(std::string name, T&& value)
+            >::type
+        >
+    inline Node(std::string name, T&& value)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
     {
 
@@ -347,9 +514,9 @@ public:
             mp_integral<T>::value &&
             !mp_empty<Args...>::value,
             void
-        >::type
-    >
-    Node(std::string name, T&& value, Args&& ... args)
+            >::type
+        >
+    inline Node(std::string name, T&& value, Args&& ... args)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
     {
         AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
@@ -363,10 +530,10 @@ public:
             !mp_same_from_opt<T, std::string>::value &&
             mp_can_be_string_from_opt<T>::value,
             T
-        >::type,
+            >::type,
         class=void
-    >
-    Node(std::string name, const T& param)
+        >
+    inline Node(std::string name, const T& param)
         : Node(std::move(name))
     {
         if (param) {
@@ -384,11 +551,11 @@ public:
             !mp_same<T, char*>::value &&
             mp_same_from_opt<T, std::string>::value,
             T
-        >::type,
+            >::type,
         class=void,
         class=void
-    >
-    Node(std::string name, const T& param)
+        >
+    inline Node(std::string name, const T& param)
         : Node(std::move(name))
     {
         if (param) {
@@ -399,102 +566,556 @@ public:
         }
     }
 
-    Node& operator = (const Node& node) noexcept;
-    Node& operator = (Node&& node) noexcept;
-    bool operator == (const Node& node) const noexcept;
-    bool operator != (const Node& node) const noexcept;
-    operator bool() const noexcept;
-
-    NodeList operator [] (const std::string& name);
-    NodeList operator [] (const char* name);
-    NodeList operator [] (const Type& type);
-    const NodeList operator [] (const std::string& name) const;
-    const NodeList operator [] (const char* name) const;
-    const NodeList operator [] (const Type& type) const;
-
-    NodeList findNodes(const std::string& name);
-    NodeList findNodes(const Type& type);
-    const NodeList findNodes(const std::string& name) const;
-    const NodeList findNodes(const Type& type) const;
-
-    NodeList findNodesXPath(const std::string& name);
-    const NodeList findNodesXPath(const std::string& name) const;
-
-    Node operator () (const std::string& name);
-    Node operator () (const Type& type);
-    const Node operator () (const std::string& name) const;
-    const Node operator () (const Type& type) const;
-
-    Node findNode(const std::string& name);
-    Node findNode(const Type& type);
-    const Node findNode(const std::string& name) const;
-    const Node findNode(const Type& type) const;
-
-    Node findNodeXPath(const std::string& name);
-    const Node findNodeXPath(const std::string& name) const;
-
-    Node& operator -= (const Node& root);
-    Node& operator -= (Node&& root);
-    Node& operator -= (const NodeList& nodes);
-    Node& operator -= (NodeList&& nodes);
-
-    Node& operator += (const Node& root);
-    Node& operator += (Node&& root);
-    Node& operator += (const NodeList& nodes);
-    Node& operator += (NodeList&& nodes);
-
-    Node& addNode(const Node& node);
-    Node& addNode(Node&& node);
-    Node& addNode(std::string name);
-    Node& addNode(std::string name, std::string value);
-    Node& addNode(std::string name, std::string value, const Node::Type type);
-
     template<
         class T,
         class=typename std::enable_if<
             mp_can_be_string<T>::value,
             T
-        >::type
-    >
+            >::type
+        >
     Node& addNode(std::string name, T&& value)
     {
         return addNode(std::move(name), std::to_string(std::forward<T>(value)));
     }
 
-    Node& addAttribute(std::string name);
-    Node& addAttribute(std::string name, std::string value);
+    inline Node& operator = (const Node& node) noexcept
+    {
+        if (this != &node) {
+            pimpl = node.pimpl;
+        }
+        return *this;
+    }
 
-    Node& addNodes(const NodeList& node);
-    Node& addNodes(NodeList&& node);
+    inline Node& operator = (Node&& node) noexcept
+    {
+        if (this != &node) {
+            pimpl = std::move(node.pimpl);
+            node.pimpl = nullptr;
+        }
+        return *this;
+    }
 
-    Node& eraseNode(const Node& node);
-    Node& eraseNode(Node&& node);
-    Node& eraseNodes(const NodeList& node);
-    Node& eraseNodes(NodeList&& nodes);
+    inline bool operator == (const Node& node) const noexcept
+    {
+        return pimpl and node.pimpl and *pimpl == *node.pimpl;
+    }
 
-    NodeList nodes();
-    const NodeList nodes() const;
+    inline bool operator != (const Node& node) const noexcept
+    {
+        return not (*this == node);
+    }
 
-    Node::Type type() const;
-    void type(const Node::Type type);
+    inline operator bool() const noexcept
+    {
+        return !!pimpl and *pimpl != NodeImpl {};
+    }
 
-    std::string& name() const;
-    void name(std::string name);
+    inline NodeList operator [] (const std::string& name)
+    {
+        return findNodes(name);
+    }
 
-    std::string& text() const;
-    void text(std::string value);
+    inline NodeList operator [] (const char* name)
+    {
+        return findNodes(name);
+    }
 
-    void value(std::string text);
-    void value(const Node& node);
-    void value(Node&& node);
+    inline NodeList operator [] (const NodeType& type)
+    {
+        return findNodes(type);
+    }
 
-    void isCaseInsensitive(const bool isCaseInsensitive);
-    bool isCaseInsensitive() const;
+    inline const NodeList operator [] (const std::string& name) const
+    {
+        return findNodes(name);
+    }
 
-    void valueFilter(ValueFilter valueFilter);
-    ValueFilter valueFilter() const;
+    inline const NodeList operator [] (const char* name) const
+    {
+        return findNodes(name);
+    }
 
-    Node clone(ValueFilter valueFilter_ = nullptr) const;
+    inline const NodeList operator [] (const NodeType& type) const
+    {
+        return findNodes(type);
+    }
+
+    inline NodeList findNodes(const std::string& name)
+    {
+        NodeList result;
+        if (pimpl) {
+            for (const auto& node : pimpl->findNodes(name)) {
+                result.emplace_back(node);
+            }
+        }
+        return result;
+    }
+
+    inline NodeList findNodes(const NodeType& type)
+    {
+        NodeList result;
+        if (pimpl) {
+            for (const auto& node : pimpl->nodes()) {
+                if (node->type() == type) {
+                    result.emplace_back(node);
+                }
+            }
+        }
+        return result;
+    }
+
+    inline const NodeList findNodes(const std::string& name) const
+    {
+        return const_cast<Node*>(this)->findNodes(name);
+    }
+
+    inline const NodeList findNodes(const NodeType& type) const
+    {
+        return const_cast<Node*>(this)->findNodes(type);
+    }
+
+    inline Node operator () (const std::string& name)
+    {
+        return findNode(name);
+    }
+
+    inline Node operator () (const NodeType& type)
+    {
+        return findNode(type);
+    }
+
+    inline const Node operator () (const std::string& name) const
+    {
+        return findNode(name);
+    }
+
+    inline const Node operator () (const NodeType& type) const
+    {
+        return findNode(type);
+    }
+
+    inline Node findNode(const std::string& name)
+    {
+        if (not pimpl) {
+            return Node {std::make_shared<NodeImpl>()};
+        }
+        return pimpl->findNode(name);
+    }
+
+    inline Node findNode(const NodeType& type)
+    {
+        for (const auto& node : nodes()) {
+            if (node.type() == type) {
+                return node;
+            }
+        }
+        return Node {std::make_shared<NodeImpl>()};
+    }
+
+    inline const Node findNode(const std::string& name) const
+    {
+        return const_cast<Node*>(this)->findNode(name);
+    }
+
+    inline const Node findNode(const NodeType& type) const
+    {
+        return const_cast<Node*>(this)->findNode(type);
+    }
+
+    inline NodeList findNodesXPath(const std::string& name)
+    {
+        const auto parts = split(name, '/');
+        if (parts.size() > 1) {
+            Node node = *this;
+            for (size_t i = 0; i < parts.size() - 1; ++i) {
+                node = node.findNode(parts[i]);
+                if (not node) {
+                    return {};
+                }
+            }
+            return node.findNodes(parts[parts.size() - 1]);
+        }
+        else {
+            return findNodes(parts[0]);
+        }
+    }
+
+    inline const NodeList findNodesXPath(const std::string& name) const
+    {
+        return const_cast<Node*>(this)->findNodesXPath(name);
+    }
+
+    inline Node findNodeXPath(const std::string& name)
+    {
+        Node node = *this;
+        for (const auto& part : split(name, '/')) {
+            node = node.findNode(part);
+            if (not node) {
+                return Node {std::make_shared<NodeImpl>()};
+            }
+        }
+        return node;
+    }
+
+    inline const Node findNodeXPath(const std::string& name) const
+    {
+        return const_cast<Node*>(this)->findNodeXPath(name);
+    }
+
+    inline NodeType type() const
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [type]");
+        }
+        return pimpl->type();
+    }
+
+    inline void type(const NodeType type)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [type]");
+        }
+        pimpl->type(type);
+    }
+
+    inline std::string& name() const
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [name]");
+        }
+        return pimpl->name();
+    }
+
+    inline void name(std::string name)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [name]");
+        }
+        pimpl->name(std::move(name));
+    }
+
+    inline std::string& text() const
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [text]");
+        }
+        return pimpl->text();
+    }
+
+    inline void text(std::string value)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [text]");
+        }
+        pimpl->text(std::move(value));
+    }
+
+    inline void value(std::string text)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [value]");
+        }
+        const auto nodes = pimpl->nodes();
+        for (const auto& node : nodes) {
+            pimpl->eraseNode(node);
+        }
+
+        if (not text.empty()) {
+            try {
+                auto node = fromString(text);
+                if (node) {
+                    addNode(std::move(node));
+                    return;
+                }
+            } catch (...) {
+
+            }
+
+            this->text(std::move(text));
+        }
+    }
+
+    inline void value(const Node& root)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [value]");
+        }
+        const auto nodes = pimpl->nodes();
+        for (const auto& node : nodes) {
+            pimpl->eraseNode(node);
+        }
+
+        addNode(root);
+    }
+
+    inline void value(Node&& root)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [value]");
+        }
+        const auto nodes = pimpl->nodes();
+        for (const auto& node : nodes) {
+            pimpl->eraseNode(node);
+        }
+
+        addNode(std::move(root));
+        root.pimpl = nullptr;
+    }
+
+    inline Node& operator += (const Node& node)
+    {
+        if (node) {
+            addNode(node);
+        }
+
+        return *this;
+    }
+
+    inline Node& operator += (Node&& node)
+    {
+        if (node) {
+            addNode(std::move(node));
+            node.pimpl = nullptr;
+        }
+
+        return *this;
+    }
+
+    inline Node& operator += (const NodeList& nodes)
+    {
+        addNodes(nodes);
+
+        return *this;
+    }
+
+    inline Node& operator += (NodeList&& nodes)
+    {
+        addNodes(std::move(nodes));
+
+        return *this;
+    }
+
+    inline Node& addNode(const Node& node)
+    {
+        if (node) {
+            if (not pimpl) {
+                throw Xml11Exception("Error! Node is not valid! [addNode]");
+            }
+            pimpl->addNode(node.pimpl);
+        }
+
+        return *this;
+    }
+
+    inline Node& addNode(Node&& node)
+    {
+        if (node) {
+            if (not pimpl) {
+                throw Xml11Exception("Error! Node is not valid! [addNode]");
+            }
+            pimpl->addNode(node.pimpl);
+            node.pimpl = nullptr;
+        }
+
+        return *this;
+    }
+
+    inline Node& addNode(std::string name)
+    {
+        if (not name.empty()) {
+            if (not pimpl) {
+                throw Xml11Exception("Error! Node is not valid! [addNode]");
+            }
+            pimpl->addNode(std::move(name));
+        }
+
+        return *this;
+    }
+
+    inline Node& addNode(std::string name, std::string value)
+    {
+        if (not name.empty()) {
+            if (not pimpl) {
+                throw Xml11Exception("Error! Node is not valid! [addNode]");
+            }
+            pimpl->addNode(std::move(name), std::move(value));
+        }
+
+        return *this;
+    }
+
+    inline Node& addNode(std::string name, std::string value, const NodeType type)
+    {
+        if (type == NodeType::OPTIONAL and value.empty()) {
+            return *this;
+        }
+
+        return addNode({std::move(name), std::move(value), type});
+    }
+
+    inline Node& addAttribute(std::string name)
+    {
+        if (not name.empty()) {
+            addNode({std::move(name), "", NodeType::ATTRIBUTE});
+        }
+
+        return *this;
+    }
+
+    inline Node& addAttribute(std::string name, std::string value)
+    {
+        if (not name.empty()) {
+            addNode({std::move(name), std::move(value), NodeType::ATTRIBUTE});
+        }
+
+        return *this;
+    }
+
+    inline Node& addNodes(const NodeList& nodes)
+    {
+        for (const auto& node : nodes) {
+            if (node) {
+                addNode(node);
+            }
+        }
+
+        return *this;
+    }
+
+    inline Node& addNodes(NodeList&& nodes)
+    {
+        for (auto& node : nodes) {
+            if (node) {
+                addNode(std::move(node));
+                node.pimpl = nullptr;
+            }
+        }
+
+        return *this;
+    }
+
+    inline Node& operator -= (const Node& root)
+    {
+        if (root) {
+            eraseNode(root);
+        }
+
+        return *this;
+    }
+
+    inline Node& operator -= (Node&& root)
+    {
+        if (root) {
+            eraseNode(root);
+        }
+
+        return *this;
+    }
+
+    inline Node& operator -= (const NodeList& nodes)
+    {
+        return eraseNodes(nodes);
+    }
+
+    inline Node& operator -= (NodeList&& nodes)
+    {
+        return eraseNodes(std::move(nodes));
+    }
+
+    inline Node& eraseNode(const Node& node)
+    {
+        if (node) {
+            if (not pimpl) {
+                throw Xml11Exception("Error! Node is not valid! [eraseNode]");
+            }
+            pimpl->eraseNode(node.pimpl);
+        }
+
+        return *this;
+    }
+
+    inline Node& eraseNode(Node&& node)
+    {
+        if (node) {
+            if (not pimpl) {
+                throw Xml11Exception("Error! Node is not valid! [eraseNode]");
+            }
+            pimpl->eraseNode(std::move(node.pimpl));
+        }
+
+        return *this;
+    }
+
+    inline Node& eraseNodes(const NodeList& nodes)
+    {
+        for (const auto& node : nodes) {
+            eraseNode(node);
+        }
+
+        return *this;
+    }
+
+    inline Node& eraseNodes(NodeList&& nodes)
+    {
+        for (auto& node : nodes) {
+            eraseNode(std::move(node));
+        }
+
+        return *this;
+    }
+
+    inline NodeList nodes()
+    {
+        NodeList result;
+        if (pimpl) {
+            for (const auto& node : pimpl->nodes()) {
+                result.emplace_back(node);
+            }
+        }
+        return result;
+    }
+
+    inline const NodeList nodes() const
+    {
+        return const_cast<Node*>(this)->nodes();
+    }
+
+    inline void isCaseInsensitive(const bool isCaseInsensitive)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [isCaseInsensitive]");
+        }
+        return pimpl->isCaseInsensitive(isCaseInsensitive);
+    }
+
+    inline bool isCaseInsensitive() const
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [isCaseInsensitive]");
+        }
+        return pimpl->isCaseInsensitive();
+    }
+
+    inline void valueFilter(ValueFilter valueFilter)
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [valueFilter]");
+        }
+        return pimpl->valueFilter(valueFilter);
+    }
+
+    inline ValueFilter valueFilter() const
+    {
+        if (not pimpl) {
+            throw Xml11Exception("Error! Node is not valid! [valueFilter]");
+        }
+        return pimpl->valueFilter();
+    }
+
+    inline Node clone(ValueFilter valueFilter_) const
+    {
+        return fromString(this->toString(false, valueFilter_), isCaseInsensitive(), valueFilter());
+    }
 
 private:
     std::shared_ptr<class NodeImpl> pimpl {nullptr};
@@ -502,6 +1123,9 @@ private:
 
 namespace literals {
 
-Node operator "" _xml(const char* value, size_t size);
+inline Node operator "" _xml(const char* value, size_t size)
+{
+    return Node::fromString(std::string(value, size));
+}
 
 } /* literals */

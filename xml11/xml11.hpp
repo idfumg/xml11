@@ -10,8 +10,6 @@
 namespace xml11 {
 
 #include "xml11_node.hpp"
-#include "xml11_associativearray.hpp"
-#include "xml11_nodeimpl.hpp"
 
 } /* namespace xml11 */
 
@@ -24,11 +22,5 @@ namespace xml11 {
 #include "xml11_rapidxml.hpp"
 
 #endif
-
-namespace xml11 {
-
-#include "xml11_impl.hpp"
-
-} /* namespace xml11 */
 
 #endif // XML11_HPP

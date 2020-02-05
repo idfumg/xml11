@@ -1,3 +1,5 @@
+#pragma once
+
 namespace {
 template<class T>
 inline auto to_lower(T s) -> decltype(T().begin(), T())
@@ -18,7 +20,7 @@ public:
     using ThisType = AssociativeArray<U, T>;
 
 public:
-    AssociativeArray(const bool isCaseInsensitive = true)
+    inline AssociativeArray(const bool isCaseInsensitive = true)
         noexcept(noexcept(NamesValuesT()) &&
                  noexcept(ValuesListT()))
         : m_data{}, m_assoc_data{}, m_isCaseInsensitive{isCaseInsensitive}
@@ -26,8 +28,8 @@ public:
 
     }
 
-    AssociativeArray(std::initializer_list<std::pair<U, T>> list,
-                     const bool isCaseInsensitive = true)
+    inline AssociativeArray(std::initializer_list<std::pair<U, T>> list,
+                            const bool isCaseInsensitive = true)
         noexcept(noexcept(ValuesListT().emplace_back(std::make_shared<T>(T()))) &&
                  noexcept(NamesValuesT()[U()]))
         : m_isCaseInsensitive{isCaseInsensitive}
@@ -55,7 +57,7 @@ public:
      ********************************************************************************/
 
     template<class V>
-    auto insert(const U& name, V&& value)
+    inline auto insert(const U& name, V&& value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT()))) ->
         typename std::enable_if<
             !std::is_same<typename std::decay<V>::type, typename std::decay<T>::type>::value,
@@ -74,7 +76,7 @@ public:
         }
     }
 
-    void insert(const U& name, const T& value)
+    inline void insert(const U& name, const T& value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
     {
         m_data.emplace_back(std::make_shared<T>(value));
@@ -88,7 +90,7 @@ public:
         }
     }
 
-    void insert(const U& name, ValuePointerT&& value)
+    inline void insert(const U& name, ValuePointerT&& value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
     {
         m_data.emplace_back(std::move(value));
@@ -102,7 +104,7 @@ public:
         }
     }
 
-    void insert(const U& name, const ValuePointerT& value)
+    inline void insert(const U& name, const ValuePointerT& value)
         noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
     {
         m_data.emplace_back(value);
@@ -116,7 +118,7 @@ public:
         }
     }
 
-    void erase(const ValuePointerT& node)
+    inline void erase(const ValuePointerT& node)
         noexcept(noexcept(ValuesListT().erase(typename ValuesListT::iterator())) &&
                  noexcept(NamesValuesT().erase(typename NamesValuesT::iterator())))
     {
@@ -141,20 +143,19 @@ public:
     }
 
     template <class T1>
-    const ValuesListT findNodes(T1&& name) const noexcept
+    inline const ValuesListT findNodes(T1&& name) const noexcept
     {
         return const_cast<ThisType>(this)->findNodes(std::forward<T1>(name));
     }
 
     template <class T1>
-    ValuesListT findNodes(T1&& name)
+    inline ValuesListT findNodes(T1&& name)
         noexcept(noexcept(NamesValuesT().find(U())) &&
                  noexcept(NamesValuesT().end()))
     {
-        auto name_lower = std::forward<T1>(name);
-        if (m_isCaseInsensitive) {
-            name_lower = to_lower(name);
-        }
+        const auto name_lower = m_isCaseInsensitive
+            ? to_lower(name)
+            : std::forward<T1>(name);
 
         const auto it = m_assoc_data.find(name_lower);
         if (it != m_assoc_data.end()) {
@@ -164,13 +165,13 @@ public:
     }
 
     template <class T1>
-    const ValuePointerT findNode(T1&& name) const noexcept
+    inline const ValuePointerT findNode(T1&& name) const noexcept
     {
         return const_cast<ThisType>(this)->findNode(std::forward<T1>(name));
     }
 
     template <class T1>
-    ValuePointerT findNode(T1&& name) noexcept
+    inline ValuePointerT findNode(T1&& name) noexcept
     {
         const auto nodes = findNodes(std::forward<T1>(name));
         if (nodes.empty())
@@ -183,28 +184,28 @@ public:
      ********************************************************************************/
 
     template <class T1>
-    const ValuePointerT operator() (T1&& name) const
+    inline const ValuePointerT operator() (T1&& name) const
         noexcept(noexcept(findNode(U())))
     {
         return const_cast<ThisType>(this)(std::forward<T1>(name));
     }
 
     template <class T1>
-    ValuePointerT operator() (T1&& name)
+    inline ValuePointerT operator() (T1&& name)
         noexcept(noexcept(findNode(U())))
     {
         return findNode(std::forward<T1>(name));
     }
 
     template <class T1>
-    const ValuesListT operator[] (T1&& name) const
+    inline const ValuesListT operator[] (T1&& name) const
         noexcept(noexcept(findNodes(U())))
     {
         return const_cast<ThisType>(this)[std::forward<T1>(name)];
     }
 
     template <class T1>
-    ValuesListT operator[] (T1&& name) noexcept
+    inline ValuesListT operator[] (T1&& name) noexcept
     {
         return findNodes(std::forward<T1>(name));
     }
@@ -213,96 +214,96 @@ public:
      * Misc functions.
      ********************************************************************************/
 
-    iterator begin()
+    inline iterator begin()
         noexcept(noexcept(ValuesListT().begin()))
     {
         return m_data.begin();
     }
 
-    iterator end()
+    inline iterator end()
         noexcept(noexcept(ValuesListT().end()))
     {
         return m_data.end();
     }
 
-    const_iterator begin() const
+    inline const_iterator begin() const
         noexcept(noexcept(ValuesListT().begin()))
     {
         return m_data.begin();
     }
 
-    const_iterator end() const
+    inline const_iterator end() const
         noexcept(noexcept(ValuesListT().end()))
     {
         return m_data.end();
     }
 
-    size_t size() const
+    inline size_t size() const
         noexcept(noexcept(ValuesListT().size()))
     {
         return m_data.size();
     }
 
-    bool empty() const
+    inline bool empty() const
         noexcept(noexcept(ValuesListT().empty()))
     {
         return m_data.empty();
     }
 
-    ValuePointerT& back()
+    inline ValuePointerT& back()
         noexcept(noexcept(ValuesListT().back()))
     {
         return m_data.back();
     }
 
-    const ValuePointerT& back() const
+    inline const ValuePointerT& back() const
         noexcept(noexcept(ValuesListT().back()))
     {
         return m_data.back();
     }
 
-    ValuePointerT& front()
+    inline ValuePointerT& front()
         noexcept(noexcept(ValuesListT().front()))
     {
         return m_data.front();
     }
 
-    const ValuePointerT& front() const
+    inline const ValuePointerT& front() const
         noexcept(noexcept(ValuesListT().front()))
     {
         return m_data.front();
     }
 
-    ValuesListT& nodes() noexcept
+    inline ValuesListT& nodes() noexcept
     {
         return m_data;
     }
 
-    const ValuesListT& nodes() const noexcept
+    inline const ValuesListT& nodes() const noexcept
     {
         return m_data;
     }
 
-    bool operator == (const AssociativeArray& right) const
+    inline bool operator == (const AssociativeArray& right) const
         noexcept(noexcept(ValuesListT() == ValuesListT()) &&
                  noexcept(NamesValuesT() == NamesValuesT()))
     {
         return right.m_data == m_data and right.m_assoc_data == m_assoc_data;
     }
 
-    bool operator != (const AssociativeArray& right) const
+    inline bool operator != (const AssociativeArray& right) const
         noexcept(noexcept(ValuesListT() == ValuesListT()) &&
                  noexcept(NamesValuesT() == NamesValuesT()))
     {
         return not (*this == right);
     }
 
-    void isCaseInsensitive(const bool isCaseInsensitive) noexcept
+    inline void isCaseInsensitive(const bool isCaseInsensitive) noexcept
     {
         m_isCaseInsensitive = isCaseInsensitive;
     }
 
-    bool isCaseInsensitive() const noexcept
+    inline bool isCaseInsensitive() const noexcept
     {
         return m_isCaseInsensitive;
     }

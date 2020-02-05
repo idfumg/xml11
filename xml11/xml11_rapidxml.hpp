@@ -1,3 +1,5 @@
+#pragma once
+
 #define RAPIDXML_NO_STREAMS
 
 #include <rapidxml.hpp>
@@ -46,7 +48,7 @@ void Parse(
         std::string value = n->value();
 
         NodeImpl new_node {std::move(name), std::move(value)};
-        new_node.type(Node::Type::ATTRIBUTE);
+        new_node.type(NodeType::ATTRIBUTE);
         root.addNode(std::move(new_node));
     }
 
@@ -107,7 +109,7 @@ void Xml(
     xml_attribute<>* new_attribute {nullptr};
     for (const auto& node : nodeImpl->nodes()) {
         switch (node->type()) {
-        case Node::Type::ELEMENT:
+        case NodeType::ELEMENT:
             new_node = doc.allocate_node(
                     node_element,
                     node->name().c_str(),
@@ -125,7 +127,7 @@ void Xml(
 
             root->append_node(new_node);
             break;
-        case Node::Type::ATTRIBUTE:
+        case NodeType::ATTRIBUTE:
             new_attribute = doc.allocate_attribute(
                     node->name().c_str(),
                     node->text().c_str());

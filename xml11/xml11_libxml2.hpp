@@ -1,3 +1,5 @@
+#pragma once
+
 #include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
 
@@ -16,12 +18,12 @@ using BufferTypePtr = std::shared_ptr<BufferType>;
 using WriterTypePtr = std::shared_ptr<WriterType>;
 using ReaderTypePtr = std::shared_ptr<ReaderType>;
 
-void InitializeParser() noexcept
+static inline void InitializeParser() noexcept
 {
     xmlInitParser();
 }
 
-void CleanupParser() noexcept
+static inline void CleanupParser() noexcept
 {
     if (xmlGetLastError()) {
         xmlResetError(xmlGetLastError());
@@ -35,7 +37,7 @@ void CleanupParser() noexcept
 }
 
 template<class T, class Fn>
-void ReleaseMemory(const T* buffer, Fn fn) noexcept
+static inline void ReleaseMemory(const T* buffer, Fn fn) noexcept
 {
     if (buffer) {
         if (*buffer) {
@@ -46,37 +48,37 @@ void ReleaseMemory(const T* buffer, Fn fn) noexcept
     }
 }
 
-void FreeXmlBuffer(const BufferType* buffer) noexcept
+static inline void FreeXmlBuffer(const BufferType* buffer) noexcept
 {
     ReleaseMemory(buffer, xmlBufferFree);
 }
 
-void FreeXmlWriter(const WriterType* writer) noexcept
+static inline void FreeXmlWriter(const WriterType* writer) noexcept
 {
     ReleaseMemory(writer, xmlFreeTextWriter);
 }
 
-void FreeXmlReader(const ReaderType* reader) noexcept
+static inline void FreeXmlReader(const ReaderType* reader) noexcept
 {
     ReleaseMemory(reader, xmlFreeTextReader);
 }
 
-BufferType* CreateBuffer() noexcept
+static inline BufferType* CreateBuffer() noexcept
 {
     return new BufferType(xmlBufferCreateSize(BASE_BUFFER_SIZE));
 }
 
-WriterType* CreateWriter(const BufferTypePtr& buffer) noexcept
+static inline WriterType* CreateWriter(const BufferTypePtr& buffer) noexcept
 {
     return new WriterType(xmlNewTextWriterMemory(*buffer, 0 /* compress */));
 }
 
-ReaderType* CreateReader(const std::string& text) noexcept
+static inline ReaderType* CreateReader(const std::string& text) noexcept
 {
     return new ReaderType(xmlReaderForMemory(text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS));
 }
 
-BufferTypePtr GetXmlBuffer(const bool useCaching) noexcept
+static inline BufferTypePtr GetXmlBuffer(const bool useCaching) noexcept
 {
     if (useCaching) {
         static const auto buffer = BufferTypePtr(CreateBuffer(), FreeXmlBuffer);
@@ -87,7 +89,7 @@ BufferTypePtr GetXmlBuffer(const bool useCaching) noexcept
     return BufferTypePtr(CreateBuffer(), FreeXmlBuffer);
 }
 
-WriterTypePtr GetXmlWriter(const bool useCaching, const BufferTypePtr& buffer) noexcept
+static inline WriterTypePtr GetXmlWriter(const bool useCaching, const BufferTypePtr& buffer) noexcept
 {
     if (useCaching) {
         static const auto writer = WriterTypePtr(CreateWriter(buffer), FreeXmlWriter);
@@ -97,7 +99,7 @@ WriterTypePtr GetXmlWriter(const bool useCaching, const BufferTypePtr& buffer) n
     return WriterTypePtr(CreateWriter(buffer), FreeXmlWriter);
 }
 
-ReaderTypePtr GetXmlReader(const bool useCaching, const std::string& text) noexcept
+static inline ReaderTypePtr GetXmlReader(const bool useCaching, const std::string& text) noexcept
 {
     if (useCaching) {
         static ReaderTypePtr reader = nullptr;
@@ -113,7 +115,7 @@ ReaderTypePtr GetXmlReader(const bool useCaching, const std::string& text) noexc
     return ReaderTypePtr(CreateReader(text), FreeXmlReader);
 }
 
-int ConvertXmlToText__(
+static inline int ConvertXmlToText__(
     const std::shared_ptr<NodeImpl>& root,
     const xmlTextWriterPtr writer,
     const bool indent,
@@ -126,7 +128,7 @@ int ConvertXmlToText__(
     xmlTextWriterSetIndent(writer, indent ? 1 : 0 /*indent*/);
 
     for (const auto& node : root->nodes()) {
-        if (node->type() == Node::Type::ATTRIBUTE) {
+        if (node->type() == NodeType::ATTRIBUTE) {
             if (valueFilter) {
                 if (xmlTextWriterWriteAttribute(
                         writer,
@@ -147,7 +149,7 @@ int ConvertXmlToText__(
     }
 
     for (const auto& node : root->nodes()) {
-        if (node->type() == Node::Type::ELEMENT) {
+        if (node->type() == NodeType::ELEMENT) {
             if (ConvertXmlToText__(node, writer, indent, valueFilter) < 0) {
                 return -1;
             }
@@ -180,7 +182,7 @@ int ConvertXmlToText__(
     return 0;
 }
 
-void ErrorHandler(void *ctx, const xmlErrorPtr error)
+static inline void ErrorHandler(void *ctx, const xmlErrorPtr error)
 {
     using std::to_string;
 
@@ -239,7 +241,7 @@ void ErrorHandler(void *ctx, const xmlErrorPtr error)
     xmlResetError(error);
 }
 
-std::string ConvertXmlToText_(
+static inline std::string ConvertXmlToText_(
     const std::shared_ptr<NodeImpl>& root,
     const bool indent,
     const ValueFilter& valueFilter,
@@ -298,26 +300,7 @@ std::string ConvertXmlToText_(
                        xmlBufferLength(*buffer));
 }
 
-std::string ConvertXmlToText(
-    const std::shared_ptr<NodeImpl>& root,
-    const bool indent,
-    const ValueFilter& valueFilter,
-    const bool useCaching)
-{
-    std::string error;
-
-    InitializeParser();
-    const auto result = ConvertXmlToText_(root, indent, valueFilter, useCaching, error);
-    CleanupParser();
-
-    if (not error.empty()) {
-        throw Node::Xml11Exception{error};
-    }
-
-    return result;
-}
-
-NodeImpl& FindLastByDepth(NodeImpl& root, size_t depth)
+static inline NodeImpl& FindLastByDepth(NodeImpl& root, size_t depth)
 {
     auto* node = &root;
     for (depth -= 1; depth and not node->nodes().empty() and node->nodes().back(); --depth) {
@@ -326,7 +309,7 @@ NodeImpl& FindLastByDepth(NodeImpl& root, size_t depth)
     return *node;
 }
 
-void FetchAllAttributes(
+static inline void FetchAllAttributes(
     NodeImpl& node,
     const xmlTextReaderPtr reader,
     const bool isCaseInsensitive,
@@ -346,7 +329,7 @@ void FetchAllAttributes(
                                         static_cast<size_t>(xmlStrlen(value))),
                             valueFilter)
                     };
-                    prop.type(Node::Type::ATTRIBUTE);
+                    prop.type(NodeType::ATTRIBUTE);
                     prop.isCaseInsensitive(isCaseInsensitive);
                     node.addNode(std::move(prop));
                 }
@@ -355,7 +338,7 @@ void FetchAllAttributes(
                         {reinterpret_cast<const char*>(name), static_cast<size_t>(xmlStrlen(name))},
                         {reinterpret_cast<const char*>(value), static_cast<size_t>(xmlStrlen(value))},
                     };
-                    prop.type(Node::Type::ATTRIBUTE);
+                    prop.type(NodeType::ATTRIBUTE);
                     prop.isCaseInsensitive(isCaseInsensitive);
                     node.addNode(std::move(prop));
                 }
@@ -365,7 +348,7 @@ void FetchAllAttributes(
     }
 }
 
-std::shared_ptr<NodeImpl> ParseXmlFromText__(
+static inline std::shared_ptr<NodeImpl> ParseXmlFromText__(
     const xmlTextReaderPtr reader,
     const bool isCaseInsensitive,
     const ValueFilter& valueFilter)
@@ -399,7 +382,7 @@ std::shared_ptr<NodeImpl> ParseXmlFromText__(
                 NodeImpl node {
                     {reinterpret_cast<const char*>(name), static_cast<size_t>(xmlStrlen(name))},
                 };
-                node.type(Node::Type::ELEMENT);
+                node.type(NodeType::ELEMENT);
                 node.isCaseInsensitive(isCaseInsensitive);
 
                 FetchAllAttributes(node, reader, isCaseInsensitive, valueFilter);
@@ -447,7 +430,7 @@ std::shared_ptr<NodeImpl> ParseXmlFromText__(
     return ret != 0 ? nullptr : root;
 }
 
-std::shared_ptr<NodeImpl> ParseXmlFromText_(
+static inline std::shared_ptr<NodeImpl> ParseXmlFromText_(
     const std::string& text,
     const bool isCaseInsensitive,
     const ValueFilter& valueFilter,
@@ -478,7 +461,28 @@ std::shared_ptr<NodeImpl> ParseXmlFromText_(
     return node;
 }
 
-std::shared_ptr<NodeImpl> ParseXmlFromText(
+} /* anonymous namespace */
+
+inline std::string ConvertXmlToText(
+    const std::shared_ptr<NodeImpl>& root,
+    const bool indent,
+    const ValueFilter& valueFilter,
+    const bool useCaching)
+{
+    std::string error;
+
+    InitializeParser();
+    const auto result = ConvertXmlToText_(root, indent, valueFilter, useCaching, error);
+    CleanupParser();
+
+    if (not error.empty()) {
+        throw Node::Xml11Exception{error};
+    }
+
+    return result;
+}
+
+inline std::shared_ptr<NodeImpl> ParseXmlFromText(
     const std::string& text,
     const bool isCaseInsensitive,
     const ValueFilter& valueFilter,
@@ -496,7 +500,5 @@ std::shared_ptr<NodeImpl> ParseXmlFromText(
 
     return result;
 }
-
-} /* anonymous namespace */
 
 } /* namespace xml11 */

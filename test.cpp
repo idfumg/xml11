@@ -44,7 +44,7 @@ void test_fn1()
     {
         Node node {
             "root", {
-                {"node1", "value1", Node::Type::ATTRIBUTE},
+                {"node1", "value1", NodeType::ATTRIBUTE},
                 {"node2", "value2"},
                 {"node3", "value3"},
                 {"node4", "1123"},
@@ -62,7 +62,7 @@ void test_fn1()
                     {"Epmloyer", {
                         {"name", "1"},
                         {"surname", "2"},
-                        {"patronym", "3", Node::Type::ATTRIBUTE}
+                        {"patronym", "3", NodeType::ATTRIBUTE}
                     }}
                 }}
             }
@@ -83,10 +83,10 @@ void test_fn1()
         assert(node("node2"));
         assert(node("node2").text() == "value2");
         assert(node("node2")("nodex"));
-        assert(node("node2")("nodex").type() == Node::Type::ELEMENT);
+        assert(node("node2")("nodex").type() == NodeType::ELEMENT);
         assert(node("node2")("nodex")("nested1"));
         assert(!node("node2")("nodex")("nested1")("123")("asd"));
-        assert(node("node2")("nodex")("nested1").type() == Node::Type::ELEMENT);
+        assert(node("node2")("nodex")("nested1").type() == NodeType::ELEMENT);
         assert(node("node2")("nodex")("nested1").text() == "nested2");
 
         node("node1").text("<aqwe><nested1/></aqwe>");
@@ -105,7 +105,7 @@ void test_fn1()
         node("node3").value(Node {"new node3", "asdqwe123"});
         node.toString(true);
         assert(node);
-        assert(node("Epmloyers")[Node::Type::ELEMENT].size() == 3);
+        assert(node("Epmloyers")[NodeType::ELEMENT].size() == 3);
         assert(node("Epmloyers").text() == "");
 
         auto new_node = Node {"", "text_new_node"};
@@ -204,7 +204,7 @@ void test_fn1()
         assert(node.name() == "new_story");
 
         // Check the node type.
-        assert(node.type() == Node::Type::ELEMENT);
+        assert(node.type() == NodeType::ELEMENT);
         assert(not node(""));
 
         // Set value to the node (replace exists text nodes).
@@ -525,6 +525,24 @@ void test_fn1()
         const auto cloned = root->clone(nullptr);
         root.reset();
         assert(cloned("node3").text() == "3");
+    }
+
+    {
+        const std::optional<std::string> validOptional  = "3";
+        const Node root {"node3", validOptional, NodeType::ATTRIBUTE};
+        assert(root.text() == "3");
+    }
+
+    {
+        const std::optional<std::string> validOptional  = "3";
+        const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33"}}};
+        assert(root("node3").text() == "33");
+    }
+
+    {
+        const std::optional<std::string> validOptional  = "3";
+        const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33", Node{"node4", "4"}}}};
+        assert(root("node3").text() == "33");
     }
 }
 
