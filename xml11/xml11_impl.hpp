@@ -623,7 +623,7 @@ Node Node::fromString(
     ValueFilter valueFilter_,
     const bool useCaching)
 {
-    Node node {ParseXml(text, isCaseInsensitive, valueFilter_, useCaching)};
+    Node node {ParseXmlFromText(text, isCaseInsensitive, valueFilter_, useCaching)};
     if (node) {
         node.valueFilter(valueFilter_);
     }
@@ -638,7 +638,7 @@ std::string Node::toString(
     if (not pimpl) {
         throw Node::Xml11Exception("Error! Node is not valid! [toString]");
     }
-    return ToXml(pimpl, indent, valueFilter_, useCaching);
+    return ConvertXmlToText(pimpl, indent, valueFilter_, useCaching);
 }
 
 void Node::isCaseInsensitive(const bool isCaseInsensitive)
