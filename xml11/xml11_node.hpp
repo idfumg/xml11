@@ -61,12 +61,12 @@ public:
         const std::string& text,
         const bool isCaseInsensitive=true,
         ValueFilter valueFilter_ = nullptr,
-        const bool useCaching = true);
+        const bool useCaching = false);
 
     std::string toString(
         const bool indent = true,
         ValueFilter valueFilter_ = nullptr,
-        const bool useCaching = true) const;
+        const bool useCaching = false) const;
 
 public:
     static void AddNode(Node&) noexcept
