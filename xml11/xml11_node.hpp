@@ -96,13 +96,12 @@ std::string ConvertXmlToText(
     const ValueFilter& valueFilter,
     const bool useCaching);
 
-class Node {
+class Xml11Exception final : public std::runtime_error {
 public:
-    class Xml11Exception final : public std::runtime_error {
-    public:
-        using std::runtime_error::runtime_error;
-    };
+    using std::runtime_error::runtime_error;
+};
 
+class Node {
 public:
     static inline Node fromString(
         const std::string& text,

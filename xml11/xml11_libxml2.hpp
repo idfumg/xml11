@@ -472,7 +472,7 @@ inline std::string ConvertXmlToText(
     CleanupParser();
 
     if (not error.empty()) {
-        throw Node::Xml11Exception{error};
+        throw Xml11Exception{error};
     }
 
     return result;
@@ -491,7 +491,7 @@ inline std::shared_ptr<NodeImpl> ParseXmlFromText(
     CleanupParser();
 
     if (not error.empty()) {
-        throw Node::Xml11Exception{error};
+        throw Xml11Exception{error};
     }
 
     return result;

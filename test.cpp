@@ -157,7 +157,7 @@ void test_fn1()
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<root><nested></nested></roo>"_xml;
             assert(false);
-        } catch (const Node::Xml11Exception& e) {
+        } catch (const Xml11Exception& e) {
             assert(true);
         }
     }
@@ -166,7 +166,7 @@ void test_fn1()
         try {
             const auto node = "aqwe"_xml;
             assert(false);
-        } catch (const Node::Xml11Exception& e) {
+        } catch (const Xml11Exception& e) {
             assert(true);
         }
     }
