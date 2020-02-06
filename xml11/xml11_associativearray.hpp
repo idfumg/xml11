@@ -1,13 +1,16 @@
 #pragma once
 
 namespace {
+
 template<class T>
-inline auto to_lower(T s) -> decltype(T().begin(), T())
+inline auto to_lower(T&& s_) -> std::string
 {
+    std::string s(std::forward<T>(s_));
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
 }
-}
+
+} // anonymous namespace
 
 template <class U, class T>
 struct AssociativeArray {
@@ -28,7 +31,7 @@ public:
 
     }
 
-    inline AssociativeArray(std::initializer_list<std::pair<U, T>> list,
+    inline AssociativeArray(std::initializer_list<std::pair<U, T>>&& list,
                             const bool isCaseInsensitive = true)
         noexcept(noexcept(ValuesListT().emplace_back(std::make_shared<T>(T()))) &&
                  noexcept(NamesValuesT()[U()]))
@@ -37,10 +40,10 @@ public:
         for (auto&& p : list) {
             m_data.emplace_back(std::make_shared<T>(move(p.second)));
             if (m_isCaseInsensitive) {
-                m_assoc_data[to_lower(p.first)].emplace_back(m_data.back());
+                m_assoc_data[to_lower(std::move(p.first))].emplace_back(m_data.back());
             }
             else {
-                m_assoc_data[move(p.first)].emplace_back(m_data.back());
+                m_assoc_data[move(std::move(p.first))].emplace_back(m_data.back());
             }
         }
     }
@@ -56,65 +59,76 @@ public:
      * Main functions.
      ********************************************************************************/
 
-    template<class V>
-    inline auto insert(const U& name, V&& value)
-        noexcept(noexcept(ValuesListT().push_back(ValuePointerT()))) ->
-        typename std::enable_if<
-            !std::is_same<typename std::decay<V>::type, typename std::decay<T>::type>::value,
+    template<
+        class T1,
+        class T2,
+        class = std::enable_if_t<
+            !std::is_same<std::decay_t<T2>, std::decay_t<T>>::value &&
+            !std::is_same<std::decay_t<T2>, std::decay_t<ValuePointerT>>::value,
             void
-        >::type
-
+        >,
+        class = void
+    >
+    inline void insert(T1&& name, T2&& value) noexcept
     {
-        m_data.emplace_back(std::make_shared<T>(name, std::forward<V>(value)));
+        m_data.push_back(std::make_shared<T>(std::forward<T1>(name), std::forward<T2>(value)));
 
         if (m_isCaseInsensitive) {
             m_data.back()->isCaseInsensitive(true);
-            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
+            m_assoc_data[to_lower(m_data.back()->name())].emplace_back(m_data.back());
         }
         else {
-            m_assoc_data[name].emplace_back(m_data.back());
+            m_assoc_data[m_data.back()->name()].emplace_back(m_data.back());
         }
     }
 
-    inline void insert(const U& name, const T& value)
-        noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
+    template<
+        class T1,
+        class T2,
+        class = std::enable_if_t<
+            std::is_same<std::decay_t<T2>, std::decay_t<T>>::value &&
+            !std::is_same<std::decay_t<T2>, std::decay_t<ValuePointerT>>::value,
+            void
+        >,
+        class = void,
+        class = void
+    >
+    inline void insert(T1&& name_, T2&& value) noexcept
     {
-        m_data.emplace_back(std::make_shared<T>(value));
+        U name = name_;
+        m_data.push_back(std::make_shared<T>(std::forward<T2>(value)));
 
         if (m_isCaseInsensitive) {
             m_data.back()->isCaseInsensitive(true);
-            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
+            m_assoc_data[to_lower(std::forward<T1>(name))].emplace_back(m_data.back());
         }
         else {
-            m_assoc_data[name].emplace_back(m_data.back());
+            m_assoc_data[std::forward<T1>(name)].emplace_back(m_data.back());
         }
     }
 
-    inline void insert(const U& name, ValuePointerT&& value)
-        noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
+    template<
+        class T1,
+        class T2,
+        class = std::enable_if_t<
+            !std::is_same<std::decay_t<T2>, std::decay_t<T>>::value &&
+            std::is_same<std::decay_t<T2>, std::decay_t<ValuePointerT>>::value,
+            void
+        >,
+        class = void,
+        class = void,
+        class = void
+    >
+    inline void insert(T1&& name, T2&& value) noexcept
     {
-        m_data.emplace_back(std::move(value));
+        m_data.push_back(std::forward<T2>(value));
 
         if (m_isCaseInsensitive) {
             m_data.back()->isCaseInsensitive(true);
-            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
+            m_assoc_data[to_lower(std::forward<T1>(name))].emplace_back(m_data.back());
         }
         else {
-            m_assoc_data[name].emplace_back(m_data.back());
-        }
-    }
-
-    inline void insert(const U& name, const ValuePointerT& value)
-        noexcept(noexcept(ValuesListT().push_back(ValuePointerT())))
-    {
-        m_data.emplace_back(value);
-
-        if (m_isCaseInsensitive) {
-            m_data.back()->isCaseInsensitive(true);
-            m_assoc_data[to_lower(name)].emplace_back(m_data.back());
-        }
-        else {
-            m_assoc_data[name].emplace_back(m_data.back());
+            m_assoc_data[std::forward<T1>(name)].emplace_back(m_data.back());
         }
     }
 
@@ -149,15 +163,11 @@ public:
     }
 
     template <class T1>
-    inline ValuesListT findNodes(T1&& name)
-        noexcept(noexcept(NamesValuesT().find(U())) &&
-                 noexcept(NamesValuesT().end()))
+    inline ValuesListT findNodes(T1&& name) noexcept
     {
-        const auto name_lower = m_isCaseInsensitive
-            ? to_lower(name)
-            : std::forward<T1>(name);
-
-        const auto it = m_assoc_data.find(name_lower);
+        const auto it = m_assoc_data.find(m_isCaseInsensitive
+                                          ? to_lower(std::forward<T1>(name))
+                                          : std::forward<T1>(name));
         if (it != m_assoc_data.end()) {
             return it->second;
         }

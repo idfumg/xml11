@@ -37,6 +37,7 @@ void test_fn1()
 
         assert(node.toString(false) == text);
         assert(node[""].size() == 0);
+        assert(node("info"));
         assert(node("info")("id1"));
         assert(node("info")("id1").text() == "123456789");
     }
@@ -264,7 +265,7 @@ void test_fn1()
     }
 
     {
-        constexpr auto TIMES = 100000;
+        constexpr auto TIMES = 1000000;
         std::vector<Node> nodes;
         nodes.reserve(TIMES);
 
@@ -326,7 +327,7 @@ void test_fn1()
                 "</story>"_xml;
 
         const clock_t begin = clock();
-        constexpr auto TIMES = 100000;
+        constexpr auto TIMES = 1000000;
 
         std::string result;
         for (size_t i = 0; i < TIMES; ++i) {
@@ -551,3 +552,12 @@ int main()
     test_fn1();
     return 0;
 }
+
+/*
+Result size: 1000000
+Average total parsing time 1000000 times = 11.3914 secs
+Average one parsing time = 1.13914e-05 secs
+Result size: 352000000
+Average total serialize 1000000 times = 4.05362 secs
+Average one serialization time = 4.05362e-06 secs
+*/
