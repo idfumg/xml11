@@ -648,6 +648,7 @@ public:
                 result.emplace_back(node);
             }
         }
+
         return result;
     }
 

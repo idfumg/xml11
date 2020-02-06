@@ -3,9 +3,8 @@
 namespace {
 
 template<class T>
-inline auto to_lower(T&& s_) -> std::string
+inline auto to_lower(T s) -> std::string
 {
-    std::string s(std::forward<T>(s_));
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
 }
@@ -26,7 +25,7 @@ public:
     inline AssociativeArray(const bool isCaseInsensitive = true)
         noexcept(noexcept(NamesValuesT()) &&
                  noexcept(ValuesListT()))
-        : m_data{}, m_assoc_data{}, m_isCaseInsensitive{isCaseInsensitive}
+        : m_data{}, m_isCaseInsensitive{isCaseInsensitive}
     {
 
     }
@@ -37,14 +36,8 @@ public:
                  noexcept(NamesValuesT()[U()]))
         : m_isCaseInsensitive{isCaseInsensitive}
     {
-        for (auto&& p : list) {
+        for (auto&& p : std::move(list)) {
             m_data.emplace_back(std::make_shared<T>(move(p.second)));
-            if (m_isCaseInsensitive) {
-                m_assoc_data[to_lower(std::move(p.first))].emplace_back(m_data.back());
-            }
-            else {
-                m_assoc_data[move(std::move(p.first))].emplace_back(m_data.back());
-            }
         }
     }
 
@@ -71,19 +64,14 @@ public:
     >
     inline void insert(T1&& name, T2&& value) noexcept
     {
-        m_data.push_back(std::make_shared<T>(std::forward<T1>(name), std::forward<T2>(value)));
+        const auto& link = m_data.emplace_back(std::make_shared<T>(std::forward<T1>(name), std::forward<T2>(value)));
 
         if (m_isCaseInsensitive) {
-            m_data.back()->isCaseInsensitive(true);
-            m_assoc_data[to_lower(m_data.back()->name())].emplace_back(m_data.back());
-        }
-        else {
-            m_assoc_data[m_data.back()->name()].emplace_back(m_data.back());
+            link->isCaseInsensitive(true);
         }
     }
 
     template<
-        class T1,
         class T2,
         class = std::enable_if_t<
             std::is_same<std::decay_t<T2>, std::decay_t<T>>::value &&
@@ -93,22 +81,16 @@ public:
         class = void,
         class = void
     >
-    inline void insert(T1&& name_, T2&& value) noexcept
+    inline void insert(T2&& value) noexcept
     {
-        U name = name_;
-        m_data.push_back(std::make_shared<T>(std::forward<T2>(value)));
+        const auto& link = m_data.emplace_back(std::make_shared<T>(std::forward<T2>(value)));
 
         if (m_isCaseInsensitive) {
-            m_data.back()->isCaseInsensitive(true);
-            m_assoc_data[to_lower(std::forward<T1>(name))].emplace_back(m_data.back());
-        }
-        else {
-            m_assoc_data[std::forward<T1>(name)].emplace_back(m_data.back());
+            link->isCaseInsensitive(true);
         }
     }
 
     template<
-        class T1,
         class T2,
         class = std::enable_if_t<
             !std::is_same<std::decay_t<T2>, std::decay_t<T>>::value &&
@@ -119,39 +101,22 @@ public:
         class = void,
         class = void
     >
-    inline void insert(T1&& name, T2&& value) noexcept
+    inline void insert(T2&& value) noexcept
     {
-        m_data.push_back(std::forward<T2>(value));
+        const auto& link = m_data.emplace_back(std::forward<T2>(value));
 
         if (m_isCaseInsensitive) {
-            m_data.back()->isCaseInsensitive(true);
-            m_assoc_data[to_lower(std::forward<T1>(name))].emplace_back(m_data.back());
-        }
-        else {
-            m_assoc_data[std::forward<T1>(name)].emplace_back(m_data.back());
+            link->isCaseInsensitive(true);
         }
     }
 
-    inline void erase(const ValuePointerT& node)
-        noexcept(noexcept(ValuesListT().erase(typename ValuesListT::iterator())) &&
-                 noexcept(NamesValuesT().erase(typename NamesValuesT::iterator())))
+    template <class T1>
+    inline void erase(T1&& node) noexcept
     {
         for (auto it = m_data.begin(); it != m_data.end(); ++it) {
             if (*it and *it == node) {
                 m_data.erase(it);
                 break;
-            }
-        }
-
-        for (auto it = m_assoc_data.begin(); it != m_assoc_data.end(); ++it) {
-            for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
-                if (*it2 and *it2 == node) {
-                    it->second.erase(it2);
-                    if (it->second.empty()) {
-                        m_assoc_data.erase(it);
-                    }
-                    return;
-                }
             }
         }
     }
@@ -162,16 +127,25 @@ public:
         return const_cast<ThisType>(this)->findNodes(std::forward<T1>(name));
     }
 
-    template <class T1>
-    inline ValuesListT findNodes(T1&& name) noexcept
+    template<class T1>
+    inline ValuesListT findNodes(T1&& name_) noexcept
     {
-        const auto it = m_assoc_data.find(m_isCaseInsensitive
-                                          ? to_lower(std::forward<T1>(name))
-                                          : std::forward<T1>(name));
-        if (it != m_assoc_data.end()) {
-            return it->second;
+        ValuesListT result;
+
+        const T1 name = m_isCaseInsensitive ? to_lower(std::forward<T1>(name_)) : std::forward<T1>(name_);
+
+        for (const auto& value : m_data) {
+            if (m_isCaseInsensitive) {
+                if (to_lower(value->name()) == name) {
+                    result.emplace_back(value);
+                }
+            }
+            else if (value->name() == name) {
+                result.emplace_back(value);
+            }
         }
-        return {};
+
+        return result;
     }
 
     template <class T1>
@@ -181,12 +155,22 @@ public:
     }
 
     template <class T1>
-    inline ValuePointerT findNode(T1&& name) noexcept
+    inline ValuePointerT findNode(T1&& name_) noexcept
     {
-        const auto nodes = findNodes(std::forward<T1>(name));
-        if (nodes.empty())
-            return nullptr;
-        return nodes[0];
+        const T1 name = m_isCaseInsensitive ? to_lower(std::forward<T1>(name_)) : std::forward<T1>(name_);
+
+        for (const auto& value : m_data) {
+            if (m_isCaseInsensitive) {
+                if (to_lower(value->name()) == name) {
+                    return value;
+                }
+            }
+            else if (value->name() == name) {
+                return value;
+            }
+        }
+
+        return nullptr;
     }
 
     /********************************************************************************
@@ -298,7 +282,7 @@ public:
         noexcept(noexcept(ValuesListT() == ValuesListT()) &&
                  noexcept(NamesValuesT() == NamesValuesT()))
     {
-        return right.m_data == m_data and right.m_assoc_data == m_assoc_data;
+        return right.m_data == m_data;
     }
 
     inline bool operator != (const AssociativeArray& right) const
@@ -320,6 +304,5 @@ public:
 
 private:
     ValuesListT m_data;
-    NamesValuesT m_assoc_data;
     bool m_isCaseInsensitive {true};
 };

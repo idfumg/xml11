@@ -26,6 +26,8 @@ void test_fn1()
     using namespace xml11;
     using namespace xml11::literals;
 
+    std::cout << "Tests.1" << std::endl;
+
     {
         const auto text =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -42,6 +44,7 @@ void test_fn1()
         assert(node("info")("id1").text() == "123456789");
     }
 
+    std::cout << "Tests.2" << std::endl;
     {
         Node node {
             "root", {
@@ -69,8 +72,12 @@ void test_fn1()
             }
         };
 
+        std::cout << "Tests.2.1" << std::endl;
+
         assert(node("Epmloyers")["Epmloyer"][2]("name"));
+        std::cout << "Tests.2.1.1" << std::endl;
         assert(node("Epmloyers")["Epmloyer"][2]("patronym"));
+        std::cout << "Tests.2.1.2" << std::endl;
         assert(node("Epmloyers")["Epmloyer"][2]("patronym").text() == "3");
 
         node("node2") += Node{ "nodex",
@@ -79,6 +86,8 @@ void test_fn1()
             },
             Node {"as", "asd"}
         };
+
+        std::cout << "Tests.2.2" << std::endl;
 
         assert(node);
         assert(node("node2"));
@@ -139,6 +148,8 @@ void test_fn1()
         assert(node.nodes().back().text() == "6");
 
     }
+
+    std::cout << "Tests.3" << std::endl;
 
     {
         try {
@@ -560,4 +571,11 @@ Average one parsing time = 1.13914e-05 secs
 Result size: 352000000
 Average total serialize 1000000 times = 4.05362 secs
 Average one serialization time = 4.05362e-06 secs
+
+Result size: 1000000
+Average total parsing time 1000000 times = 9.00343 secs
+Average one parsing time = 9.00343e-06 secs
+Result size: 352000000
+Average total serialize 1000000 times = 4.29292 secs
+Average one serialization time = 4.29292e-06 secs
 */

@@ -48,7 +48,7 @@ public:
             m_text += node->text();
         }
         else {
-            m_nodes.insert(node->name(), node);
+            m_nodes.insert(node);
         }
     }
 
@@ -58,7 +58,7 @@ public:
             m_text += std::move(node->text());
         }
         else {
-            m_nodes.insert(node->name(), std::move(node));
+            m_nodes.insert(std::move(node));
         }
     }
 
@@ -68,7 +68,7 @@ public:
             m_text += node.text();
         }
         else {
-            m_nodes.insert(node.name(), node);
+            m_nodes.insert(node);
         }
     }
 
@@ -78,7 +78,7 @@ public:
             m_text += std::move(node.text());
         }
         else {
-            m_nodes.insert(node.name(), std::move(node));
+            m_nodes.insert(std::move(node));
         }
     }
 
@@ -136,12 +136,7 @@ public:
     }
 
     template <class T>
-    inline void text(T&& text)
-        noexcept(noexcept(std::string() = std::string()) &&
-                 noexcept(AssociativeArray<std::string, NodeImpl>()
-                          .insert(std::string(), NodeImpl(std::string(), std::string()))) &&
-                 noexcept(AssociativeArray<std::string, NodeImpl>()
-                          .erase(std::make_shared<NodeImpl>(std::string(), std::string()))))
+    inline void text(T&& text) noexcept
     {
         m_text = std::forward<T>(text);
     }
