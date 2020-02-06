@@ -11,33 +11,29 @@ inline auto to_lower(T s) -> std::string
 
 } // anonymous namespace
 
-template <class U, class T>
+template <class T>
 struct AssociativeArray {
 public:
     using ValuePointerT = std::shared_ptr<T>;
     using ValuesListT = std::vector<ValuePointerT>;
-    using NamesValuesT = std::unordered_map<U, ValuesListT>;
     using iterator = typename ValuesListT::iterator;
     using const_iterator = typename ValuesListT::const_iterator;
-    using ThisType = AssociativeArray<U, T>;
+    using ThisType = AssociativeArray<T>;
 
 public:
     inline AssociativeArray(const bool isCaseInsensitive = true)
-        noexcept(noexcept(NamesValuesT()) &&
-                 noexcept(ValuesListT()))
+        noexcept(noexcept(ValuesListT()))
         : m_data{}, m_isCaseInsensitive{isCaseInsensitive}
     {
 
     }
 
-    inline AssociativeArray(std::initializer_list<std::pair<U, T>>&& list,
-                            const bool isCaseInsensitive = true)
-        noexcept(noexcept(ValuesListT().emplace_back(std::make_shared<T>(T()))) &&
-                 noexcept(NamesValuesT()[U()]))
+    inline AssociativeArray(std::initializer_list<T>&& list, const bool isCaseInsensitive = true)
+        noexcept(noexcept(ValuesListT()))
         : m_isCaseInsensitive{isCaseInsensitive}
     {
         for (auto&& p : std::move(list)) {
-            m_data.emplace_back(std::make_shared<T>(move(p.second)));
+            m_data.emplace_back(std::make_shared<T>(std::move(p)));
         }
     }
 
@@ -178,22 +174,19 @@ public:
      ********************************************************************************/
 
     template <class T1>
-    inline const ValuePointerT operator() (T1&& name) const
-        noexcept(noexcept(findNode(U())))
+    inline const ValuePointerT operator() (T1&& name) const noexcept
     {
         return const_cast<ThisType>(this)(std::forward<T1>(name));
     }
 
     template <class T1>
-    inline ValuePointerT operator() (T1&& name)
-        noexcept(noexcept(findNode(U())))
+    inline ValuePointerT operator() (T1&& name) noexcept
     {
         return findNode(std::forward<T1>(name));
     }
 
     template <class T1>
-    inline const ValuesListT operator[] (T1&& name) const
-        noexcept(noexcept(findNodes(U())))
+    inline const ValuesListT operator[] (T1&& name) const noexcept
     {
         return const_cast<ThisType>(this)[std::forward<T1>(name)];
     }
@@ -279,15 +272,13 @@ public:
     }
 
     inline bool operator == (const AssociativeArray& right) const
-        noexcept(noexcept(ValuesListT() == ValuesListT()) &&
-                 noexcept(NamesValuesT() == NamesValuesT()))
+        noexcept(noexcept(ValuesListT() == ValuesListT()))
     {
         return right.m_data == m_data;
     }
 
     inline bool operator != (const AssociativeArray& right) const
-        noexcept(noexcept(ValuesListT() == ValuesListT()) &&
-                 noexcept(NamesValuesT() == NamesValuesT()))
+        noexcept(noexcept(ValuesListT() == ValuesListT()))
     {
         return not (*this == right);
     }

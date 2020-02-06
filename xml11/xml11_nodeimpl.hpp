@@ -11,16 +11,14 @@ public:
     NodeImpl& operator= (NodeImpl&& node) = default;
 
     inline NodeImpl(std::string name)
-        noexcept(noexcept(AssociativeArray<std::string, NodeImpl>()) &&
-                 noexcept(std::string()))
+        noexcept(noexcept(AssociativeArray<NodeImpl>()) && noexcept(std::string()))
         : m_name {std::move(name)}
     {
 
     }
 
     inline NodeImpl(std::string name, std::string text)
-        noexcept(noexcept(AssociativeArray<std::string, NodeImpl>()) &&
-                 noexcept(std::string()))
+        noexcept(noexcept(AssociativeArray<NodeImpl>()) && noexcept(std::string()))
         : m_name {std::move(name)},
           m_text {std::move(text)}
     {
@@ -117,20 +115,17 @@ public:
      ********************************************************************************/
 
     template <class T>
-    inline void name(T&& name)
-        noexcept(noexcept(std::string() = std::string()))
+    inline void name(T&& name) noexcept(noexcept(std::string() = std::string()))
     {
         m_name = std::forward<T>(name);
     }
 
-    inline std::string& name()
-        noexcept
+    inline std::string& name() noexcept
     {
         return m_name;
     }
 
-    inline const std::string& name() const
-        noexcept
+    inline const std::string& name() const noexcept
     {
         return m_name;
     }
@@ -141,41 +136,35 @@ public:
         m_text = std::forward<T>(text);
     }
 
-    inline std::string& text()
-        noexcept(noexcept(std::string() += std::string()))
+    inline std::string& text() noexcept(noexcept(std::string() += std::string()))
     {
         return m_text;
     }
 
-    inline const std::string& text() const
-        noexcept(noexcept(std::string() += std::string()))
+    inline const std::string& text() const noexcept(noexcept(std::string() += std::string()))
     {
         return const_cast<NodeImpl*>(this)->text();
     }
 
     template <class T>
-    inline void type(T&& type)
-        noexcept
+    inline void type(T&& type) noexcept
     {
         m_type = std::forward<T>(type);
     }
 
-    inline NodeType& type()
-        noexcept
+    inline NodeType& type() noexcept
     {
         return m_type;
     }
 
-    inline const NodeType& type() const
-        noexcept
+    inline const NodeType& type() const noexcept
     {
         return m_type;
     }
 
     inline bool operator == (const NodeImpl& right) const
         noexcept(noexcept(std::string() == std::string()) &&
-                 noexcept(AssociativeArray<std::string, NodeImpl>() ==
-                          AssociativeArray<std::string, NodeImpl>()))
+                 noexcept(AssociativeArray<NodeImpl>() == AssociativeArray<NodeImpl>()))
     {
         return
             right.m_type == m_type and
@@ -186,20 +175,17 @@ public:
 
     inline bool operator != (const NodeImpl& right) const
         noexcept(noexcept(std::string() == std::string()) &&
-                 noexcept(AssociativeArray<std::string, NodeImpl>() ==
-                          AssociativeArray<std::string, NodeImpl>()))
+                 noexcept(AssociativeArray<NodeImpl>() == AssociativeArray<NodeImpl>()))
     {
         return not (*this == right);
     }
 
-    inline std::vector<std::shared_ptr<NodeImpl> >& nodes()
-        noexcept
+    inline std::vector<std::shared_ptr<NodeImpl> >& nodes() noexcept
     {
         return m_nodes.nodes();
     }
 
-    inline const std::vector<std::shared_ptr<NodeImpl> >& nodes() const
-        noexcept
+    inline const std::vector<std::shared_ptr<NodeImpl> >& nodes() const noexcept
     {
         return const_cast<NodeImpl*>(this)->nodes();
     }
@@ -218,5 +204,5 @@ private:
     std::string m_name {};
     std::string m_text {};
     NodeType m_type {NodeType::ELEMENT};
-    AssociativeArray<std::string, NodeImpl> m_nodes {};
+    AssociativeArray<NodeImpl> m_nodes {};
 };
