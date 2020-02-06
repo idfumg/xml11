@@ -118,14 +118,11 @@ static inline ReaderTypePtr GetXmlReader(const bool useCaching, const std::strin
 static inline int ConvertXmlToText__(
     const std::shared_ptr<NodeImpl>& root,
     const xmlTextWriterPtr writer,
-    const bool indent,
     const ValueFilter& valueFilter)
 {
     if (xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar*>(root->name().c_str())) < 0) {
         return -1;
     }
-
-    xmlTextWriterSetIndent(writer, indent ? 1 : 0 /*indent*/);
 
     for (const auto& node : root->nodes()) {
         if (node->type() == NodeType::ATTRIBUTE) {
@@ -150,7 +147,7 @@ static inline int ConvertXmlToText__(
 
     for (const auto& node : root->nodes()) {
         if (node->type() == NodeType::ELEMENT) {
-            if (ConvertXmlToText__(node, writer, indent, valueFilter) < 0) {
+            if (ConvertXmlToText__(node, writer, valueFilter) < 0) {
                 return -1;
             }
         }
@@ -176,8 +173,6 @@ static inline int ConvertXmlToText__(
     if (xmlTextWriterEndElement(writer) < 0) {
         return -1;
     }
-
-    xmlTextWriterSetIndent(writer, indent ? 1 : 0 /*indent*/);
 
     return 0;
 }
@@ -273,8 +268,6 @@ static inline std::string ConvertXmlToText_(
         return {};
     }
 
-    xmlTextWriterSetIndentString(*writer, reinterpret_cast<const xmlChar*>(indent ? "  " : ""));
-
     if ((rc = xmlTextWriterStartDocument(*writer, NULL/*version*/, "UTF-8", NULL/*standalone*/)) < 0) {
         if (error.empty()) {
             error = CreateErrorText("xmlTextWriterStartDocument");
@@ -282,7 +275,10 @@ static inline std::string ConvertXmlToText_(
         return {};
     }
 
-    if ((rc = ConvertXmlToText__(root, *writer, indent, valueFilter)) < 0) {
+    xmlTextWriterSetIndentString(*writer, reinterpret_cast<const xmlChar*>(indent ? "  " : ""));
+    xmlTextWriterSetIndent(*writer, indent ? 1 : 0 /*indent*/);
+
+    if ((rc = ConvertXmlToText__(root, *writer, valueFilter)) < 0) {
         if (error.empty()) {
             error = CreateErrorText("ConvertXmlToText__");
         }
