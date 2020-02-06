@@ -3,10 +3,16 @@
 namespace {
 
 template<class T>
-inline auto to_lower(T s) -> std::string
+inline auto to_lower1(T s) -> std::string
 {
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
+}
+
+template<class T>
+inline auto to_lower2(T&& s) -> void
+{
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
 
 } // anonymous namespace
@@ -117,52 +123,108 @@ public:
         }
     }
 
-    template <class T1>
-    inline const ValuesListT findNodes(T1&& name) const noexcept
+    inline const ValuesListT findNodes(const std::string& name) const noexcept
     {
-        return const_cast<ThisType>(this)->findNodes(std::forward<T1>(name));
+        return const_cast<ThisType>(this)->findNodes(name);
     }
 
-    template<class T1>
-    inline ValuesListT findNodes(T1&& name_) noexcept
+    inline const ValuesListT findNodes(std::string&& name) const noexcept
+    {
+        return const_cast<ThisType>(this)->findNodes(std::move(name));
+    }
+
+    inline ValuesListT findNodes(const std::string& name) noexcept
     {
         ValuesListT result;
 
-        const T1 name = m_isCaseInsensitive ? to_lower(std::forward<T1>(name_)) : std::forward<T1>(name_);
-
-        for (const auto& value : m_data) {
-            if (m_isCaseInsensitive) {
-                if (to_lower(value->name()) == name) {
+        if (m_isCaseInsensitive) {
+            const auto lowerName = to_lower1(name);
+            for (const auto& value : m_data) {
+                if (to_lower1(value->name()) == lowerName) {
                     result.emplace_back(value);
                 }
             }
-            else if (value->name() == name) {
-                result.emplace_back(value);
+        }
+        else {
+            for (const auto& value : m_data) {
+                if (value->name() == name) {
+                    result.emplace_back(value);
+                }
             }
         }
 
         return result;
     }
 
-    template <class T1>
-    inline const ValuePointerT findNode(T1&& name) const noexcept
+    inline ValuesListT findNodes(std::string&& name) noexcept
     {
-        return const_cast<ThisType>(this)->findNode(std::forward<T1>(name));
+        ValuesListT result;
+
+        if (m_isCaseInsensitive) {
+            to_lower2(std::move(name));
+            for (const auto& value : m_data) {
+                if (to_lower1(value->name()) == name) {
+                    result.emplace_back(value);
+                }
+            }
+        }
+        else {
+            for (const auto& value : m_data) {
+                if (value->name() == name) {
+                    result.emplace_back(value);
+                }
+            }
+        }
+
+        return result;
     }
 
-    template <class T1>
-    inline ValuePointerT findNode(T1&& name_) noexcept
+    inline const ValuePointerT findNode(const std::string& name) const noexcept
     {
-        const T1 name = m_isCaseInsensitive ? to_lower(std::forward<T1>(name_)) : std::forward<T1>(name_);
+        return const_cast<ThisType>(this)->findNode(name);
+    }
 
-        for (const auto& value : m_data) {
-            if (m_isCaseInsensitive) {
-                if (to_lower(value->name()) == name) {
+    inline const ValuePointerT findNode(std::string&& name) const noexcept
+    {
+        return const_cast<ThisType>(this)->findNode(std::move(name));
+    }
+
+    inline ValuePointerT findNode(const std::string& name) noexcept
+    {
+        if (m_isCaseInsensitive) {
+            const auto lowerName = to_lower1(name);
+            for (const auto& value : m_data) {
+                if (to_lower1(value->name()) == lowerName) {
                     return value;
                 }
             }
-            else if (value->name() == name) {
-                return value;
+        }
+        else {
+            for (const auto& value : m_data) {
+                if (value->name() == name) {
+                    return value;
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+        inline ValuePointerT findNode(std::string&& name) noexcept
+    {
+        if (m_isCaseInsensitive) {
+            to_lower2(std::move(name));
+            for (const auto& value : m_data) {
+                if (to_lower1(value->name()) == name) {
+                    return value;
+                }
+            }
+        }
+        else {
+            for (const auto& value : m_data) {
+                if (value->name() == name) {
+                    return value;
+                }
             }
         }
 
