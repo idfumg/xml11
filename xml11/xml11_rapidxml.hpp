@@ -2,7 +2,7 @@
 
 #define RAPIDXML_NO_STREAMS
 
-#include <rapidxml.hpp>
+#include "rapidxml.hpp"
 
 namespace rapidxml { namespace internal {
 template<class OutIt, class Ch>
@@ -33,7 +33,7 @@ template<class OutIt, class Ch>
 inline OutIt print_pi_node(OutIt out, const rapidxml::xml_node<Ch> *node, int flags, int indent);
 }}
 
-#include <rapidxml_print.hpp>
+#include "rapidxml_print.hpp"
 
 namespace xml11 {
 
@@ -41,72 +41,43 @@ namespace {
 
 void Parse(
     NodeImpl& root,
+    const bool isCaseInsensitive,
+    const ValueFilter& valueFilter,
     rapidxml::xml_node<>* node)
 {
     for (auto n = node->first_attribute(); n; n = n->next_attribute()) {
         std::string name = n->name();
-        std::string value = n->value();
+        std::string value = valueFilter ? GenerateString(n->value(), valueFilter) : n->value();
 
         NodeImpl new_node {std::move(name), std::move(value)};
         new_node.type(NodeType::ATTRIBUTE);
+        new_node.isCaseInsensitive(isCaseInsensitive);
         root.addNode(std::move(new_node));
     }
 
     for (auto n = node->first_node(); n; n = n->next_sibling()) {
         std::string name = n->name();
-        std::string value = n->value();
+        std::string value = valueFilter ? GenerateString(n->value(), valueFilter) : n->value();
 
         NodeImpl new_node {std::move(name), std::move(value)};
-        Parse(new_node, n);
+        new_node.type(NodeType::ELEMENT);
+        new_node.isCaseInsensitive(isCaseInsensitive);
+        Parse(new_node, isCaseInsensitive, valueFilter, n);
         root.addNode(std::move(new_node));
     }
-}
-
-std::shared_ptr<NodeImpl> ParseXml(
-    std::string text)
-{
-    using namespace rapidxml;
-
-    if (text.empty()) {
-        return nullptr;
-    }
-
-    try {
-
-        xml_document<> doc;
-
-        doc.parse<parse_full | parse_no_data_nodes>(const_cast<char*>(text.data()));
-
-
-        auto node = doc.first_node();
-        if (node->next_sibling()) {
-            node = node->next_sibling();
-        }
-
-        std::shared_ptr<NodeImpl> root =
-            std::make_shared<NodeImpl>(
-                reinterpret_cast<const char*>(node->name()));
-
-        Parse(*root, node);
-
-        return root;
-
-    } catch (const std::exception& e) {
-        throw Node::Xml11Exception(e.what());
-    }
-
-    return nullptr;
 }
 
 void Xml(
     rapidxml::xml_document<>& doc,
     rapidxml::xml_node<>* root,
+    const ValueFilter& valueFilter,
     const std::shared_ptr<NodeImpl>& nodeImpl)
 {
     using namespace rapidxml;
 
     xml_node<>* new_node {nullptr};
     xml_attribute<>* new_attribute {nullptr};
+
     for (const auto& node : nodeImpl->nodes()) {
         switch (node->type()) {
         case NodeType::ELEMENT:
@@ -120,26 +91,72 @@ void Xml(
                         doc.allocate_node(
                             node_data,
                             nullptr,
-                            node->text().c_str()));
+                            valueFilter ? GenerateString(node->text(), valueFilter).c_str() : node->text().c_str()));
             }
 
-            Xml(doc, new_node, node);
+            Xml(doc, new_node, valueFilter, node);
 
             root->append_node(new_node);
             break;
         case NodeType::ATTRIBUTE:
             new_attribute = doc.allocate_attribute(
                     node->name().c_str(),
-                    node->text().c_str());
+                    valueFilter ? GenerateString(node->text(), valueFilter).c_str() : node->text().c_str());
             root->append_attribute(new_attribute);
+            break;
+        case NodeType::OPTIONAL:
             break;
         }
     }
 }
 
-std::string ToXml(
+} /* anonymous namespace */
+
+inline std::shared_ptr<NodeImpl> ParseXmlFromText(
+    const std::string& text,
+    const bool isCaseInsensitive,
+    const ValueFilter& valueFilter,
+    const bool )
+{
+    using namespace rapidxml;
+
+    if (text.empty()) {
+        return nullptr;
+    }
+
+    try {
+
+        xml_document<> doc;
+
+        doc.parse<parse_full | parse_no_data_nodes>(const_cast<char*>(text.data()));
+
+        auto node = doc.first_node();
+        if (node->next_sibling()) {
+            node = node->next_sibling();
+        }
+
+        std::shared_ptr<NodeImpl> root =
+            std::make_shared<NodeImpl>(
+                reinterpret_cast<const char*>(node->name()));
+
+        root->isCaseInsensitive(isCaseInsensitive);
+
+        Parse(*root, isCaseInsensitive, valueFilter, node);
+
+        return root;
+
+    } catch (const std::exception& e) {
+        throw Xml11Exception(e.what());
+    }
+
+    return nullptr;
+}
+
+inline std::string ConvertXmlToText(
     const std::shared_ptr<NodeImpl>& root,
-    const bool indent)
+    const bool indent,
+    const ValueFilter& valueFilter,
+    const bool )
 {
     using namespace rapidxml;
 
@@ -153,7 +170,7 @@ std::string ToXml(
         doc.append_node(decl_node);
 
         std::string name = root->name();
-        std::string value = root->text();
+        const std::string& value = root->text();
 
         xml_node<>* root_node =
             doc.allocate_node(node_element, doc.allocate_string(name.c_str()));
@@ -163,23 +180,23 @@ std::string ToXml(
                 doc.allocate_node(
                     node_data,
                     nullptr,
-                    doc.allocate_string(value.c_str())));
+                    doc.allocate_string(valueFilter
+                                        ? GenerateString(value, valueFilter).c_str()
+                                        : value.c_str())));
         }
 
         doc.append_node(root_node);
-        Xml(doc, root_node, root);
+        Xml(doc, root_node, valueFilter, root);
 
         std::string xml_as_string;
         rapidxml::print(std::back_inserter(xml_as_string), doc, !indent);
         return xml_as_string;
 
     } catch (const std::exception& e) {
-        throw Node::Xml11Exception(e.what());
+        throw Xml11Exception(e.what());
     }
 
     return "";
 }
-
-} /* anonymous namespace */
 
 } /* namespace xml11 */

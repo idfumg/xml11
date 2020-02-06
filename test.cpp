@@ -33,11 +33,19 @@ void test_fn1()
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n";
 
+        const auto text2 =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>";
+
         const auto node =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
             "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>"_xml;
 
-        assert(node.toString(false) == text);
+        const auto result = node.toString(false);
+
+        std::cout << result << std::endl;
+
+        assert(result == text or result == text2);
         assert(node[""].size() == 0);
         assert(node("info"));
         assert(node("info")("id1"));
@@ -380,7 +388,12 @@ void test_fn1()
         assert(node);
         assert(node.name() == "StorY");
         assert(node("info"));
-        assert(node("info")("author").toString(false) == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<author>JOHN FLECK</author>\n");
+
+        const auto result = node("info")("author").toString(false);
+        const auto match1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<author>JOHN FLECK</author>\n";
+        const auto match2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><author>JOHN FLECK</author>";
+
+        assert(result == match1 or result == match2);
     }
 
     {
