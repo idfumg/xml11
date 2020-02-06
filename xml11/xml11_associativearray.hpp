@@ -1,22 +1,5 @@
 #pragma once
 
-namespace {
-
-template<class T>
-inline auto to_lower1(T s) -> std::string
-{
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-    return s;
-}
-
-template<class T>
-inline auto to_lower2(T&& s) -> void
-{
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-}
-
-} // anonymous namespace
-
 template <class T>
 struct AssociativeArray {
 public:
