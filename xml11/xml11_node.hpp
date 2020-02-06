@@ -110,11 +110,7 @@ public:
         const ValueFilter valueFilter_ = nullptr,
         const bool useCaching = false)
     {
-        Node node {ParseXmlFromText(text, isCaseInsensitive, valueFilter_, useCaching)};
-        if (node) {
-            node.valueFilter(valueFilter_);
-        }
-        return node;
+        return {ParseXmlFromText(text, isCaseInsensitive, valueFilter_, useCaching)};
     }
 
     inline std::string toString(
@@ -1097,25 +1093,9 @@ public:
         return pimpl->isCaseInsensitive();
     }
 
-    inline void valueFilter(ValueFilter valueFilter)
+    inline Node clone(const ValueFilter& from = nullptr, const ValueFilter& to = nullptr) const
     {
-        if (not pimpl) {
-            throw Xml11Exception("Error! Node is not valid! [valueFilter]");
-        }
-        return pimpl->valueFilter(valueFilter);
-    }
-
-    inline ValueFilter valueFilter() const
-    {
-        if (not pimpl) {
-            throw Xml11Exception("Error! Node is not valid! [valueFilter]");
-        }
-        return pimpl->valueFilter();
-    }
-
-    inline Node clone(ValueFilter valueFilter_) const
-    {
-        return fromString(this->toString(false, valueFilter_), isCaseInsensitive(), valueFilter());
+        return fromString(this->toString(false, from), isCaseInsensitive(), to);
     }
 
 private:

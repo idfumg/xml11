@@ -214,20 +214,9 @@ public:
         return m_nodes.isCaseInsensitive();
     }
 
-    inline void valueFilter(ValueFilter valueFilter_) noexcept
-    {
-        m_valueFilter = valueFilter_;
-    }
-
-    inline ValueFilter valueFilter() const noexcept
-    {
-        return m_valueFilter;
-    }
-
 private:
     std::string m_name {};
     std::string m_text {};
-    AssociativeArray<std::string, NodeImpl> m_nodes {};
     NodeType m_type {NodeType::ELEMENT};
-    mutable ValueFilter m_valueFilter{nullptr};
+    AssociativeArray<std::string, NodeImpl> m_nodes {};
 };
