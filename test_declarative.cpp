@@ -75,7 +75,7 @@ int main()
     try {
         NoRoot noRoot {Node::fromString("")};
         assert(false);
-    } catch (const Node::Xml11Exception& e) {
+    } catch (const Xml11Exception& e) {
         assert(true);
     }
 

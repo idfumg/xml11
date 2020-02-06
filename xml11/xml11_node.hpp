@@ -255,6 +255,12 @@ public:
 
     }
 
+    inline Node(std::shared_ptr<class NodeImpl>&& node) noexcept
+        : pimpl {std::move(node)}
+    {
+
+    }
+
     inline Node(const Node& node) noexcept
         : pimpl {node.pimpl}
     {
