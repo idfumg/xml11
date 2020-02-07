@@ -26,8 +26,6 @@ void test_fn1()
     using namespace xml11;
     using namespace xml11::literals;
 
-    std::cout << "Tests.1" << std::endl;
-
     {
         const auto text =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -51,8 +49,6 @@ void test_fn1()
         assert(node("info")("id1"));
         assert(node("info")("id1").text() == "123456789");
     }
-
-    std::cout << "Tests.2" << std::endl;
     {
         Node node {
             "root", {
@@ -80,12 +76,8 @@ void test_fn1()
             }
         };
 
-        std::cout << "Tests.2.1" << std::endl;
-
         assert(node("Epmloyers")["Epmloyer"][2]("name"));
-        std::cout << "Tests.2.1.1" << std::endl;
         assert(node("Epmloyers")["Epmloyer"][2]("patronym"));
-        std::cout << "Tests.2.1.2" << std::endl;
         assert(node("Epmloyers")["Epmloyer"][2]("patronym").text() == "3");
 
         node("node2") += Node{ "nodex",
@@ -94,8 +86,6 @@ void test_fn1()
             },
             Node {"as", "asd"}
         };
-
-        std::cout << "Tests.2.2" << std::endl;
 
         assert(node);
         assert(node("node2"));
@@ -156,8 +146,6 @@ void test_fn1()
         assert(node.nodes().back().text() == "6");
 
     }
-
-    std::cout << "Tests.3" << std::endl;
 
     {
         try {
@@ -284,7 +272,7 @@ void test_fn1()
     }
 
     {
-        constexpr auto TIMES = 1000000;
+        constexpr auto TIMES = 100000;
         std::vector<Node> nodes;
         nodes.reserve(TIMES);
 
@@ -346,7 +334,7 @@ void test_fn1()
                 "</story>"_xml;
 
         const clock_t begin = clock();
-        constexpr auto TIMES = 1000000;
+        constexpr auto TIMES = 100000;
 
         std::string result;
         for (size_t i = 0; i < TIMES; ++i) {

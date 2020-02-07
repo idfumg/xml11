@@ -39,37 +39,31 @@ namespace xml11 {
 
 namespace {
 
-void Parse(
+void ParseXmlFromText_(
     NodeImpl& root,
     const bool isCaseInsensitive,
     const ValueFilter& valueFilter,
-    rapidxml::xml_node<>* node)
+    const rapidxml::xml_node<>* const node)
 {
-    for (auto n = node->first_attribute(); n; n = n->next_attribute()) {
-        std::string name = n->name();
-        std::string value = valueFilter ? GenerateString(n->value(), valueFilter) : n->value();
-
-        NodeImpl new_node {std::move(name), std::move(value)};
+    for (const auto* n = node->first_attribute(); n; n = n->next_attribute()) {
+        NodeImpl new_node {n->name(), valueFilter ? GenerateString(n->value(), valueFilter) : n->value()};
         new_node.type(NodeType::ATTRIBUTE);
         new_node.isCaseInsensitive(isCaseInsensitive);
         root.addNode(std::move(new_node));
     }
 
-    for (auto n = node->first_node(); n; n = n->next_sibling()) {
-        std::string name = n->name();
-        std::string value = valueFilter ? GenerateString(n->value(), valueFilter) : n->value();
-
-        NodeImpl new_node {std::move(name), std::move(value)};
+    for (const auto* n = node->first_node(); n; n = n->next_sibling()) {
+        NodeImpl new_node {n->name(), valueFilter ? GenerateString(n->value(), valueFilter) : n->value()};
         new_node.type(NodeType::ELEMENT);
         new_node.isCaseInsensitive(isCaseInsensitive);
-        Parse(new_node, isCaseInsensitive, valueFilter, n);
+        ParseXmlFromText_(new_node, isCaseInsensitive, valueFilter, n);
         root.addNode(std::move(new_node));
     }
 }
 
-void Xml(
+void ConvertXmlToText_(
     rapidxml::xml_document<>& doc,
-    rapidxml::xml_node<>* root,
+    rapidxml::xml_node<>* const root,
     const ValueFilter& valueFilter,
     const std::shared_ptr<NodeImpl>& nodeImpl)
 {
@@ -94,7 +88,7 @@ void Xml(
                             valueFilter ? GenerateString(node->text(), valueFilter).c_str() : node->text().c_str()));
             }
 
-            Xml(doc, new_node, valueFilter, node);
+            ConvertXmlToText_(doc, new_node, valueFilter, node);
 
             root->append_node(new_node);
             break;
@@ -135,13 +129,13 @@ inline std::shared_ptr<NodeImpl> ParseXmlFromText(
             node = node->next_sibling();
         }
 
-        std::shared_ptr<NodeImpl> root =
+        const std::shared_ptr<NodeImpl> root =
             std::make_shared<NodeImpl>(
                 reinterpret_cast<const char*>(node->name()));
 
         root->isCaseInsensitive(isCaseInsensitive);
 
-        Parse(*root, isCaseInsensitive, valueFilter, node);
+        ParseXmlFromText_(*root, isCaseInsensitive, valueFilter, node);
 
         return root;
 
@@ -164,7 +158,7 @@ inline std::string ConvertXmlToText(
 
         xml_document<> doc;
 
-        xml_node<>* decl_node = doc.allocate_node(node_declaration);
+        xml_node<>* const decl_node = doc.allocate_node(node_declaration);
         decl_node->append_attribute(doc.allocate_attribute("version", "1.0"));
         decl_node->append_attribute(doc.allocate_attribute("encoding", "UTF-8"));
         doc.append_node(decl_node);
@@ -172,7 +166,7 @@ inline std::string ConvertXmlToText(
         std::string name = root->name();
         const std::string& value = root->text();
 
-        xml_node<>* root_node =
+        xml_node<>* const root_node =
             doc.allocate_node(node_element, doc.allocate_string(name.c_str()));
 
         if (not value.empty()) {
@@ -186,10 +180,10 @@ inline std::string ConvertXmlToText(
         }
 
         doc.append_node(root_node);
-        Xml(doc, root_node, valueFilter, root);
+        ConvertXmlToText_(doc, root_node, valueFilter, root);
 
         std::string xml_as_string;
-        rapidxml::print(std::back_inserter(xml_as_string), doc, !indent);
+        rapidxml::print(std::back_inserter(xml_as_string), doc, !indent ? print_no_indenting : 0);
         return xml_as_string;
 
     } catch (const std::exception& e) {
