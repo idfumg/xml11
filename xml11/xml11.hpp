@@ -20,6 +20,6 @@ namespace xml11 {
 
 #include "internal/xml11_libxml2.hpp"
 
-#endif
+#endif // USE_XML11_LIBXML2
 
 #endif // XML11_HPP
