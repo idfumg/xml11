@@ -2,13 +2,6 @@
 
 #include "gtest/gtest.h"
 
-#include <cassert>
-#include <iostream>
-#include <set>
-#include <cstring>
-#include <ctime>
-#include <optional>
-
 using std::cout;
 using std::endl;
 using namespace testing;
@@ -717,12 +710,4 @@ void test_fn1()
         const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33", Node{"node4", "4"}}}};
         assert(root("node3").text() == "33");
     }
-}
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-    // test_fn1();
-    // return 0;
 }
