@@ -6,15 +6,13 @@ enum class NodeType : char {
     OPTIONAL = 2,
 };
 
-#include "xml11_utils.hpp"
-#include "xml11_nodeimpl.hpp"
+#include "internal/xml11_utils.hpp"
+#include "internal/xml11_nodeimpl.hpp"
 
 using ValueFilter = std::function<std::string (const std::string& value)>;
 
 class Node;
-using NodeList = std::vector<class Node>;
-
-
+using NodeList = std::vector<Node>;
 
 class Xml11Exception final : public std::runtime_error {
 public:

@@ -218,28 +218,24 @@ public:
      * Syntactic sugar.
      ********************************************************************************/
 
-    template <class T1>
-    inline const ValuePointerT operator() (T1&& name) const noexcept
+    inline const ValuePointerT operator() (const T& name) const noexcept
     {
-        return const_cast<ThisType>(this)(std::forward<T1>(name));
+        return const_cast<ThisType>(this)(std::forward<T>(name));
     }
 
-    template <class T1>
-    inline ValuePointerT operator() (T1&& name) noexcept
+    inline ValuePointerT operator() (const T& name) noexcept
     {
-        return findNode(std::forward<T1>(name));
+        return findNode(std::forward<T>(name));
     }
 
-    template <class T1>
-    inline const ValuesListT operator[] (T1&& name) const noexcept
+    inline const ValuesListT operator[] (const T& name) const noexcept
     {
-        return const_cast<ThisType>(this)[std::forward<T1>(name)];
+        return findNodes(std::forward<T>(name));
     }
 
-    template <class T1>
-    inline ValuesListT operator[] (T1&& name) noexcept
+    inline ValuesListT operator[] (const T& name) noexcept
     {
-        return findNodes(std::forward<T1>(name));
+        return findNodes(std::forward<T>(name));
     }
 
     /********************************************************************************

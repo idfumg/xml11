@@ -2,11 +2,9 @@
 #define XML11_HPP
 
 #include <string>
-#include <memory>
 #include <vector>
+#include <memory>
 #include <functional>
-#include <unordered_map>
-#include <iostream>
 
 namespace xml11 {
 
@@ -16,11 +14,11 @@ namespace xml11 {
 
 #ifndef USE_XML11_RAPIDXML
 
-#include "xml11_rapidxml.hpp"
+#include "internal/xml11_rapidxml.hpp"
 
 #else
 
-#include "xml11_libxml2.hpp"
+#include "internal/xml11_libxml2.hpp"
 
 #endif
 

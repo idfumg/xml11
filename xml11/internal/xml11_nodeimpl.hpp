@@ -166,11 +166,28 @@ public:
         noexcept(noexcept(std::string() == std::string()) &&
                  noexcept(AssociativeArray<NodeImpl>() == AssociativeArray<NodeImpl>()))
     {
-        return
-            right.m_type == m_type and
-            right.m_name == m_name and
-            right.m_text == m_text and
-            right.m_nodes == m_nodes;
+        if (std::tie(right.m_type, right.m_name, right.m_text) != std::tie(m_type, m_name, m_text)) {
+            return false;
+        }
+
+        if (right.m_nodes.size() != m_nodes.size()) {
+            return false;
+        }
+
+        const auto leftNodes = nodes();
+        const auto rightNodes = right.nodes();
+
+        if (rightNodes.size() != leftNodes.size()) {
+            return false;
+        }
+
+        for (std::size_t i = 0; i < leftNodes.size(); ++i) {
+            if (*rightNodes[i] != *leftNodes[i]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     inline bool operator != (const NodeImpl& right) const

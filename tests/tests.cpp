@@ -1,5 +1,7 @@
 #include "xml11/xml11.hpp"
 
+#include "gtest/gtest.h"
+
 #include <cassert>
 #include <iostream>
 #include <set>
@@ -9,16 +11,287 @@
 
 using std::cout;
 using std::endl;
+using namespace testing;
+using namespace xml11;
+using namespace xml11::literals;
 
-std::string ToLower(const std::string& str)
+static std::string GetText() noexcept
 {
-    if (str.empty())
-        return "";
-    std::string result(str);
-    for (auto& ch : result) {
-        ch = std::tolower(ch);
-    }
-    return result;
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n";
+}
+
+static std::string GetText2() noexcept
+{
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>";
+}
+
+static Node GetRoot() noexcept
+{
+    return Node::fromString(GetText());
+}
+
+static Node GetEmployers() noexcept
+{
+    return {
+        "root", {
+            {"node1", "value1", NodeType::ATTRIBUTE},
+            {"node2", "value2"},
+            {"node3", "value3"},
+            {"node4", "1123"},
+            {"Employers", {
+                    {"Employer", {
+                            {"name", "1"},
+                            {"surname", "2"},
+                            {"patronym", "3"}
+                        }},
+                    {"Employer", {
+                            {"name", "1"},
+                            {"surname", "2"},
+                            {"patronym", "3"}
+                        }},
+                    {"Employer", {
+                            {"name", "1"},
+                            {"surname", "2"},
+                            {"patronym", "3", NodeType::ATTRIBUTE}
+                        }}
+                }}
+        }
+    };
+}
+
+TEST(Main, ParseText) {
+    const auto text = GetText();
+    const auto text2 = GetText2();
+    const auto result = GetRoot().toString(false);
+
+    EXPECT_TRUE(result == text or result == text2);
+}
+
+TEST(Main, ParseTextWithUserDefinedLiterals) {
+    const auto text = GetText();
+    const auto text2 = GetText2();
+    const auto root =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>"_xml;
+
+    EXPECT_TRUE(Node::fromString(root.toString(false)) == root);
+}
+
+TEST(Main, FindNonExistedNode) {
+    const auto root = GetRoot();
+
+    EXPECT_EQ(root[""].size(), 0);
+}
+
+TEST(Main, FindNode) {
+    const auto root = GetRoot();
+
+    EXPECT_TRUE(root("info"));
+}
+
+TEST(Main, FindSubNode) {
+    const auto root = GetRoot();
+
+    EXPECT_TRUE(root("info"));
+    EXPECT_TRUE(root("info")("id1"));
+}
+
+TEST(Main, FindSubNodeText) {
+    const auto root = GetRoot();
+
+    EXPECT_TRUE(root("info"));
+    EXPECT_TRUE(root("info")("id1"));
+    EXPECT_EQ(root("info")("id1").text(), "123456789");
+}
+
+TEST(Main, NodeCanContainCoupleOfNodesAndNoText) {
+    const auto root = GetEmployers();
+
+    EXPECT_TRUE(root("Employers").text().empty());
+}
+
+TEST(Main, FindCoupleOfNodes) {
+    const auto root = GetEmployers();
+
+    EXPECT_EQ(root("Employers")["Employer"].size(), 3);
+}
+
+TEST(Main, FindTagInNodeListItem) {
+    const auto root = GetEmployers();
+
+    EXPECT_TRUE(root("Employers")["Employer"][2]("name"));
+}
+
+TEST(Main, FindTagTextInNodeListItem) {
+    const auto root = GetEmployers();
+
+    EXPECT_EQ(root("Employers")["Employer"][2]("patronym").text(), "3");
+}
+
+TEST(Main, AddNewNodeToRoot) {
+    Node root = GetEmployers();
+    root("node2") += Node{"nested", "nested"};
+
+    EXPECT_TRUE(root("node2"));
+    EXPECT_TRUE(root("node2")("nested"));
+    EXPECT_EQ(root("node2")("nested").text(), "nested");
+}
+
+TEST(Main, AddNewNodeToRootWillPreserveExistedText) {
+    Node root = GetEmployers();
+    root("node2") += Node{"nested", "nested"};
+
+    EXPECT_TRUE(root("node2"));
+    EXPECT_EQ(root("node2").text(), "value2");
+}
+
+TEST(Main, DefaultNodeTypeIsElementNodeType) {
+    Node root = GetEmployers();
+    root("node2") += Node{"nested", "nested"};
+
+    EXPECT_EQ(root("node2")("nested").type(), NodeType::ELEMENT);
+}
+
+TEST(Main, SetTextToTheAttributeNode) {
+    Node root = GetEmployers();
+    root("node1").text("ItIsANewText");
+
+    EXPECT_EQ(root("node1").text(), "ItIsANewText");
+}
+
+TEST(Main, SetTextToTheElementNode) {
+    Node root = GetEmployers();
+    root("node2").text("ItIsANewText");
+
+    EXPECT_EQ(root("node2").text(), "ItIsANewText");
+}
+
+TEST(Main, SetTextAsNewXmlTextToTheNodeWillUrlEncodeItSymbolsWhenSerializationToString) {
+    Node root = GetEmployers();
+    root("node2").text("<aqwe><nested1/></aqwe>");
+
+    EXPECT_TRUE(root("node2").toString(false).find("&lt;aqwe&gt;&lt;nested1/&gt;&lt;/aqwe&gt;") != std::string::npos);
+}
+
+TEST(Main, SetTextAsNewXmlTextToTheNodeWillNotUrlEncodeWhenWorkingWithRawNodeText) {
+    Node root = GetEmployers();
+    root("node2").text("<aqwe><nested1/></aqwe>");
+
+    EXPECT_EQ(root("node2").text(), "<aqwe><nested1/></aqwe>");
+}
+
+TEST(Main, SettingTextToTheNodeWillPreserveExistedNodeHierarchy) {
+    Node root = GetEmployers();
+    root("Employers").text("NewText");
+
+    EXPECT_EQ(root("Employers").text(), "NewText");
+    EXPECT_EQ(root("Employers")["Employer"].size(), 3);
+}
+
+TEST(Main, CreateANewNodeSubTreeWithJustText) {
+    Node root = GetEmployers();
+    root("node2").value("<NewNode><NewNodeSubNode>NewSubNodeText</NewNodeSubNode></NewNode>");
+
+    EXPECT_TRUE(root("node2")("NewNode"));
+    EXPECT_TRUE(root("node2")("NewNode")("NewNodeSubNode"));
+    EXPECT_EQ(root("node2")("NewNode")("NewNodeSubNode").text(), "NewSubNodeText");
+}
+
+TEST(Main, CreateANewNodeSubTreeWithJustTextWillPreserveExistedText) {
+    Node root = GetEmployers();
+    root("node2").value("<NewNode/>");
+
+    EXPECT_EQ(root("node2").text(), "value2");
+}
+
+TEST(Main, CreateANewNodeSubTreeWithNodeWithValueMethod) {
+    Node root = GetEmployers();
+    root("node2").value(Node {"NewNode", "NewNodeText"});
+
+    EXPECT_TRUE(root("node2")("NewNode"));
+    EXPECT_EQ(root("node2")("NewNode").text(), "NewNodeText");
+}
+
+TEST(Main, CreateANewNodeSubTreeWithNodeWithValueMethodDoesNotDeleteCurrentNodeText) {
+    Node root = GetEmployers();
+    root("node2").value(Node {"NewNode", "NewNodeText"});
+
+    EXPECT_EQ(root("node2").text(), "value2");
+}
+
+TEST(Main, FindNodesByNodeType) {
+    const Node root = GetEmployers();
+
+    EXPECT_EQ(root[NodeType::ELEMENT].size(), 4);
+    EXPECT_EQ(root[NodeType::ATTRIBUTE].size(), 1);
+}
+
+TEST(Main, GetAllNodesOfTheSpecificNode) {
+    const Node root = GetEmployers();
+
+    EXPECT_TRUE(root("node2").nodes().empty());
+    EXPECT_EQ(root("Employers").nodes().size(), 3);
+}
+
+TEST(Main, GettingNonExistingNodeCauseANonValidNodeCreation) {
+    const Node root = GetEmployers();
+
+    EXPECT_FALSE(root("nodeX"));
+}
+
+TEST(Main, GettingNonExistingNodeListCauseAnEmptyNodeListCreation) {
+    const Node root = GetEmployers();
+
+    EXPECT_TRUE(root["nodeX"].empty());
+}
+
+TEST(Main, AddingANewNodeWithoutANameWillAddNewTextPortionToAnExistingNode) {
+    Node root = GetEmployers();
+    root("node1") += Node{"", "NewText"};
+
+    EXPECT_EQ(root("node1").text(), "value1NewText");
+}
+
+TEST(Main, ReplaceCurrentNodeTextWithNewText) {
+    Node root = GetEmployers();
+    root("node1").text("NewText");
+
+    EXPECT_EQ(root("node1").text(), "NewText");
+}
+
+TEST(Main, AddingANewNodeWillIncreaseNodeListSize) {
+    Node root = GetEmployers();
+    root += Node{"NewNode", "NewText"};
+
+    EXPECT_EQ(root.nodes().size(), 6);
+}
+
+TEST(Main, RemovingANewNodeWillDecreaseNodeListSize) {
+    Node root = GetEmployers();
+    root -= root("node2");
+
+    EXPECT_EQ(root.nodes().size(), 4);
+}
+
+TEST(Main, WeCanGetNodesByFrontAndBack) {
+    const Node root = GetEmployers();
+
+    EXPECT_TRUE(root.nodes().front());
+    EXPECT_EQ(root.nodes().front().name(), "node1");
+    EXPECT_EQ(root.nodes().front().text(), "value1");
+}
+
+TEST(Main, ThereIsThrowWhenAccessToANonValidNode) {
+    const Node root = GetEmployers();
+
+    EXPECT_THROW(root("NonValidNode").text(), Xml11Exception);
+}
+
+TEST(Main, ThereIsThrowWhenYouParsingANonValidXmlText) {
+    EXPECT_THROW("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" "<root><nested></nested></roo>"_xml,
+                 Xml11Exception);
 }
 
 void test_fn1()
@@ -27,47 +300,24 @@ void test_fn1()
     using namespace xml11::literals;
 
     {
-        const auto text =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n";
-
-        const auto text2 =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>";
-
-        const auto node =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-            "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>"_xml;
-
-        const auto result = node.toString(false);
-
-        std::cout << result << std::endl;
-
-        assert(result == text or result == text2);
-        assert(node[""].size() == 0);
-        assert(node("info"));
-        assert(node("info")("id1"));
-        assert(node("info")("id1").text() == "123456789");
-    }
-    {
         Node node {
             "root", {
                 {"node1", "value1", NodeType::ATTRIBUTE},
                 {"node2", "value2"},
                 {"node3", "value3"},
                 {"node4", "1123"},
-                {"Epmloyers", {
-                    {"Epmloyer", {
+                {"Employers", {
+                    {"Employer", {
                         {"name", "1"},
                         {"surname", "2"},
                         {"patronym", "3"}
                     }},
-                    {"Epmloyer", {
+                    {"Employer", {
                         {"name", "1"},
                         {"surname", "2"},
                         {"patronym", "3"}
                     }},
-                    {"Epmloyer", {
+                    {"Employer", {
                         {"name", "1"},
                         {"surname", "2"},
                         {"patronym", "3", NodeType::ATTRIBUTE}
@@ -75,96 +325,6 @@ void test_fn1()
                 }}
             }
         };
-
-        assert(node("Epmloyers")["Epmloyer"][2]("name"));
-        assert(node("Epmloyers")["Epmloyer"][2]("patronym"));
-        assert(node("Epmloyers")["Epmloyer"][2]("patronym").text() == "3");
-
-        node("node2") += Node{ "nodex",
-            NodeList {
-                {"nested1", "nested2"}
-            },
-            Node {"as", "asd"}
-        };
-
-        assert(node);
-        assert(node("node2"));
-        assert(node("node2").text() == "value2");
-        assert(node("node2")("nodex"));
-        assert(node("node2")("nodex").type() == NodeType::ELEMENT);
-        assert(node("node2")("nodex")("nested1"));
-        assert(!node("node2")("nodex")("nested1")("123")("asd"));
-        assert(node("node2")("nodex")("nested1").type() == NodeType::ELEMENT);
-        assert(node("node2")("nodex")("nested1").text() == "nested2");
-
-        node("node1").text("<aqwe><nested1/></aqwe>");
-        auto employers = node("Epmloyers");
-        if (employers) {
-            auto employer = employers["Epmloyer"][1];
-            if (employer) {
-                employer.value("<aqwe><nested1/></aqwe>");
-            }
-        }
-
-        assert(node("Epmloyers")["Epmloyer"][1]("aqwe"));
-        assert(node("Epmloyers")["Epmloyer"][1]("aqwe")("nested1"));
-
-        node("Epmloyers")["Epmloyer"][0].value("new_my_value");
-        node("node3").value(Node {"new node3", "asdqwe123"});
-        node.toString(true);
-        assert(node);
-        assert(node("Epmloyers")[NodeType::ELEMENT].size() == 3);
-        assert(node("Epmloyers").text() == "");
-
-        auto new_node = Node {"", "text_new_node"};
-        assert(node("node4"));
-        assert(node("node4").nodes().size() == 0);
-
-        assert(node("node4").text() == "1123");
-        node("node4").addNode(std::move(new_node));
-        assert(node("node4").nodes().size() == 0);
-        assert(node("node4").text() == "1123text_new_node");
-        node("node4").text("replace_text");
-        assert(node("node4").text() == "replace_text");
-
-        assert(node.nodes().size() == 5);
-        // auto new_node2 = Node {"", ""};
-        // node.addNode(new_node2);
-        // assert(node.nodes().size() == 5);
-
-        // node -= new_node2;
-        // assert(node.nodes().size() == 5);
-
-        auto new_node3 = Node {"new3", "data3"};
-        node += new_node3;
-        assert(node.nodes().size() == 6);
-        node -= new_node3;
-        assert(node.nodes().size() == 5);
-        node += Node {"int", 6};
-        assert(node.nodes().size() == 6);
-        assert(node.nodes().back().name() == "int");
-        assert(node.nodes().back().text() == "6");
-
-    }
-
-    {
-        try {
-            const auto node =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<root><nested></nested></roo>"_xml;
-            assert(false);
-        } catch (const Xml11Exception& e) {
-            assert(true);
-        }
-    }
-
-    {
-        try {
-            const auto node = "aqwe"_xml;
-            assert(false);
-        } catch (const Xml11Exception& e) {
-            assert(true);
-        }
     }
 
     {
@@ -559,24 +719,10 @@ void test_fn1()
     }
 }
 
-int main()
+int main(int argc, char** argv)
 {
-    test_fn1();
-    return 0;
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+    // test_fn1();
+    // return 0;
 }
-
-/*
-Result size: 1000000
-Average total parsing time 1000000 times = 11.3914 secs
-Average one parsing time = 1.13914e-05 secs
-Result size: 352000000
-Average total serialize 1000000 times = 4.05362 secs
-Average one serialization time = 4.05362e-06 secs
-
-Result size: 1000000
-Average total parsing time 1000000 times = 9.00343 secs
-Average one parsing time = 9.00343e-06 secs
-Result size: 352000000
-Average total serialize 1000000 times = 4.29292 secs
-Average one serialization time = 4.29292e-06 secs
-*/
