@@ -1,6 +1,6 @@
 set(TESTS_SOURCES
   main.cpp
-  tests.cpp
+  core.cpp
 )
 
 find_package(GTest)

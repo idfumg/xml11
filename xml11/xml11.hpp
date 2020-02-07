@@ -12,7 +12,7 @@ namespace xml11 {
 
 } /* namespace xml11 */
 
-#ifndef USE_XML11_RAPIDXML
+#ifndef USE_XML11_LIBXML2
 
 #include "internal/xml11_rapidxml.hpp"
 
