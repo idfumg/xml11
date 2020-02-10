@@ -287,225 +287,107 @@ TEST(Main, ThereIsThrowWhenYouParsingANonValidXmlText) {
                  Xml11Exception);
 }
 
-void test_fn1()
-{
-    using namespace xml11;
-    using namespace xml11::literals;
+TEST(Main, NodeConstructorFromTheName) {
+    EXPECT_TRUE(Node{"MyName"});
+}
 
-    {
-        Node node {
-            "root", {
-                {"node1", "value1", NodeType::ATTRIBUTE},
-                {"node2", "value2"},
-                {"node3", "value3"},
-                {"node4", "1123"},
-                {"Employers", {
-                    {"Employer", {
-                        {"name", "1"},
-                        {"surname", "2"},
-                        {"patronym", "3"}
-                    }},
-                    {"Employer", {
-                        {"name", "1"},
-                        {"surname", "2"},
-                        {"patronym", "3"}
-                    }},
-                    {"Employer", {
-                        {"name", "1"},
-                        {"surname", "2"},
-                        {"patronym", "3", NodeType::ATTRIBUTE}
-                    }}
-                }}
-            }
-        };
-    }
+TEST(Main, NodeConstructorFromTheNameAndValue) {
+    EXPECT_TRUE(Node("MyName", "MyValue"));
+}
 
-    {
-        // Node constructors.
-        const auto _2 = Node {"MyTag"};
-        assert(_2);
+TEST(Main, EqualOperatorOfTwoNodes) {
+    const Node n1 = Node{"MyName1"};
+    const Node n2 = Node{"MyName2"};
+    const Node n3 = Node{"MyName1"};
+    EXPECT_TRUE(n1 == n3);
+    EXPECT_TRUE(n1 != n2);
+}
 
-        const auto _3 = Node {"MyTag", "MyTagValue"};
-        assert(_3);
+TEST(Main, AssignmentOperatorOfTwoNodes) {
+    const auto n1 = Node{"MyName1"};
+    auto n2 = Node{"MyName2"};
+    n2 = n1;
+    EXPECT_EQ(n1, n2);
+}
 
-        auto _4 = _3;
-        assert(_3);
-        assert(_4);
+TEST(Main, MoveOperationForOneNode) {
+    auto n1 = Node{"MyName1"};
+    auto n2 = Node{"MyName2"};
+    n2 = std::move(n1);
+    EXPECT_FALSE(n1);
+    EXPECT_TRUE(n2);
+}
 
-        const auto _5 = std::move(_4);
-        assert(not _4);
-        assert(_5);
+TEST(Main, GetNameOfTheNode) {
+    auto n1 = Node{"MyName1"};
 
-        auto node =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-            "<story>"
-            "  <info my_property=\"prop_value\">"
-            "    <author>John Fleck</author>"
-            "    <date>June 2, 2002</date>"
-            "    <keyword>example</keyword>"
-            "  </info>"
-            "  <body>"
-            "    <headline>This is the headline</headline>"
-            "    <para>Para1</para>"
-            "    <para>Para2</para>"
-            "    <para>Para3</para>"
-            "    <nested1>"
-            "      <nested2>nested2 text фыв</nested2>"
-            "    </nested1>"
-            "  </body>"
-            "  <ebook/>"
-            "  <ebook/>"
-            "</story>"_xml;
+    EXPECT_EQ(n1.name(), "MyName1");
+}
 
-        assert(node);
+TEST(Main, SetNameOfTheNode) {
+    auto n1 = Node{"MyName1"};
+    n1.name("MyName2");
 
-        // Node has a name (if it is not a text node).
-        assert(node.name() == "story");
-        node.name("new_story");
-        assert(node.name() == "new_story");
+    EXPECT_EQ(n1.name(), "MyName2");
+}
 
-        // Check the node type.
-        assert(node.type() == NodeType::ELEMENT);
-        assert(not node(""));
+TEST(Main, NodeCanHaveAType) {
+    const auto root = GetEmployers();
 
-        // Set value to the node (replace exists text nodes).
-        assert(node[""].size() == 0);
-        node.text("new_node_value");
-        assert(node[""].size() == 0);
-        assert(node.text() == "new_node_value");
+    EXPECT_EQ(root("node1").type(), NodeType::ATTRIBUTE);
+}
 
-        // Select Node child nodes.
-        assert(node("info"));
-        assert(node("body"));
-        assert(node("ebook")); // Get the first one.
-        assert(node["ebook"].size() == 2);
-        assert(not node("abracadabra")); // This node does not exists.
+TEST(Main, NodeTextCanBeReplaced) {
+    auto root = GetEmployers();
+    root.text("NewRootText");
+    EXPECT_EQ(root.text(), "NewRootText");
+}
 
-        // Working with nested nodes.
-        const auto body = node("body");
-        assert(body);
-        assert(body.name() == "body");
-        auto body_headline = body("headline");
-        assert(body_headline);
-        assert(body_headline.name() == "headline");
-        assert(body_headline.text() == "This is the headline");
-        body_headline.text("");
-        assert(body_headline.text() == "");
+TEST(Main, IfNodeDoesNotExistTheResultIsNotValid) {
+    const auto root = GetEmployers();
+    EXPECT_FALSE(root("abracadabra"));
+}
 
-        // Add a new node.
-        body_headline.addNode(Node {"new_node", "new_node_text"});
-        assert(body_headline["new_node"].size() == 1);
-        assert(body_headline["new_node"][0].name() == "new_node");
-        assert(body_headline("new_node").name() == "new_node");
-        auto new_node = body_headline("new_node");
-        assert(new_node);
-        assert(new_node.text() == "new_node_text");
+TEST(Main, FindListOfNodesByName) {
+    const auto root = GetEmployers();
+    EXPECT_EQ(root["Employers"].size(), 1);
+    EXPECT_EQ(root("Employers")["Employer"].size(), 3);
+}
 
-        // Add a new node without value.
-        body_headline.addNode(Node {"new_node2"});
-        assert(body_headline["new_node2"].size() == 1);
-        assert(body_headline("new_node2").name() == "new_node2");
-        assert(body_headline("new_node2").text() == "");
+TEST(Main, ChangeNameAndValueOfTheNestedNode) {
+    auto root = GetEmployers();
+    auto node1 = root("node1");
+    node1.text("NewNodeValue");
+    node1.name("NewNodeName");
+    EXPECT_TRUE(root("NewNodeName"));
+    EXPECT_TRUE(root("NewNodeName").text() == "NewNodeValue");
+}
 
-        // Constness. Can not access data via pointer.
-        // body["para"][0].value("");
+TEST(Main, AddNewNodeWithoutValue) {
+    auto root = GetEmployers();
+    auto node = Node{"NewNodeName"};
+    root += node;
+    EXPECT_TRUE(root("NewNodeName"));
+    EXPECT_EQ(root("NewNodeName").name(), "NewNodeName");
+    EXPECT_EQ(root("NewNodeName").text(), "");
+}
 
-        // Erase nodes.
-        body_headline.eraseNode(body_headline("new_node2"));
-        assert(not body_headline("new_node2"));
-        assert(body_headline("new_node"));
-        body_headline.eraseNode(std::move(new_node));
-        assert(not body_headline("new_node2"));
+TEST(Main, EraseNodeFromTreeHierarchy) {
+    auto root = GetEmployers();
+    auto node = Node{"NewNodeName"};
+    root += node;
+    EXPECT_TRUE(root("NewNodeName"));
+    root -= node;
+    EXPECT_FALSE(root("NewNodeName"));
+}
 
-        // Get all nodes.
-        assert(body.nodes().size() == 5);
+TEST(Main, GetAllNodesOfRoot) {
+    const auto root = GetEmployers();
+    EXPECT_EQ(root.nodes().size(), 5);
+}
 
-        // property
-        assert(node("info")("my_property").text() == "prop_value");
-    }
-
-    {
-        constexpr auto TIMES = 100000;
-        std::vector<Node> nodes;
-        nodes.reserve(TIMES);
-
-        const clock_t begin = clock();
-
-        for (size_t i = 0; i < TIMES; ++i) {
-            nodes.push_back(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<story>"
-                "  <info my_property=\"prop_value\">"
-                "    <author>John Fleck</author>"
-                "    <date>June 2, 2002</date>"
-                "    <keyword>example</keyword>"
-                "  </info>"
-                "  <body>"
-                "    <headline>This is the headline</headline>"
-                "    <para>Para1</para>"
-                "    <para>Para2</para>"
-                "    <para>Para3</para>"
-                "    <nested1>"
-                "      <nested2>nested2 text фыв</nested2>"
-                "    </nested1>"
-                "  </body>"
-                "  <ebook/>"
-                "  <ebook/>"
-                "</story>"_xml);
-        }
-
-        const clock_t end = clock();
-        const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-
-        cout << "Result size: " << nodes.size() << endl;
-        cout << "Average total parsing time "
-             << TIMES << " times = " << elapsed_secs << " secs" << endl;
-        cout << "Average one parsing time = "
-             << elapsed_secs / TIMES << " secs" << endl;
-    }
-
-    {
-        const auto node =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<story>"
-                "  <info my_property=\"prop_value\">"
-                "    <author>John Fleck</author>"
-                "    <date>June 2, 2002</date>"
-                "    <keyword>example</keyword>"
-                "  </info>"
-                "  <body>"
-                "    <headline>This is the headline</headline>"
-                "    <para>Para1</para>"
-                "    <para>Para2</para>"
-                "    <para>Para3</para>"
-                "    <nested1>"
-                "      <nested2>nested2 text фыв</nested2>"
-                "    </nested1>"
-                "  </body>"
-                "  <ebook/>"
-                "  <ebook/>"
-                "</story>"_xml;
-
-        const clock_t begin = clock();
-        constexpr auto TIMES = 100000;
-
-        std::string result;
-        for (size_t i = 0; i < TIMES; ++i) {
-            result += node.toString(false);
-        }
-
-        const clock_t end = clock();
-        const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-
-        cout << "Result size: " << result.size() << endl;
-        cout << "Average total serialize "
-             << TIMES << " times = " << elapsed_secs << " secs" << endl;
-        cout << "Average one serialization time = "
-             << elapsed_secs / TIMES << " secs" << endl;
-    }
-
-    {
-        const auto text =
+TEST(Main, InitialRegisterOfLetterIsPreserved) {
+    const auto text =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<StorY>"
             "  <iNfO my_property=\"prop_value\">"
@@ -525,17 +407,125 @@ void test_fn1()
             "  <ebook/>"
             "  <ebook/>"
             "</StorY>";
-        const auto node = Node::fromString(text);
-        assert(node);
-        assert(node.name() == "StorY");
-        assert(node("info"));
+    const auto root = Node::fromString(text);
+    EXPECT_TRUE(root);
+    EXPECT_EQ(root.name(), "StorY");
+    EXPECT_TRUE(root("info")("author").toString(false).find("JOHN FLECK") != std::string::npos);
+    EXPECT_TRUE(root("info")("author").toString(false).find("author") != std::string::npos);
+}
 
-        const auto result = node("info")("author").toString(false);
-        const auto match1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<author>JOHN FLECK</author>\n";
-        const auto match2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><author>JOHN FLECK</author>";
+TEST(Main, AccessToTheNodesIsCaseInsensitiveByDefault) {
+    const auto text =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<StorY>"
+            "  <iNfO my_property=\"prop_value\">"
+            "    <author>JOHN FLECK</author>"
+            "    <date>June 2, 2002</date>"
+            "    <keyword>example</keyword>"
+            "  </iNfO>"
+            "  <body>"
+            "    <headline>This is the headline</headline>"
+            "    <para>Para1</para>"
+            "    <para>Para2</para>"
+            "    <para>Para3</para>"
+            "    <nested1>"
+            "      <nested2>nested2 text фыв</nested2>"
+            "    </nested1>"
+            "  </body>"
+            "  <ebook/>"
+            "  <ebook/>"
+            "</StorY>";
+    const auto root = Node::fromString(text);
+    EXPECT_TRUE(root);
+    EXPECT_TRUE(root("info"));
+}
 
-        assert(result == match1 or result == match2);
-    }
+
+
+void test_fn1()
+{
+    using namespace xml11;
+    using namespace xml11::literals;
+
+    // {
+    //     constexpr auto TIMES = 100000;
+    //     std::vector<Node> nodes;
+    //     nodes.reserve(TIMES);
+
+    //     const clock_t begin = clock();
+
+    //     for (size_t i = 0; i < TIMES; ++i) {
+    //         nodes.push_back(
+    //             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+    //             "<story>"
+    //             "  <info my_property=\"prop_value\">"
+    //             "    <author>John Fleck</author>"
+    //             "    <date>June 2, 2002</date>"
+    //             "    <keyword>example</keyword>"
+    //             "  </info>"
+    //             "  <body>"
+    //             "    <headline>This is the headline</headline>"
+    //             "    <para>Para1</para>"
+    //             "    <para>Para2</para>"
+    //             "    <para>Para3</para>"
+    //             "    <nested1>"
+    //             "      <nested2>nested2 text фыв</nested2>"
+    //             "    </nested1>"
+    //             "  </body>"
+    //             "  <ebook/>"
+    //             "  <ebook/>"
+    //             "</story>"_xml);
+    //     }
+
+    //     const clock_t end = clock();
+    //     const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+    //     cout << "Result size: " << nodes.size() << endl;
+    //     cout << "Average total parsing time "
+    //          << TIMES << " times = " << elapsed_secs << " secs" << endl;
+    //     cout << "Average one parsing time = "
+    //          << elapsed_secs / TIMES << " secs" << endl;
+    // }
+
+    // {
+    //     const auto node =
+    //             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+    //             "<story>"
+    //             "  <info my_property=\"prop_value\">"
+    //             "    <author>John Fleck</author>"
+    //             "    <date>June 2, 2002</date>"
+    //             "    <keyword>example</keyword>"
+    //             "  </info>"
+    //             "  <body>"
+    //             "    <headline>This is the headline</headline>"
+    //             "    <para>Para1</para>"
+    //             "    <para>Para2</para>"
+    //             "    <para>Para3</para>"
+    //             "    <nested1>"
+    //             "      <nested2>nested2 text фыв</nested2>"
+    //             "    </nested1>"
+    //             "  </body>"
+    //             "  <ebook/>"
+    //             "  <ebook/>"
+    //             "</story>"_xml;
+
+    //     const clock_t begin = clock();
+    //     constexpr auto TIMES = 100000;
+
+    //     std::string result;
+    //     for (size_t i = 0; i < TIMES; ++i) {
+    //         result += node.toString(false);
+    //     }
+
+    //     const clock_t end = clock();
+    //     const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+    //     cout << "Result size: " << result.size() << endl;
+    //     cout << "Average total serialize "
+    //          << TIMES << " times = " << elapsed_secs << " secs" << endl;
+    //     cout << "Average one serialization time = "
+    //          << elapsed_secs / TIMES << " secs" << endl;
+    // }
 
     {
         Node root {"root"};
