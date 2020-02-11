@@ -54,6 +54,30 @@ static Node GetEmployers() noexcept
     };
 }
 
+static Node GetStoryWithVariousLetterCases() noexcept
+{
+    return
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<StorY>"
+        "  <iNfO my_property=\"prop_value\">"
+        "    <author>JOHN FLECK</author>"
+        "    <date>June 2, 2002</date>"
+        "    <keyword>example</keyword>"
+        "  </iNfO>"
+        "  <body>"
+        "    <headline>This is the headline</headline>"
+        "    <para>Para1</para>"
+        "    <para>Para2</para>"
+        "    <para>Para3</para>"
+        "    <nested1>"
+        "      <nested2>nested2 text фыв</nested2>"
+        "    </nested1>"
+        "  </body>"
+        "  <ebook/>"
+        "  <ebook/>"
+        "</StorY>"_xml;
+}
+
 TEST(Main, ParseText) {
     const auto text = GetText();
     const auto text2 = GetText2();
@@ -387,27 +411,7 @@ TEST(Main, GetAllNodesOfRoot) {
 }
 
 TEST(Main, InitialRegisterOfLetterIsPreserved) {
-    const auto text =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<StorY>"
-            "  <iNfO my_property=\"prop_value\">"
-            "    <author>JOHN FLECK</author>"
-            "    <date>June 2, 2002</date>"
-            "    <keyword>example</keyword>"
-            "  </iNfO>"
-            "  <body>"
-            "    <headline>This is the headline</headline>"
-            "    <para>Para1</para>"
-            "    <para>Para2</para>"
-            "    <para>Para3</para>"
-            "    <nested1>"
-            "      <nested2>nested2 text фыв</nested2>"
-            "    </nested1>"
-            "  </body>"
-            "  <ebook/>"
-            "  <ebook/>"
-            "</StorY>";
-    const auto root = Node::fromString(text);
+    const auto root = GetStoryWithVariousLetterCases();
     EXPECT_TRUE(root);
     EXPECT_EQ(root.name(), "StorY");
     EXPECT_TRUE(root("info")("author").toString(false).find("JOHN FLECK") != std::string::npos);
@@ -415,289 +419,271 @@ TEST(Main, InitialRegisterOfLetterIsPreserved) {
 }
 
 TEST(Main, AccessToTheNodesIsCaseInsensitiveByDefault) {
-    const auto text =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<StorY>"
-            "  <iNfO my_property=\"prop_value\">"
-            "    <author>JOHN FLECK</author>"
-            "    <date>June 2, 2002</date>"
-            "    <keyword>example</keyword>"
-            "  </iNfO>"
-            "  <body>"
-            "    <headline>This is the headline</headline>"
-            "    <para>Para1</para>"
-            "    <para>Para2</para>"
-            "    <para>Para3</para>"
-            "    <nested1>"
-            "      <nested2>nested2 text фыв</nested2>"
-            "    </nested1>"
-            "  </body>"
-            "  <ebook/>"
-            "  <ebook/>"
-            "</StorY>";
-    const auto root = Node::fromString(text);
+    const auto root = GetStoryWithVariousLetterCases();
     EXPECT_TRUE(root);
     EXPECT_TRUE(root("info"));
 }
 
+TEST(Main, AccessToTheNodesViaXPath) {
+    const auto root = Node {
+        "root", {
+            {"child1", "value1"},
+            {"children", {
+                    {"subchild1", "subvalue1"},
+                    {"subchild2", "subvalue2"},
+                },
+            },
+        },
+    };
 
-
-void test_fn1()
-{
-    using namespace xml11;
-    using namespace xml11::literals;
-
-    // {
-    //     constexpr auto TIMES = 100000;
-    //     std::vector<Node> nodes;
-    //     nodes.reserve(TIMES);
-
-    //     const clock_t begin = clock();
-
-    //     for (size_t i = 0; i < TIMES; ++i) {
-    //         nodes.push_back(
-    //             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    //             "<story>"
-    //             "  <info my_property=\"prop_value\">"
-    //             "    <author>John Fleck</author>"
-    //             "    <date>June 2, 2002</date>"
-    //             "    <keyword>example</keyword>"
-    //             "  </info>"
-    //             "  <body>"
-    //             "    <headline>This is the headline</headline>"
-    //             "    <para>Para1</para>"
-    //             "    <para>Para2</para>"
-    //             "    <para>Para3</para>"
-    //             "    <nested1>"
-    //             "      <nested2>nested2 text фыв</nested2>"
-    //             "    </nested1>"
-    //             "  </body>"
-    //             "  <ebook/>"
-    //             "  <ebook/>"
-    //             "</story>"_xml);
-    //     }
-
-    //     const clock_t end = clock();
-    //     const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-
-    //     cout << "Result size: " << nodes.size() << endl;
-    //     cout << "Average total parsing time "
-    //          << TIMES << " times = " << elapsed_secs << " secs" << endl;
-    //     cout << "Average one parsing time = "
-    //          << elapsed_secs / TIMES << " secs" << endl;
-    // }
-
-    // {
-    //     const auto node =
-    //             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    //             "<story>"
-    //             "  <info my_property=\"prop_value\">"
-    //             "    <author>John Fleck</author>"
-    //             "    <date>June 2, 2002</date>"
-    //             "    <keyword>example</keyword>"
-    //             "  </info>"
-    //             "  <body>"
-    //             "    <headline>This is the headline</headline>"
-    //             "    <para>Para1</para>"
-    //             "    <para>Para2</para>"
-    //             "    <para>Para3</para>"
-    //             "    <nested1>"
-    //             "      <nested2>nested2 text фыв</nested2>"
-    //             "    </nested1>"
-    //             "  </body>"
-    //             "  <ebook/>"
-    //             "  <ebook/>"
-    //             "</story>"_xml;
-
-    //     const clock_t begin = clock();
-    //     constexpr auto TIMES = 100000;
-
-    //     std::string result;
-    //     for (size_t i = 0; i < TIMES; ++i) {
-    //         result += node.toString(false);
-    //     }
-
-    //     const clock_t end = clock();
-    //     const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-
-    //     cout << "Result size: " << result.size() << endl;
-    //     cout << "Average total serialize "
-    //          << TIMES << " times = " << elapsed_secs << " secs" << endl;
-    //     cout << "Average one serialization time = "
-    //          << elapsed_secs / TIMES << " secs" << endl;
-    // }
-
-    {
-        Node root {"root"};
-        root.addNode("child1", "value1");
-        root.addNode("child2", "value2");
-
-        assert(root.nodes()[0].name() == "child1");
-        assert(root.nodes()[0].text() == "value1");
-        assert(root.nodes()[1].name() == "child2");
-        assert(root.nodes()[1].text() == "value2");
-
-        root.findNodeXPath("child1").addNode("subchild1", "subvalue1");
-        assert(root.findNodeXPath("child1/subchild1"));
-        assert(root.findNodeXPath("child1/subchild1").text() == "subvalue1");
-    }
-
-    {
-        const Node root {"root", Node{"node3", "value3"}};
-        assert(root("node3").text() == "value3");
-    }
-
-    {
-        const Node root {"root", {{"node3", "value3"}}};
-        assert(root("node3").text() == "value3");
-    }
-
-    {
-        const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}}};
-        assert(root("node4").text() == "value4");
-    }
-
-    {
-        const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}, {"node5", "value5"}}};
-        assert(root("node5").text() == "value5");
-    }
-
-    {
-        const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}}, Node{"node5", "value5"}};
-        assert(root("node5").text() == "value5");
-    }
-
-    {
-        const Node root {"root", {{"node3", "value3"}}, Node{"node4", "value4"}, Node{"node5", "value5"}};
-        assert(root("node5").text() == "value5");
-    }
-
-    {
-        const Node root {"root", 5};
-        assert(root.text() == "5");
-    }
-
-    {
-        const Node root {"root", {{"node3", "value3"}}, Node{"node5", 5}};
-        assert(root("node5").text() == "5");
-    }
-
-    {
-        const Node root {"root", {{"node3", 3}}, Node{"node5", 5}};
-        assert(root("node3").text() == "3");
-        assert(root("node5").text() == "5");
-    }
-
-    {
-        const std::optional<Node> nonValidOptionalNode{};
-        const Node root {"root", {{"node3", 3}}, nonValidOptionalNode};
-        assert(root("node3").text() == "3");
-    }
-
-    {
-        const std::optional<Node> validOptionalNode  = Node {"OptionalNode", "OptionalNodeValue"};
-        const Node root {"root", {{"node3", 3}}, validOptionalNode};
-        assert(root("node3").text() == "3");
-        assert(root("OptionalNode").text() == "OptionalNodeValue");
-    }
-
-    {
-        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
-        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
-        const Node root {"root", {validOptionalNode4, validOptionalNode5}};
-        assert(root("OptionalNode4").text() == "4");
-        assert(root("OptionalNode5").text() == "5");
-    }
-
-    {
-        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
-        const Node root {"root", {validOptionalNode4}};
-        assert(root("OptionalNode4").text() == "4");
-    }
-
-    {
-        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
-        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
-        const Node root {"root", NodeList{{"node3", 3}}, validOptionalNode4, validOptionalNode5};
-        assert(root("OptionalNode4").text() == "4");
-        assert(root("OptionalNode5").text() == "5");
-    }
-
-    {
-        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
-        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
-        const Node root {"root", {validOptionalNode4, validOptionalNode5}, NodeList{{"node3", 3}}};
-        assert(root("OptionalNode4").text() == "4");
-        assert(root("OptionalNode5").text() == "5");
-    }
-
-    {
-        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
-        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
-        const Node root {"root", Node{"node3", 3}, validOptionalNode4, validOptionalNode5};
-        assert(root("node3").text() == "3");
-        assert(root("OptionalNode4").text() == "4");
-        assert(root("OptionalNode5").text() == "5");
-    }
-
-    {
-        const std::optional<Node> validOptionalNode4  = Node {"OptionalNode4", 4};
-        const std::optional<Node> validOptionalNode5  = Node {"OptionalNode5", 5};
-        const Node root {"root", {{"node3", 3}}, validOptionalNode4, validOptionalNode5};
-        assert(root("node3").text() == "3");
-        assert(root("OptionalNode4").text() == "4");
-        assert(root("OptionalNode5").text() == "5");
-    }
-
-    {
-        const Node root {"root", {{"node3", 3}, {"SeveralStrings", "firstString", "secondString"}}};
-        assert(root("node3").text() == "3");
-        assert(root("SeveralStrings").text() == "secondString");
-    }
-
-    {
-        const std::optional<std::string> validOptional  = "3";
-        const Node root {"root", Node{"node3", validOptional}};
-        assert(root("node3").text() == "3");
-    }
-
-    {
-        const std::optional<std::string> validOptional  = "3";
-        const Node root {"root", {{"node3", validOptional}, {"node4", "4"}}};
-        assert(root("node3").text() == "3");
-    }
-
-    {
-        const std::optional<std::string> validOptional  = "3";
-        const Node root {"root", {{"node4", "4"}, {"node3", validOptional}}};
-        assert(root("node3").text() == "3");
-    }
-
-    {
-        const std::optional<std::string> validOptional  = "3";
-        auto root = std::make_unique<Node>(Node{"root", {{"node4", "4"}, {"node3", validOptional}}});
-        assert((*root)("node3").text() == "3");
-
-        const auto cloned = root->clone(nullptr, nullptr);
-        root.reset();
-        assert(cloned("node3").text() == "3");
-    }
-
-    {
-        const std::optional<std::string> validOptional  = "3";
-        const Node root {"node3", validOptional, NodeType::ATTRIBUTE};
-        assert(root.text() == "3");
-    }
-
-    {
-        const std::optional<std::string> validOptional  = "3";
-        const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33"}}};
-        assert(root("node3").text() == "33");
-    }
-
-    {
-        const std::optional<std::string> validOptional  = "3";
-        const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33", Node{"node4", "4"}}}};
-        assert(root("node3").text() == "33");
-    }
+    EXPECT_TRUE(root.findNodeXPath("child1"));
+    EXPECT_EQ(root.findNodeXPath("children/subchild1").name(), "subchild1");
+    EXPECT_EQ(root.findNodeXPath("children/subchild1").text(), "subvalue1");
+    EXPECT_EQ(root.findNodeXPath("children/subchild2").text(), "subvalue2");
 }
+
+TEST(Main, AddNodeWithBraceInitializerList) {
+    const Node root {"root", Node{"node3", "value3"}};
+    EXPECT_TRUE(root("node3"));
+    EXPECT_EQ(root("node3").text(), "value3");
+}
+
+TEST(Main, AddNodeListWithOneNodeWithBraceInitializerList) {
+    const Node root {"root", {{"node3", "value3"}}};
+    EXPECT_TRUE(root("node3"));
+    EXPECT_EQ(root("node3").text(), "value3");
+}
+
+TEST(Main, AddNodeListWithTwoNodesWithBraceInitializerList) {
+    const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}}};
+    EXPECT_TRUE(root("node4"));
+    EXPECT_EQ(root("node4").text(), "value4");
+}
+
+TEST(Main, AddNodeListWithThreeNodesWithBraceInitializerList) {
+    const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}, {"node5", "value5"}}};
+    EXPECT_TRUE(root("node5"));
+    EXPECT_EQ(root("node5").text(), "value5");
+}
+
+TEST(Main, AddNodeListWithThreeNodesWithBraceInitializerListWithAnExplicitTypeName) {
+    const Node root {"root", {{"node3", "value3"}}, Node{"node4", "value4"}, Node{"node5", "value5"}};
+    EXPECT_TRUE(root("node5"));
+    EXPECT_EQ(root("node5").text(), "value5");
+}
+
+TEST(Main, CreateNodeWithIntegerValue) {
+    const Node root {"root", 5};
+    EXPECT_EQ(root.text(), "5");
+}
+
+TEST(Main, AddSubNodeListWhenOneOfTheNodesHasAnIntegerValue) {
+    const Node root {"root", {{"node3", "value3"}}, Node{"node5", 5}};
+    EXPECT_EQ(root("node5").text(), "5");
+}
+
+TEST(Main, AddSubNodeListWhenTwoOfTheNodesHasAnIntegerValue) {
+    const Node root {"root", {{"node3", 3}}, Node{"node5", 5}};
+    EXPECT_EQ(root("node3").text(), "3");
+    EXPECT_EQ(root("node5").text(), "5");
+}
+
+TEST(Main, AddNodeListWhenOneNodeHasIntegerValueAndAnotherHasNonValidOptionalNodeAndWillBeOmmited) {
+    const Node root {"root", {{"node3", 3}}, std::optional<Node>()};
+    EXPECT_EQ(root.nodes().size(), 1);
+    EXPECT_EQ(root("node3").text(), "3");
+}
+
+TEST(Main, AddNodeListWhenOneNodeHasIntegerValueAndAnotherHasValidOptionalNodeAndWillBeIncluded) {
+    const Node root {"root", {{"node3", 3}}, std::optional<Node>({"OptionalNode", "OptionalNodeValue"})};
+    EXPECT_EQ(root.nodes().size(), 2);
+    EXPECT_EQ(root("node3").text(), "3");
+    EXPECT_EQ(root("OptionalNode").text(), "OptionalNodeValue");
+}
+
+TEST(Main, AddTheListOfTwoValidOptionalNodes) {
+    const std::optional<Node> validOptionalNode4 = Node {"OptionalNode4", 4};
+    const std::optional<Node> validOptionalNode5 = Node {"OptionalNode5", 5};
+    const Node root {"root", {validOptionalNode4, validOptionalNode5}};;
+    EXPECT_EQ(root.nodes().size(), 2);
+    EXPECT_EQ(root("OptionalNode4").text(), "4");
+    EXPECT_EQ(root("OptionalNode5").text(), "5");
+}
+
+TEST(Main, AddTheListOfExactlyOneValidOptionalNode) {
+    const std::optional<Node> validOptionalNode4 = Node {"OptionalNode4", 4};
+    const Node root {"root", {validOptionalNode4}};
+    EXPECT_EQ(root.nodes().size(), 1);
+    EXPECT_EQ(root("OptionalNode4").text(), "4");
+}
+
+TEST(Main, AddTheListOfTheOnePlainNodeAndJustTwoOptionalNodes) {
+    const std::optional<Node> validOptionalNode4 = Node {"OptionalNode4", 4};
+    const std::optional<Node> validOptionalNode5 = Node {"OptionalNode5", 5};
+    const Node root {"root", {{"node3", 3}}, validOptionalNode4, validOptionalNode5};
+    EXPECT_EQ(root.nodes().size(), 3);
+    EXPECT_EQ(root("node3").text(), "3");
+    EXPECT_EQ(root("OptionalNode4").text(), "4");
+    EXPECT_EQ(root("OptionalNode5").text(), "5");
+}
+
+TEST(Main, AddTheListOfTheOnePlainNodeAtTheEndAndTwoOptionalNodesAsTheNodeList) {
+    const std::optional<Node> validOptionalNode4 = Node {"OptionalNode4", 4};
+    const std::optional<Node> validOptionalNode5 = Node {"OptionalNode5", 5};
+    const Node root {"root", {validOptionalNode4, validOptionalNode5}, NodeList{{"node3", 3}}};
+    EXPECT_EQ(root.nodes().size(), 3);
+    EXPECT_EQ(root("node3").text(), "3");
+    EXPECT_EQ(root("OptionalNode4").text(), "4");
+    EXPECT_EQ(root("OptionalNode5").text(), "5");
+}
+
+TEST(Main, AddOnePlainNodeAndTwoOptionalNodesToTheRoot) {
+    const std::optional<Node> validOptionalNode4 = Node {"OptionalNode4", 4};
+    const std::optional<Node> validOptionalNode5 = Node {"OptionalNode5", 5};
+    const Node root {"root", Node{"node3", 3}, validOptionalNode4, validOptionalNode5};
+    EXPECT_EQ(root.nodes().size(), 3);
+    EXPECT_EQ(root("node3").text(), "3");
+    EXPECT_EQ(root("OptionalNode4").text(), "4");
+    EXPECT_EQ(root("OptionalNode5").text(), "5");
+}
+
+TEST(Main, AdditionOfOneNodeAndThreeStringsWillLeadToTheTextValueOfTheLastString) {
+    const Node root {"root", {{"node3", 3}, {"SeveralStrings", "firstString", "secondString"}}};
+    EXPECT_EQ(root("node3").text(), "3");
+    EXPECT_EQ(root("SeveralStrings").text(), "secondString");
+}
+
+TEST(Main, AddNodeWithAValidOptionalValue) {
+    const std::optional<std::string> validOptional = "3";
+    const Node root {"root", Node{"node3", validOptional}};
+    EXPECT_EQ(root("node3").text(), "3");
+}
+
+TEST(Main, AddNodeWithAValidOptionalValueAndOneAnotherPlainNode) {
+    const std::optional<std::string> validOptional = "3";
+    const Node root {"root", {{"node3", validOptional}, {"node4", "4"}}};
+    EXPECT_EQ(root.nodes().size(), 2);
+    EXPECT_EQ(root("node3").text(), "3");
+}
+
+TEST(Main, AddNodeWithAValidOptionalValueAndOneAnotherPlainNodeInTheOppositeOrder) {
+    const std::optional<std::string> validOptional = "3";
+    const Node root {"root", {{"node4", "4"}, {"node3", validOptional}}};
+    EXPECT_EQ(root.nodes().size(), 2);
+    EXPECT_EQ(root("node3").text(), "3");
+}
+
+TEST(Main, TheOneCanCloneNodeToGetTheWholeIndependentCopyOfIt) {
+    const std::optional<std::string> validOptional  = "3";
+    auto root = std::make_unique<Node>(Node{"root", {{"node4", "4"}, {"node3", validOptional}}});
+    EXPECT_EQ((*root)("node3").text(), "3");
+
+    const auto cloned = root->clone(nullptr, nullptr);
+    root.reset();
+    EXPECT_EQ(cloned("node3").text(), "3");
+}
+
+TEST(Main, CreateANodeWithTheOptionalValueAsAnAttribute) {
+    const std::optional<std::string> validOptional  = "3";
+    const Node root {"node3", validOptional, NodeType::ATTRIBUTE};
+    EXPECT_EQ(root.text(), "3");
+}
+
+TEST(Main, CreateANodeWithTheOptionalValueAsAnAttributePlusAdditionalTextWithWillReplaceFormerOne) {
+    const std::optional<std::string> validOptional  = "3";
+    const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33"}}};
+    EXPECT_EQ(root("node3").text(), "33");
+}
+
+TEST(Main, CreateANodeWithTheOptionalValueAsAnAttributeAndAdditionalPlainSubNodeWhichWillBeAddedToTheRoot) {
+    const std::optional<std::string> validOptional  = "3";
+    const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33", Node{"node4", "4"}}}};
+    EXPECT_EQ(root("node3").text(), "33");
+    EXPECT_TRUE(root("node3")("node4"));
+}
+
+// void test_fn1()
+// {
+//     using namespace xml11;
+//     using namespace xml11::literals;
+
+//     {
+//         constexpr auto TIMES = 100000;
+//         std::vector<Node> nodes;
+//         nodes.reserve(TIMES);
+
+//         const clock_t begin = clock();
+
+//         for (size_t i = 0; i < TIMES; ++i) {
+//             nodes.push_back(
+//                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+//                 "<story>"
+//                 "  <info my_property=\"prop_value\">"
+//                 "    <author>John Fleck</author>"
+//                 "    <date>June 2, 2002</date>"
+//                 "    <keyword>example</keyword>"
+//                 "  </info>"
+//                 "  <body>"
+//                 "    <headline>This is the headline</headline>"
+//                 "    <para>Para1</para>"
+//                 "    <para>Para2</para>"
+//                 "    <para>Para3</para>"
+//                 "    <nested1>"
+//                 "      <nested2>nested2 text фыв</nested2>"
+//                 "    </nested1>"
+//                 "  </body>"
+//                 "  <ebook/>"
+//                 "  <ebook/>"
+//                 "</story>"_xml);
+//         }
+
+//         const clock_t end = clock();
+//         const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+//         cout << "Result size: " << nodes.size() << endl;
+//         cout << "Average total parsing time "
+//              << TIMES << " times = " << elapsed_secs << " secs" << endl;
+//         cout << "Average one parsing time = "
+//              << elapsed_secs / TIMES << " secs" << endl;
+//     }
+
+//     {
+//         const auto node =
+//                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+//                 "<story>"
+//                 "  <info my_property=\"prop_value\">"
+//                 "    <author>John Fleck</author>"
+//                 "    <date>June 2, 2002</date>"
+//                 "    <keyword>example</keyword>"
+//                 "  </info>"
+//                 "  <body>"
+//                 "    <headline>This is the headline</headline>"
+//                 "    <para>Para1</para>"
+//                 "    <para>Para2</para>"
+//                 "    <para>Para3</para>"
+//                 "    <nested1>"
+//                 "      <nested2>nested2 text фыв</nested2>"
+//                 "    </nested1>"
+//                 "  </body>"
+//                 "  <ebook/>"
+//                 "  <ebook/>"
+//                 "</story>"_xml;
+
+//         const clock_t begin = clock();
+//         constexpr auto TIMES = 100000;
+
+//         std::string result;
+//         for (size_t i = 0; i < TIMES; ++i) {
+//             result += node.toString(false);
+//         }
+
+//         const clock_t end = clock();
+//         const double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+//         cout << "Result size: " << result.size() << endl;
+//         cout << "Average total serialize "
+//              << TIMES << " times = " << elapsed_secs << " secs" << endl;
+//         cout << "Average one serialization time = "
+//              << elapsed_secs / TIMES << " secs" << endl;
+//     }
+// }
