@@ -190,9 +190,6 @@ public:
     {
         AddNode_(node, std::forward<Head>(head));
         AddNode_(node, std::forward<Tail>(tail)...);
-        if (node and (node.type() == NodeType::OPTIONAL or node.type() == NodeType::OPTIONAL_ATTRIBUTE) and node.text().empty() and node.nodes().empty()) {
-            node.pimpl = nullptr;
-        }
     }
 
 public:
@@ -381,12 +378,11 @@ public:
         if (!!(*this)) {
             if (param) {
                 this->value(*std::forward<T>(param));
+                this->type(type);
+                AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
             }
-            this->type(type);
-            AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
-            if (pimpl and (type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and text().empty() and nodes().empty()) {
+            else {
                 pimpl = nullptr;
-                return;
             }
         }
     }
@@ -412,12 +408,11 @@ public:
         if (!!(*this)) {
             if (param) {
                 this->value(std::to_string(*std::forward<T>(param)));
+                this->type(type);
+                AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
             }
-            this->type(type);
-            AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
-            if (pimpl and (type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and text().empty() and nodes().empty()) {
+            else {
                 pimpl = nullptr;
-                return;
             }
         }
     }
