@@ -652,6 +652,23 @@ TEST(Main, CreateANodeWithNonValidOptionalValueAndOptionalType) {
     EXPECT_FALSE(root);
 }
 
+TEST(Main, CreateANodeWithValidOptionalIntValueAndOptionalType) {
+    const std::optional<int> nonValidOptional{3};
+    const Node root {"root", nonValidOptional, NodeType::OPTIONAL};
+    EXPECT_TRUE(root);
+}
+
+TEST(Main, CreateANodeWithNonValidOptionalIntValueAndOptionalType) {
+    const std::optional<int> nonValidOptional{};
+    const Node root {"root", nonValidOptional, NodeType::OPTIONAL};
+    EXPECT_FALSE(root);
+}
+
+TEST(Main, CreateANodeWithIntegerValueAndOptionalType) {
+    const Node root {"root", 3, NodeType::OPTIONAL};
+    EXPECT_TRUE(root);
+}
+
 // void test_fn1()
 // {
 //     using namespace xml11;

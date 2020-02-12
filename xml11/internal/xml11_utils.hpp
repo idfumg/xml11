@@ -43,7 +43,25 @@ template<class T, class U> using mp_same_from_opt = std::is_same<std::decay_t<de
 template<class T> using mp_integral = std::is_integral<std::decay_t<T>>;
 template<class T> using mp_like_pointer = detail::mp_like_pointer_impl<T>;
 template<class T> using mp_can_be_string = detail::mp_can_be_string_impl<T>;
-template<class T> using mp_can_be_string_from_opt = detail::mp_can_be_string_from_opt_impl<T>;
+//template<class T> using mp_can_be_string_from_opt = detail::mp_can_be_string_from_opt_impl<T>;
+template<class T> using mp_can_be_string_from_opt =
+    std::is_same<
+        detail::mp_raw<
+            decltype(
+                std::to_string(
+                    std::declval<
+                        detail::mp_raw<
+                            decltype(
+                                *std::declval<
+                                    detail::mp_raw<T>
+                                >()
+                            )
+                        >
+                    >()
+                )
+            )
+        >,
+        std::string>;
 
 } // anonymous namespace
 
