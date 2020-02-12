@@ -650,7 +650,7 @@ TEST(Main, CreateANodeWithAnNonEmptyOptionalValueAndOptionalType) {
 TEST(Main, CreateANodeWithAnEmptyOptionalValueAndOptionalType) {
     const std::optional<std::string> validOptional = "";
     const Node root {"root", validOptional, NodeType::OPTIONAL};
-    EXPECT_TRUE(root);
+    EXPECT_FALSE(root);
 }
 
 TEST(Main, CreateANodeWithNonValidOptionalValueAndOptionalType) {
