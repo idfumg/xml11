@@ -361,22 +361,29 @@ public:
         class T,
         class ... Args,
         class = typename std::enable_if<
-            mp_like_pointer<T>::value,
+            mp_like_pointer<T>::value &&
+            !mp_same<T, std::string>::value &&
+            !mp_same<T, char*>::value &&
+            mp_same_from_opt<T, std::string>::value,
+            //mp_can_be_string_from_opt<T>::value,
             void
             >::type,
         class = void,
         class = void
         >
     inline Node(std::string name, T&& param, const NodeType type, Args&& ... args)
-        : Node(std::move(name), std::forward<T>(param))
+        : Node(std::move(name))
     {
-        if (not pimpl) {
-            pimpl = nullptr;
-            return;
-        }
         if (!!(*this)) {
+            if (param) {
+                this->value(std::string{*std::forward<T>(param)});
+            }
             this->type(type);
             AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+            if (type == NodeType::OPTIONAL and text().empty()) {
+                pimpl = nullptr;
+                return;
+            }
         }
     }
 
@@ -444,7 +451,7 @@ public:
             this->value(std::to_string(*param));
         }
         else {
-            this->pimpl = nullptr;
+            this->value(std::string());
         }
     }
 
@@ -466,7 +473,7 @@ public:
             this->value(*param);
         }
         else {
-            this->pimpl = nullptr;
+            this->value(std::string());
         }
     }
 
