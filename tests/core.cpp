@@ -634,10 +634,17 @@ TEST(Main, CreateANodeWithANonValidOptionalValue) {
 }
 
 TEST(Main, CreateANodeWithAnEmptyOptionalValueAndElementType) {
-    const std::optional<std::string> validOptional = "";
+    const std::optional<std::string> validOptional = "123";
     const Node root {"root", validOptional, NodeType::ELEMENT};
     EXPECT_TRUE(root);
-    EXPECT_EQ(root.text(), "");
+    EXPECT_EQ(root.text(), "123");
+}
+
+TEST(Main, CreateANodeWithAnNonEmptyOptionalValueAndOptionalType) {
+    const std::optional<std::string> validOptional = "123";
+    const Node root {"root", validOptional, NodeType::OPTIONAL};
+    EXPECT_TRUE(root);
+    EXPECT_EQ(root.text(), "123");
 }
 
 TEST(Main, CreateANodeWithAnEmptyOptionalValueAndOptionalType) {
@@ -667,6 +674,25 @@ TEST(Main, CreateANodeWithNonValidOptionalIntValueAndOptionalType) {
 TEST(Main, CreateANodeWithIntegerValueAndOptionalType) {
     const Node root {"root", 3, NodeType::OPTIONAL};
     EXPECT_TRUE(root);
+    EXPECT_EQ(root.text(), "3");
+}
+
+TEST(Main, CreateSeveralOptionalNodesAndSeveralPlainOnes) {
+    const std::optional<std::string> ppr = "PprValue";
+    const std::optional<std::string> ipp = "IppValue";
+    const auto root = xml11::Node {"root", NodeList {
+            {"agn", "AgnValue"},
+            {"pult", "PultValue"},
+            {"opr", "OprValue"},
+            {"ppr", ppr, NodeType::OPTIONAL},
+            {"ipp", ipp, NodeType::OPTIONAL},
+    }};
+
+    EXPECT_TRUE(root);
+    EXPECT_TRUE(root("ppr"));
+    EXPECT_TRUE(root("ipp"));
+    EXPECT_EQ(root("ppr").text(), "PprValue");
+    EXPECT_EQ(root("ipp").text(), "IppValue");
 }
 
 // void test_fn1()
