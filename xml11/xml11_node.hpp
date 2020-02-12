@@ -105,7 +105,6 @@ public:
 
     static inline void AddNode_(Node& node, const NodeType type)
     {
-        std::cout << __FUNCTION__ << std::endl;
         node.type(type);
     }
 
@@ -259,7 +258,6 @@ public:
 
     inline Node(std::string name, std::string value, const NodeType type)
     {
-        std::cout << "OPTIONAL NodeType constructor" << std::endl;
         if (type == NodeType::OPTIONAL and value.empty()) {
             return;
         }
@@ -356,7 +354,6 @@ public:
     inline Node(std::string name, std::string value, const NodeType type, Args&& ... args)
         : Node(std::move(name), std::move(value), type)
     {
-        std::cout << __FUNCTION__ << ": " << __LINE__ << std::endl;
         AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
     }
 
@@ -373,8 +370,7 @@ public:
     inline Node(std::string name, T&& param, const NodeType type, Args&& ... args)
         : Node(std::move(name), std::forward<T>(param))
     {
-        std::cout << __FUNCTION__ << ": " << __LINE__ << std::endl;
-        if (type == NodeType::OPTIONAL and (not pimpl or text().empty())) {
+        if (not pimpl) {
             pimpl = nullptr;
             return;
         }

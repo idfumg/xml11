@@ -616,7 +616,7 @@ TEST(Main, CreateANodeWithAnEmptyValueAndNodeTypeElement) {
 
 TEST(Main, CreateANodeWithAnEmptyValueAndNodeTypeOptional) {
     const Node root  = Node ("root", "", NodeType::OPTIONAL);
-    EXPECT_FALSE(root);
+    EXPECT_TRUE(root);
 }
 
 TEST(Main, CreateANodeWithAnEmptyOptionalValue) {
@@ -627,8 +627,8 @@ TEST(Main, CreateANodeWithAnEmptyOptionalValue) {
 }
 
 TEST(Main, CreateANodeWithANonValidOptionalValue) {
-    const std::optional<std::string> validOptional{};
-    const Node root {"root", validOptional};
+    const std::optional<std::string> nonValidOptional{};
+    const Node root {"root", nonValidOptional};
     EXPECT_FALSE(root);
 }
 
@@ -642,12 +642,12 @@ TEST(Main, CreateANodeWithAnEmptyOptionalValueAndElementType) {
 TEST(Main, CreateANodeWithAnEmptyOptionalValueAndOptionalType) {
     const std::optional<std::string> validOptional = "";
     const Node root {"root", validOptional, NodeType::OPTIONAL};
-    EXPECT_FALSE(root);
+    EXPECT_TRUE(root);
 }
 
 TEST(Main, CreateANodeWithNonValidOptionalValueAndOptionalType) {
-    const std::optional<std::string> validOptional{};
-    const Node root {"root", validOptional, NodeType::OPTIONAL};
+    const std::optional<std::string> nonValidOptional{};
+    const Node root {"root", nonValidOptional, NodeType::OPTIONAL};
     EXPECT_FALSE(root);
 }
 
