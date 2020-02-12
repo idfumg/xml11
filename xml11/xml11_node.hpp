@@ -4,6 +4,7 @@ enum class NodeType : char {
     ELEMENT = 0,
     ATTRIBUTE = 1,
     OPTIONAL = 2,
+    OPTIONAL_ATTRIBUTE = 3,
 };
 
 #include "internal/xml11_utils.hpp"
@@ -189,7 +190,7 @@ public:
     {
         AddNode_(node, std::forward<Head>(head));
         AddNode_(node, std::forward<Tail>(tail)...);
-        if (node and node.type() == NodeType::OPTIONAL and node.text().empty() and node.nodes().empty()) {
+        if (node and (node.type() == NodeType::OPTIONAL or node.type() == NodeType::OPTIONAL_ATTRIBUTE) and node.text().empty() and node.nodes().empty()) {
             node.pimpl = nullptr;
         }
     }
@@ -261,7 +262,7 @@ public:
 
     inline Node(std::string name, std::string value, const NodeType type)
     {
-        if (type == NodeType::OPTIONAL and value.empty()) {
+        if ((type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and value.empty()) {
             return;
         }
 
@@ -383,7 +384,7 @@ public:
             }
             this->type(type);
             AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
-            if (pimpl and type == NodeType::OPTIONAL and text().empty() and nodes().empty()) {
+            if (pimpl and (type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and text().empty() and nodes().empty()) {
                 pimpl = nullptr;
                 return;
             }
@@ -414,7 +415,7 @@ public:
             }
             this->type(type);
             AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
-            if (pimpl and type == NodeType::OPTIONAL and text().empty() and nodes().empty()) {
+            if (pimpl and (type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and text().empty() and nodes().empty()) {
                 pimpl = nullptr;
                 return;
             }
@@ -892,7 +893,7 @@ public:
 
     inline Node& addNode(std::string name, std::string value, const NodeType type)
     {
-        if (type == NodeType::OPTIONAL and value.empty()) {
+        if ((type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and value.empty()) {
             return *this;
         }
 

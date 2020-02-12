@@ -96,6 +96,7 @@ void ConvertXmlToText_(
 
             root->append_node(new_node);
             break;
+        case NodeType::OPTIONAL_ATTRIBUTE:
         case NodeType::ATTRIBUTE:
             if (not node) {
                 break;

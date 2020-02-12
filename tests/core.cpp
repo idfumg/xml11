@@ -680,12 +680,14 @@ TEST(Main, CreateANodeWithIntegerValueAndOptionalType) {
 TEST(Main, CreateSeveralOptionalNodesAndSeveralPlainOnes) {
     const std::optional<std::string> ppr = "PprValue";
     const std::optional<std::string> ipp = "IppValue";
+    const std::optional<std::string> attr = "AttrValue";
     const auto root = xml11::Node {"root", NodeList {
             {"agn", "AgnValue"},
             {"pult", "PultValue"},
             {"opr", "OprValue"},
             {"ppr", ppr, NodeType::OPTIONAL},
             {"ipp", ipp, NodeType::OPTIONAL},
+            {"attr", attr, NodeType::OPTIONAL_ATTRIBUTE},
     }};
 
     EXPECT_TRUE(root);
@@ -693,7 +695,10 @@ TEST(Main, CreateSeveralOptionalNodesAndSeveralPlainOnes) {
     EXPECT_TRUE(root("ipp"));
     EXPECT_EQ(root("ppr").text(), "PprValue");
     EXPECT_EQ(root("ipp").text(), "IppValue");
+    EXPECT_EQ(root("attr").text(), "AttrValue");
     EXPECT_TRUE(root.toString(false).find("IppValue") != std::string::npos);
+    EXPECT_TRUE(root.toString(false).find("AttrValue") != std::string::npos);
+    std::cout << root.toString(true) << std::endl;
 }
 
 // void test_fn1()

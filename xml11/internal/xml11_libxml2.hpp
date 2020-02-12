@@ -125,7 +125,10 @@ static inline int ConvertXmlToText__(
     }
 
     for (const auto& node : root->nodes()) {
-        if (node->type() == NodeType::ATTRIBUTE) {
+        if (not node) {
+            continue;
+        }
+        if (node->type() == NodeType::ATTRIBUTE or node->type() == NodeType::OPTIONAL_ATTRIBUTE) {
             if (valueFilter) {
                 if (xmlTextWriterWriteAttribute(
                         writer,
@@ -146,7 +149,10 @@ static inline int ConvertXmlToText__(
     }
 
     for (const auto& node : root->nodes()) {
-        if (node->type() != NodeType::ATTRIBUTE) {
+        if (not node) {
+            continue;
+        }
+        if (node->type() == NodeType::ELEMENT or node->type() == NodeType::OPTIONAL) {
             if (ConvertXmlToText__(node, writer, valueFilter) < 0) {
                 return -1;
             }
