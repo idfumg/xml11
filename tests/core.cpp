@@ -698,7 +698,6 @@ TEST(Main, CreateSeveralOptionalNodesAndSeveralPlainOnes) {
     EXPECT_EQ(root("attr").text(), "AttrValue");
     EXPECT_TRUE(root.toString(false).find("IppValue") != std::string::npos);
     EXPECT_TRUE(root.toString(false).find("AttrValue") != std::string::npos);
-    std::cout << root.toString(true) << std::endl;
 }
 
 // void test_fn1()
