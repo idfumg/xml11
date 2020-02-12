@@ -602,6 +602,55 @@ TEST(Main, CreateANodeWithTheOptionalValueAsAnAttributeAndAdditionalPlainSubNode
     EXPECT_TRUE(root("node3")("node4"));
 }
 
+TEST(Main, CreateANodeWithAnEmptyValue) {
+    const Node root {"root", ""};
+    EXPECT_TRUE(root);
+    EXPECT_EQ(root.text(), "");
+}
+
+TEST(Main, CreateANodeWithAnEmptyValueAndNodeTypeElement) {
+    const Node root {"root", "", NodeType::ELEMENT};
+    EXPECT_TRUE(root);
+    EXPECT_EQ(root.text(), "");
+}
+
+TEST(Main, CreateANodeWithAnEmptyValueAndNodeTypeOptional) {
+    const Node root  = Node ("root", "", NodeType::OPTIONAL);
+    EXPECT_FALSE(root);
+}
+
+TEST(Main, CreateANodeWithAnEmptyOptionalValue) {
+    const std::optional<std::string> validOptional = "";
+    const Node root {"root", validOptional};
+    EXPECT_TRUE(root);
+    EXPECT_EQ(root.text(), "");
+}
+
+TEST(Main, CreateANodeWithANonValidOptionalValue) {
+    const std::optional<std::string> validOptional{};
+    const Node root {"root", validOptional};
+    EXPECT_FALSE(root);
+}
+
+TEST(Main, CreateANodeWithAnEmptyOptionalValueAndElementType) {
+    const std::optional<std::string> validOptional = "";
+    const Node root {"root", validOptional, NodeType::ELEMENT};
+    EXPECT_TRUE(root);
+    EXPECT_EQ(root.text(), "");
+}
+
+TEST(Main, CreateANodeWithAnEmptyOptionalValueAndOptionalType) {
+    const std::optional<std::string> validOptional = "";
+    const Node root {"root", validOptional, NodeType::OPTIONAL};
+    EXPECT_FALSE(root);
+}
+
+TEST(Main, CreateANodeWithNonValidOptionalValueAndOptionalType) {
+    const std::optional<std::string> validOptional{};
+    const Node root {"root", validOptional, NodeType::OPTIONAL};
+    EXPECT_FALSE(root);
+}
+
 // void test_fn1()
 // {
 //     using namespace xml11;
