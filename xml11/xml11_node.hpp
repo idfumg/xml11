@@ -189,7 +189,7 @@ public:
     {
         AddNode_(node, std::forward<Head>(head));
         AddNode_(node, std::forward<Tail>(tail)...);
-        if (node and node.type() == NodeType::OPTIONAL and node.text().empty()) {
+        if (node and node.type() == NodeType::OPTIONAL and node.text().empty() and node.nodes().empty()) {
             node.pimpl = nullptr;
         }
     }
@@ -383,7 +383,7 @@ public:
             }
             this->type(type);
             AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
-            if (pimpl and type == NodeType::OPTIONAL and text().empty()) {
+            if (pimpl and type == NodeType::OPTIONAL and text().empty() and nodes().empty()) {
                 pimpl = nullptr;
                 return;
             }
@@ -414,7 +414,7 @@ public:
             }
             this->type(type);
             AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
-            if (pimpl and type == NodeType::OPTIONAL and text().empty()) {
+            if (pimpl and type == NodeType::OPTIONAL and text().empty() and nodes().empty()) {
                 pimpl = nullptr;
                 return;
             }

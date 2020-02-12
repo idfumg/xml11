@@ -693,6 +693,7 @@ TEST(Main, CreateSeveralOptionalNodesAndSeveralPlainOnes) {
     EXPECT_TRUE(root("ipp"));
     EXPECT_EQ(root("ppr").text(), "PprValue");
     EXPECT_EQ(root("ipp").text(), "IppValue");
+    EXPECT_TRUE(root.toString(false).find("IppValue") != std::string::npos);
 }
 
 // void test_fn1()

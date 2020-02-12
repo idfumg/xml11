@@ -146,7 +146,7 @@ static inline int ConvertXmlToText__(
     }
 
     for (const auto& node : root->nodes()) {
-        if (node->type() == NodeType::ELEMENT) {
+        if (node->type() != NodeType::ATTRIBUTE) {
             if (ConvertXmlToText__(node, writer, valueFilter) < 0) {
                 return -1;
             }

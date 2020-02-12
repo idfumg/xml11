@@ -74,7 +74,11 @@ void ConvertXmlToText_(
 
     for (const auto& node : nodeImpl->nodes()) {
         switch (node->type()) {
+        case NodeType::OPTIONAL:
         case NodeType::ELEMENT:
+            if (not node) {
+                break;
+            }
             new_node = doc.allocate_node(
                     node_element,
                     node->name().c_str(),
@@ -93,12 +97,13 @@ void ConvertXmlToText_(
             root->append_node(new_node);
             break;
         case NodeType::ATTRIBUTE:
+            if (not node) {
+                break;
+            }
             new_attribute = doc.allocate_attribute(
                     node->name().c_str(),
                     valueFilter ? GenerateString(node->text(), valueFilter).c_str() : node->text().c_str());
             root->append_attribute(new_attribute);
-            break;
-        case NodeType::OPTIONAL:
             break;
         }
     }
