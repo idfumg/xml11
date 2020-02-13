@@ -378,7 +378,8 @@ public:
         if (!!(*this)) {
             if (param) {
                 this->value(*std::forward<T>(param));
-                if ((type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and this->text().empty()) {
+                if ((type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and
+                    this->text().empty() and this->nodes().empty()) {
                     pimpl = nullptr;
                     return;
                 }
@@ -412,7 +413,8 @@ public:
         if (!!(*this)) {
             if (param) {
                 this->value(std::to_string(*std::forward<T>(param)));
-                if ((type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and this->text().empty()) {
+                if ((type == NodeType::OPTIONAL or type == NodeType::OPTIONAL_ATTRIBUTE) and
+                    this->text().empty() and this->nodes().empty()) {
                     pimpl = nullptr;
                     return;
                 }
