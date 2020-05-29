@@ -10,6 +10,8 @@ namespace {
 #define CreateErrorText(param) \
     (std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": Error in " + (param));
 
+static const size_t parseOptions = XML_PARSE_NOBLANKS | XML_PARSE_HUGE;
+
 using BufferType = std::decay_t<decltype(xmlBufferCreate())>;
 using WriterType = std::decay_t<decltype(xmlNewTextWriterMemory({}, {}))>;
 using ReaderType = std::decay_t<decltype(xmlReaderForMemory({}, {}, {}, {}, {}))>;
@@ -75,7 +77,7 @@ static inline WriterType* CreateWriter(const BufferTypePtr& buffer) noexcept
 
 static inline ReaderType* CreateReader(const std::string& text) noexcept
 {
-    return new ReaderType(xmlReaderForMemory(text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS));
+    return new ReaderType(xmlReaderForMemory(text.data(), text.size(), NULL, NULL, parseOptions));
 }
 
 static inline BufferTypePtr GetXmlBuffer(const bool useCaching) noexcept
@@ -104,7 +106,7 @@ static inline ReaderTypePtr GetXmlReader(const bool useCaching, const std::strin
     if (useCaching) {
         static ReaderTypePtr reader = nullptr;
         if (reader) { // reuse xml text reader instance
-            xmlReaderNewMemory(*reader, text.data(), text.size(), NULL, NULL, XML_PARSE_NOBLANKS);
+            xmlReaderNewMemory(*reader, text.data(), text.size(), NULL, NULL, parseOptions);
         }
         else {
             reader = ReaderTypePtr(CreateReader(text), FreeXmlReader);
