@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.3.2)
 project(xml11)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-   set(CXXFLAGS "-Wold-style-cast -pedantic-errors -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -I/usr/include/libxml2 -I./xml11 -lxml2")
+   set(CXXFLAGS "-Wold-style-cast -pedantic-errors -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -I/usr/include/libxml2 -I./xml11 -lxml2 -I/Library/Developer/CommandLineTools/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include/ -L/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib")
 endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-   set(CXXFLAGS "-fno-omit-frame-pointer -g -fsanitize=address -Wold-style-cast -pedantic-errors -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -I/usr/include/libxml2 -I./xml11 -I. -lxml2")
+   set(CXXFLAGS "-fno-omit-frame-pointer -g -fsanitize=address -Wold-style-cast -pedantic-errors -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -I/usr/include/libxml2 -I./xml11 -I. -lxml2 -I/Library/Developer/CommandLineTools/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include/ -L/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib")
  endif()
 
  if (NOT CONFIGURED_ONCE)

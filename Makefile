@@ -1,15 +1,13 @@
-test: xml11/xml11.hpp xml11/xml11_libxml2.hpp test.cpp
-	$(CXX) -Wold-style-cast -pedantic-errors -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -I/usr/include/libxml2 -I./xml11 -lxml2 test.cpp -o test
+LIBS=-lgtest -lxml2 -pthread
+FLAGS=-pedantic-errors -Wno-undef-prefix -Wno-old-style-cast -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -Wno-sign-compare
+CLANG_FLAGS=-fno-omit-frame-pointer -g -fsanitize=address
+SOURCES=tests/core.cpp tests/main.cpp
 
-test_clang: xml11/xml11.hpp xml11/xml11_libxml2.hpp test_declarative.cpp
-	clang++ -fno-omit-frame-pointer -g -fsanitize=address -Wold-style-cast -pedantic-errors -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -I/usr/include/libxml2 -I./xml11 -I. -lxml2 test.cpp -o test
-
-test_declarative:
-	$(CXX) -Wold-style-cast -pedantic-errors -Wall -Werror -Wextra -ansi -Wshadow -Weffc++ -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -I/usr/include/libxml2 -I./xml11 -lxml2 test_declarative.cpp -o test_declarative
+test: xml11/xml11.hpp tests/main.cpp
+	$(CXX) ${FLAGS} ${CLANG_FLAGS} ${SOURCES} -Ixml11 ${LIBS} -o test
 
 clean:
 	if [ -e test ]; then rm test; fi
-	if [ -e test_declarative ]; then rm test_declarative; fi
 	rm -fr *.o
 
 .PHONY: clean

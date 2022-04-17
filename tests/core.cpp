@@ -1,9 +1,7 @@
-#include "xml11/xml11.hpp"
+#include "../xml11/xml11.hpp"
 
 #include "gtest/gtest.h"
 
-using std::cout;
-using std::endl;
 using namespace testing;
 using namespace xml11;
 using namespace xml11::literals;
