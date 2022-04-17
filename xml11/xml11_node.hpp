@@ -478,6 +478,7 @@ public:
         class=typename std::enable_if<
             !mp_same<T, std::string>::value &&
             !mp_same<T, char*>::value &&
+            !mp_same<T, const char*>::value &&
             !mp_same_from_opt<T, std::string>::value &&
             mp_can_be_string_from_opt<T>::value,
             T
