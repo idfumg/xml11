@@ -52,10 +52,10 @@ public:
 
     template<
         class Head,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
             CanBeDereferenced<Head>::value,
             void
-            >::type,
+            >,
         class = void
         >
     static inline void AddNode_(Node& node, Head&& head)
@@ -67,10 +67,10 @@ public:
 
     template<
         class T,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
             IsSame<T, std::string>::value,
             void
-            >::type,
+            >,
         class = void,
         class = void
         >
@@ -81,14 +81,11 @@ public:
 
     template<
         class T,
-        class = typename std::enable_if<
-            !IsSame<T, Node>::value &&
-            !IsSame<T, NodeList>::value &&
-            !IsSame<T, std::string>::value &&
-            !IsSame<T, char*>::value &&
-            mp_can_be_string<T>::value,
+        class = std::enable_if_t<
+            NoneOf<T, Node, NodeList, std::string, char*> &&
+            ConvertibleToString<T>::value,
             void
-            >::type
+            >
         >
     static inline void AddNode_(Node& node, T&& value)
     {
@@ -109,10 +106,10 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
             IsSame<T, Node>::value,
             void
-            >::type
+            >
         >
     static inline void AddNode_(Node& node, T&& head)
     {
@@ -122,10 +119,10 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
             IsSame<T, NodeList>::value,
             void
-            >::type,
+            >,
         class = void
         >
     static inline void AddNode_(Node& node, T&& head)
@@ -136,10 +133,10 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
             CanBeDereferenced<T>::value,
             void
-            >::type
+            >
         >
     static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
     {
@@ -150,10 +147,10 @@ public:
 
     template<
         class T,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
             IsSame<T, Node>::value,
             void
-            >::type
+            >
         >
     static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
     {
@@ -162,10 +159,10 @@ public:
 
     template<
         class T,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
             IsSame<T, NodeList>::value,
             void
-            >::type,
+            >,
         class = void
         >
     static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
@@ -286,7 +283,7 @@ public:
 
     template<
         class ... Args,
-        class = std::enable_if<
+        class = std::enable_if_t<
             !IsEmpty<Args...>,
             void
             >
@@ -300,7 +297,7 @@ public:
     template<
         class T,
         class ... Args,
-        class = std::enable_if<
+        class = std::enable_if_t<
             CanBeDereferenced<T>::value &&
             IsEmpty<Args...>,
             void
@@ -317,7 +314,7 @@ public:
     template<
         class T,
         class ... Args,
-        class = std::enable_if<
+        class = std::enable_if_t<
             CanBeDereferenced<T>::value &&
             !IsEmpty<Args...>,
             void
@@ -331,7 +328,7 @@ public:
 
     template<
         class ... Args,
-        class = std::enable_if<
+        class = std::enable_if_t<
             !IsEmpty<Args...>,
             void
             >
@@ -359,10 +356,9 @@ public:
         class T,
         class ... Args,
         class = std::enable_if_t<
+            NoneOf<T, std::string, char*> &&
             CanBeDereferenced<T>::value &&
-            !IsSame<T, std::string>::value &&
-            !IsSame<T, char*>::value &&
-            CanBeConvertedToBool<T>::value &&
+            ConvertibleToBool<T>::value &&
             IsSameAfterDereference<T, std::string>::value,
             void
         >,
@@ -392,14 +388,13 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
+        class = std::enable_if_t<
+            NoneOf<T, std::string, char*> &&
             CanBeDereferenced<T>::value &&
-            !IsSame<T, std::string>::value &&
-            !IsSame<T, char*>::value &&
-            std::is_convertible_v<bool, T> &&
-            mp_can_be_string_from_opt<T>::value,
+            ConvertibleToStringFromOptional<T>::value &&
+            std::is_convertible_v<bool, T>,
             void
-            >::type,
+            >,
         class = void,
         class = void,
         class = void
@@ -428,7 +423,7 @@ public:
         class T,
         class ... Args,
         class = std::enable_if_t<
-            (IsSame<T, Node>::value || IsSame<T, NodeList>::value) &&
+            OneOf<T, Node, NodeList> &&
             !IsEmpty<Args...>,
             void
             >,
@@ -444,7 +439,7 @@ public:
         class T,
         class ... Args,
         class = std::enable_if_t<
-            IsIntegral<T>::value &&
+            std::is_integral<std::decay_t<T>>::value &&
             IsEmpty<Args...>,
             void
             >
@@ -459,7 +454,7 @@ public:
         class T,
         class ... Args,
         class = std::enable_if_t<
-            IsIntegral<T>::value &&
+            std::is_integral<std::decay_t<T>>::value &&
             !IsEmpty<Args...>,
             void
             >
@@ -472,14 +467,11 @@ public:
 
     template<
         class T,
-        class=typename std::enable_if<
-            !IsSame<T, std::string>::value &&
-            !IsSame<T, char*>::value &&
-            !IsSame<T, const char*>::value &&
+        class=std::enable_if_t<
+            NoneOf<T, std::string, char*, const char*> &&
             !IsSameAfterDereference<T, std::string>::value &&
-            mp_can_be_string_from_opt<T>::value,
-            T
-            >::type,
+            ConvertibleToStringFromOptional<T>::value,
+            T>,
         class=void
         >
     inline Node(std::string name, const T& param)
@@ -495,12 +487,10 @@ public:
 
     template<
         class T,
-        class=typename std::enable_if<
-            !IsSame<T, std::string>::value &&
-            !IsSame<T, char*>::value &&
+        class=std::enable_if_t<
+            NoneOf<T, std::string, char*> &&
             IsSameAfterDereference<T, std::string>::value,
-            T
-            >::type,
+            T>,
         class=void,
         class=void
         >
@@ -517,11 +507,7 @@ public:
 
     template<
         class T,
-        class=typename std::enable_if<
-            mp_can_be_string<T>::value,
-            T
-            >::type
-        >
+        class = ConvertibleToString<T>>
     Node& addNode(std::string name, T&& value)
     {
         return addNode(std::move(name), std::to_string(std::forward<T>(value)));

@@ -9,64 +9,19 @@ namespace xml11 {
 
 namespace {
 
-namespace detail {
-
-template<class T, class = std::enable_if_t<decltype(std::to_string(std::declval<std::decay_t<T>>()), true)(true), void>>
-struct mp_can_be_string_impl {
-    static const bool value = true;
-};
-
-template<class T, class = std::enable_if_t<decltype(std::to_string(*std::declval<std::decay_t<T>>()), true)(true), void>>
-struct mp_can_be_string_from_opt_impl {
-    static const bool value = true;
-};
-
-} // namespace detail
-
-template<class ... Ts> inline constexpr auto IsEmpty = sizeof...(Ts) == 0;
-
-template<class T, class U = std::decay_t<decltype(*std::declval<std::decay_t<T>>())>>
-struct TypeAfterDereferenceImpl {
-    using type = U;
-};
-template<class T> using TypeAfterDereferenceT = typename TypeAfterDereferenceImpl<T>::type;
-
-template<class T, class = std::enable_if_t<decltype(*std::declval<std::decay_t<T>>(), true)(true), void>>
-struct CanBeDereferencedImpl {
-    static const bool value = true;
-};
-template<class T> using CanBeDereferenced = CanBeDereferencedImpl<T>;
-
-template<class T, class = std::enable_if_t<decltype(static_cast<bool>(std::declval<std::decay_t<T>>())){true}, void>>
-struct CanBeConvertedToBoolImpl {
-    static const bool value = true;
-};
-template<class T> using CanBeConvertedToBool = CanBeConvertedToBoolImpl<T>;
-
+template<class T> T ExpressionType(T&& args);
+template<class T> inline static constexpr std::true_type CheckExpression(T&& arg);
+template<class T> using CreateValue = std::decay_t<T>;
+template<class T> using TypeAfterDereference = decltype(ExpressionType(*CreateValue<T>()));
+template<class T> using CanBeDereferenced = decltype(CheckExpression(*CreateValue<T>()));
+template<class T> using ConvertibleToBool = decltype(CheckExpression(static_cast<bool>(CreateValue<T>())));
+template<class T> using ConvertibleToString = decltype(CheckExpression(std::to_string(CreateValue<T>())));
+template<class T> using ConvertibleToStringFromOptional = decltype(CheckExpression(std::to_string(*CreateValue<T>())));
 template<class T, class U> using IsSame = std::is_same<std::decay_t<T>, std::decay_t<U>>;
-template<class T, class U> using IsSameAfterDereference = IsSame<TypeAfterDereferenceT<T>, U>;
-template<class T> using IsIntegral = std::is_integral<std::decay_t<T>>;
-// template<class T> inline constexpr auto CanBeUsedAsBool = decltype(static_cast<bool>(std::declval<std::decay_t<T>>())){true};
-template<class T> using mp_can_be_string = detail::mp_can_be_string_impl<T>;
-//template<class T> using mp_can_be_string_from_opt = detail::mp_can_be_string_from_opt_impl<T>;
-template<class T> using mp_can_be_string_from_opt =
-    std::is_same<
-        std::decay_t<
-            decltype(
-                std::to_string(
-                    std::declval<
-                        std::decay_t<
-                            decltype(
-                                *std::declval<
-                                    std::decay_t<T>
-                                >()
-                            )
-                        >
-                    >()
-                )
-            )
-        >,
-        std::string>;
+template<class T, class U> using IsSameAfterDereference = IsSame<TypeAfterDereference<T>, U>;
+template<class ... Ts> inline constexpr auto IsEmpty = sizeof...(Ts) == 0;
+template<class T, class ... Ts> inline static constexpr auto NoneOf = (... && !IsSame<T, Ts>::value);
+template<class T, class ... Ts> inline static constexpr auto OneOf = (... || IsSame<T, Ts>::value);
 
 } // anonymous namespace
 
