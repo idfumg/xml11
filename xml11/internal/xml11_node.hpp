@@ -363,7 +363,7 @@ public:
             !IsSame<T, std::string>::value &&
             !IsSame<T, char*>::value &&
             CanBeConvertedToBool<T>::value &&
-            IsSameFromPointer<T, std::string>::value,
+            IsSameAfterDereference<T, std::string>::value,
             void
         >,
         class = void,
@@ -476,7 +476,7 @@ public:
             !IsSame<T, std::string>::value &&
             !IsSame<T, char*>::value &&
             !IsSame<T, const char*>::value &&
-            !IsSameFromPointer<T, std::string>::value &&
+            !IsSameAfterDereference<T, std::string>::value &&
             mp_can_be_string_from_opt<T>::value,
             T
             >::type,
@@ -498,7 +498,7 @@ public:
         class=typename std::enable_if<
             !IsSame<T, std::string>::value &&
             !IsSame<T, char*>::value &&
-            IsSameFromPointer<T, std::string>::value,
+            IsSameAfterDereference<T, std::string>::value,
             T
             >::type,
         class=void,

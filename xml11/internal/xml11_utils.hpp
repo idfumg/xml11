@@ -44,7 +44,7 @@ struct CanBeConvertedToBoolImpl {
 template<class T> using CanBeConvertedToBool = CanBeConvertedToBoolImpl<T>;
 
 template<class T, class U> using IsSame = std::is_same<std::decay_t<T>, std::decay_t<U>>;
-template<class T, class U> using IsSameFromPointer = IsSame<TypeAfterDereferenceT<T>, U>;
+template<class T, class U> using IsSameAfterDereference = IsSame<TypeAfterDereferenceT<T>, U>;
 template<class T> using IsIntegral = std::is_integral<std::decay_t<T>>;
 // template<class T> inline constexpr auto CanBeUsedAsBool = decltype(static_cast<bool>(std::declval<std::decay_t<T>>())){true};
 template<class T> using mp_can_be_string = detail::mp_can_be_string_impl<T>;
