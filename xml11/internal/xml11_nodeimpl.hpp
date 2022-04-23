@@ -1,6 +1,9 @@
 #pragma once
 
 #include "xml11_associativearray.hpp"
+#include "xml11_node.hpp"
+
+namespace xml11 {
 
 class NodeImpl final {
 public:
@@ -152,7 +155,7 @@ public:
         m_type = std::forward<T>(type);
     }
 
-    inline NodeType& type() noexcept
+    inline xml11::NodeType& type() noexcept
     {
         return m_type;
     }
@@ -223,3 +226,5 @@ private:
     NodeType m_type {NodeType::ELEMENT};
     AssociativeArray<NodeImpl> m_nodes {};
 };
+
+} // namespace xml11

@@ -7,11 +7,7 @@
 #include <functional>
 #include <iostream>
 
-namespace xml11 {
-
-#include "xml11_node.hpp"
-
-} /* namespace xml11 */
+#include "internal/xml11_node.hpp"
 
 #ifndef USE_XML11_LIBXML2
 

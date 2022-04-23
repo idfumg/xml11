@@ -1,5 +1,11 @@
 #pragma once
 
+#include "xml11_utils.hpp"
+
+#include <memory>
+
+namespace xml11 {
+
 template <class T>
 struct AssociativeArray {
 public:
@@ -121,7 +127,7 @@ public:
         ValuesListT result;
 
         if (m_isCaseInsensitive) {
-            const auto lowerName = to_lower1(name);
+            const auto lowerName = xml11::to_lower1(name);
             for (const auto& value : m_data) {
                 if (to_lower1(value->name()) == lowerName) {
                     result.emplace_back(value);
@@ -144,7 +150,7 @@ public:
         ValuesListT result;
 
         if (m_isCaseInsensitive) {
-            to_lower2(std::move(name));
+            xml11::to_lower2(std::move(name));
             for (const auto& value : m_data) {
                 if (to_lower1(value->name()) == name) {
                     result.emplace_back(value);
@@ -175,7 +181,7 @@ public:
     inline ValuePointerT findNode(const std::string& name) noexcept
     {
         if (m_isCaseInsensitive) {
-            const auto lowerName = to_lower1(name);
+            const auto lowerName = xml11::to_lower1(name);
             for (const auto& value : m_data) {
                 if (to_lower1(value->name()) == lowerName) {
                     return value;
@@ -196,7 +202,7 @@ public:
         inline ValuePointerT findNode(std::string&& name) noexcept
     {
         if (m_isCaseInsensitive) {
-            to_lower2(std::move(name));
+            xml11::to_lower2(std::move(name));
             for (const auto& value : m_data) {
                 if (to_lower1(value->name()) == name) {
                     return value;
@@ -338,3 +344,5 @@ private:
     ValuesListT m_data;
     bool m_isCaseInsensitive {true};
 };
+
+} // namespace xml11

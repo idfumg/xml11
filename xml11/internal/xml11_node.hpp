@@ -1,14 +1,11 @@
 #pragma once
 
-enum class NodeType : char {
-    ELEMENT = 0,
-    ATTRIBUTE = 1,
-    OPTIONAL = 2,
-    OPTIONAL_ATTRIBUTE = 3,
-};
+#include "xml11_nodetype.hpp"
+#include "xml11_utils.hpp"
+#include "xml11_nodeimpl.hpp"
+#include <type_traits>
 
-#include "internal/xml11_utils.hpp"
-#include "internal/xml11_nodeimpl.hpp"
+namespace xml11 {
 
 using ValueFilter = std::function<std::string (const std::string& value)>;
 
@@ -56,7 +53,7 @@ public:
     template<
         class Head,
         class = typename std::enable_if<
-            mp_like_pointer<Head>::value,
+            CanBeDereferenced<Head>::value,
             void
             >::type,
         class = void
@@ -71,7 +68,7 @@ public:
     template<
         class T,
         class = typename std::enable_if<
-            mp_same<T, std::string>::value,
+            IsSame<T, std::string>::value,
             void
             >::type,
         class = void,
@@ -85,10 +82,10 @@ public:
     template<
         class T,
         class = typename std::enable_if<
-            !mp_same<T, Node>::value &&
-            !mp_same<T, NodeList>::value &&
-            !mp_same<T, std::string>::value &&
-            !mp_same<T, char*>::value &&
+            !IsSame<T, Node>::value &&
+            !IsSame<T, NodeList>::value &&
+            !IsSame<T, std::string>::value &&
+            !IsSame<T, char*>::value &&
             mp_can_be_string<T>::value,
             void
             >::type
@@ -113,7 +110,7 @@ public:
         class T,
         class ... Args,
         class = typename std::enable_if<
-            mp_same<T, Node>::value,
+            IsSame<T, Node>::value,
             void
             >::type
         >
@@ -126,7 +123,7 @@ public:
         class T,
         class ... Args,
         class = typename std::enable_if<
-            mp_same<T, NodeList>::value,
+            IsSame<T, NodeList>::value,
             void
             >::type,
         class = void
@@ -140,7 +137,7 @@ public:
         class T,
         class ... Args,
         class = typename std::enable_if<
-            mp_like_pointer<T>::value,
+            CanBeDereferenced<T>::value,
             void
             >::type
         >
@@ -154,7 +151,7 @@ public:
     template<
         class T,
         class = typename std::enable_if<
-            mp_same<T, Node>::value,
+            IsSame<T, Node>::value,
             void
             >::type
         >
@@ -166,7 +163,7 @@ public:
     template<
         class T,
         class = typename std::enable_if<
-            mp_same<T, NodeList>::value,
+            IsSame<T, NodeList>::value,
             void
             >::type,
         class = void
@@ -289,10 +286,10 @@ public:
 
     template<
         class ... Args,
-        class = typename std::enable_if<
-            !mp_empty<Args...>::value,
+        class = std::enable_if<
+            !IsEmpty<Args...>,
             void
-            >::type
+            >
         >
     inline Node(std::string name, std::initializer_list<Node>&& list, Args&& ... args)
         : Node(std::move(name), NodeList(std::move(list)))
@@ -303,11 +300,11 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
-            mp_like_pointer<T>::value &&
-            mp_empty<Args...>::value,
+        class = std::enable_if<
+            CanBeDereferenced<T>::value &&
+            IsEmpty<Args...>,
             void
-            >::type
+            >
         >
     inline Node(std::string name, std::initializer_list<T>&& list)
         : Node(std::move(name))
@@ -320,11 +317,11 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
-            mp_like_pointer<T>::value &&
-            !mp_empty<Args...>::value,
+        class = std::enable_if<
+            CanBeDereferenced<T>::value &&
+            !IsEmpty<Args...>,
             void
-            >::type
+            >
         >
     inline Node(std::string name, std::initializer_list<T>&& list, Args&& ... args)
         : Node(std::move(name), std::move(list))
@@ -334,10 +331,10 @@ public:
 
     template<
         class ... Args,
-        class = typename std::enable_if<
-            !mp_empty<Args...>::value,
+        class = std::enable_if<
+            !IsEmpty<Args...>,
             void
-            >::type
+            >
         >
     inline Node(std::string name, std::string value, Args&& ... args)
         : Node(std::move(name), std::move(value))
@@ -347,10 +344,10 @@ public:
 
     template<
         class ... Args,
-        class = typename std::enable_if<
-            !mp_empty<Args...>::value,
+        class = std::enable_if_t<
+            !IsEmpty<Args...>,
             void
-            >::type
+            >
         >
     inline Node(std::string name, std::string value, const NodeType type, Args&& ... args)
         : Node(std::move(name), std::move(value), type)
@@ -361,14 +358,14 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
-            mp_like_pointer<T>::value &&
-            !mp_same<T, std::string>::value &&
-            !mp_same<T, char*>::value &&
-            decltype(true == static_cast<bool>(std::declval<detail::mp_raw<T>>()))(true) &&
-            mp_same_from_opt<T, std::string>::value,
+        class = std::enable_if_t<
+            CanBeDereferenced<T>::value &&
+            !IsSame<T, std::string>::value &&
+            !IsSame<T, char*>::value &&
+            CanBeConvertedToBool<T>::value &&
+            IsSameFromPointer<T, std::string>::value,
             void
-            >::type,
+        >,
         class = void,
         class = void
         >
@@ -396,10 +393,10 @@ public:
         class T,
         class ... Args,
         class = typename std::enable_if<
-            mp_like_pointer<T>::value &&
-            !mp_same<T, std::string>::value &&
-            !mp_same<T, char*>::value &&
-            decltype(true == std::declval<detail::mp_raw<T>>())(true) &&
+            CanBeDereferenced<T>::value &&
+            !IsSame<T, std::string>::value &&
+            !IsSame<T, char*>::value &&
+            std::is_convertible_v<bool, T> &&
             mp_can_be_string_from_opt<T>::value,
             void
             >::type,
@@ -430,11 +427,11 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
-            (mp_same<T, Node>::value || mp_same<T, NodeList>::value) &&
-            !mp_empty<Args...>::value,
+        class = std::enable_if_t<
+            (IsSame<T, Node>::value || IsSame<T, NodeList>::value) &&
+            !IsEmpty<Args...>,
             void
-            >::type,
+            >,
         class = void
         >
     inline Node(std::string name, T&& value, Args&& ... args)
@@ -446,11 +443,11 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
-            mp_integral<T>::value &&
-            mp_empty<Args...>::value,
+        class = std::enable_if_t<
+            IsIntegral<T>::value &&
+            IsEmpty<Args...>,
             void
-            >::type
+            >
         >
     inline Node(std::string name, T&& value)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
@@ -461,11 +458,11 @@ public:
     template<
         class T,
         class ... Args,
-        class = typename std::enable_if<
-            mp_integral<T>::value &&
-            !mp_empty<Args...>::value,
+        class = std::enable_if_t<
+            IsIntegral<T>::value &&
+            !IsEmpty<Args...>,
             void
-            >::type
+            >
         >
     inline Node(std::string name, T&& value, Args&& ... args)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
@@ -476,10 +473,10 @@ public:
     template<
         class T,
         class=typename std::enable_if<
-            !mp_same<T, std::string>::value &&
-            !mp_same<T, char*>::value &&
-            !mp_same<T, const char*>::value &&
-            !mp_same_from_opt<T, std::string>::value &&
+            !IsSame<T, std::string>::value &&
+            !IsSame<T, char*>::value &&
+            !IsSame<T, const char*>::value &&
+            !IsSameFromPointer<T, std::string>::value &&
             mp_can_be_string_from_opt<T>::value,
             T
             >::type,
@@ -499,9 +496,9 @@ public:
     template<
         class T,
         class=typename std::enable_if<
-            !mp_same<T, std::string>::value &&
-            !mp_same<T, char*>::value &&
-            mp_same_from_opt<T, std::string>::value,
+            !IsSame<T, std::string>::value &&
+            !IsSame<T, char*>::value &&
+            IsSameFromPointer<T, std::string>::value,
             T
             >::type,
         class=void,
@@ -1066,3 +1063,5 @@ inline Node operator "" _xml(const char* value, size_t size)
 }
 
 } /* literals */
+
+} // namespace xml11 {
