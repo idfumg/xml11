@@ -26,14 +26,14 @@ template<class T, class ... Ts> inline static constexpr auto OneOf = (... || IsS
 } // anonymous namespace
 
 template<class T>
-static inline auto to_lower1(T s) -> std::string
+static inline auto to_lower_copy(T s)
 {
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
 }
 
 template<class T>
-static inline auto to_lower2(T&& s) -> void
+static inline void to_lower_inplace(T&& s)
 {
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
@@ -52,7 +52,7 @@ static inline std::vector<std::string> split(const std::string &text, const char
     std::vector<std::string> tokens;
     std::size_t start = 0, end = 0;
     while ((end = text.find(sep, start)) != std::string::npos) {
-        tokens.push_back(text.substr(start, end - start));
+        tokens.emplace_back(text.substr(start, end - start));
         start = end + 1;
     }
     tokens.emplace_back(text.substr(start));

@@ -127,9 +127,9 @@ public:
         ValuesListT result;
 
         if (m_isCaseInsensitive) {
-            const auto lowerName = xml11::to_lower1(name);
+            const auto lowerName = xml11::to_lower_copy(name);
             for (const auto& value : m_data) {
-                if (to_lower1(value->name()) == lowerName) {
+                if (to_lower_copy(value->name()) == lowerName) {
                     result.emplace_back(value);
                 }
             }
@@ -150,9 +150,9 @@ public:
         ValuesListT result;
 
         if (m_isCaseInsensitive) {
-            xml11::to_lower2(std::move(name));
+            xml11::to_lower_inplace(std::move(name));
             for (const auto& value : m_data) {
-                if (to_lower1(value->name()) == name) {
+                if (to_lower_copy(value->name()) == name) {
                     result.emplace_back(value);
                 }
             }
@@ -181,9 +181,9 @@ public:
     inline ValuePointerT findNode(const std::string& name) noexcept
     {
         if (m_isCaseInsensitive) {
-            const auto lowerName = xml11::to_lower1(name);
+            const auto lowerName = xml11::to_lower_copy(name);
             for (const auto& value : m_data) {
-                if (to_lower1(value->name()) == lowerName) {
+                if (to_lower_copy(value->name()) == lowerName) {
                     return value;
                 }
             }
@@ -202,9 +202,9 @@ public:
         inline ValuePointerT findNode(std::string&& name) noexcept
     {
         if (m_isCaseInsensitive) {
-            xml11::to_lower2(std::move(name));
+            xml11::to_lower_inplace(std::move(name));
             for (const auto& value : m_data) {
-                if (to_lower1(value->name()) == name) {
+                if (to_lower_copy(value->name()) == name) {
                     return value;
                 }
             }
