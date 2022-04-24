@@ -45,145 +45,88 @@ public:
 
     }
 
-    static inline void AddNode_(Node&) noexcept
-    {
-
-    }
-
-    template<
-        class Head,
-        class = std::enable_if_t<
-            CanBeDereferenced<Head>::value,
-            void
-            >,
-        class = void
-        >
-    static inline void AddNode_(Node& node, Head&& head)
+    template<class Head, class = Deferencible<Head>, class = void>
+    static inline void AddNode(Node& node, Head&& head)
     {
         if (head) {
-            AddNode_(node, *std::forward<Head>(head));
+            AddNode(node, *std::forward<Head>(head));
         }
     }
 
-    template<
-        class T,
-        class = std::enable_if_t<
-            IsSame<T, std::string>::value,
-            void
-            >,
-        class = void,
-        class = void
-        >
-    static inline void AddNode_(Node& node, T&& value)
+    static inline void AddNode(Node& node, std::string&& value)
     {
-        node.text(std::forward<T>(value));
+        node.text(std::move(value));
     }
 
-    template<
-        class T,
-        class = std::enable_if_t<
-            NoneOf<T, Node, NodeList, std::string, char*>::value &&
-            ConvertibleToString<T>::value,
-            void
-            >
-        >
-    static inline void AddNode_(Node& node, T&& value)
+    static inline void AddNode(Node& node, const std::string& value)
+    {
+        node.text(std::move(value));
+    }
+
+    template<class T, class = NotAStringButConvertibleToString<T>>
+    static inline void AddNode(Node& node, T&& value)
     {
         node.text(std::to_string(std::forward<T>(value)));
     }
 
     template<std::size_t N>
-    static inline void AddNode_(Node& node, const char(&value)[N])
+    static inline void AddNode(Node& node, const char(&value)[N])
     {
         node.text(value);
     }
 
-    static inline void AddNode_(Node& node, const NodeType type)
+    static inline void AddNode(Node& node, const NodeType type)
     {
         node.type(type);
     }
 
-    template<
-        class T,
-        class ... Ts,
-        class = std::enable_if_t<
-            IsSame<T, Node>::value,
-            void
-            >
-        >
-    static inline void AddNode_(Node& node, T&& head)
+    static inline void AddNode(Node& node, Node&& head)
     {
-        node.addNode(std::forward<T>(head));
+        node.addNode(std::move(head));
     }
 
-    template<
-        class T,
-        class ... Ts,
-        class = std::enable_if_t<
-            IsSame<T, NodeList>::value,
-            void
-            >,
-        class = void
-        >
-    static inline void AddNode_(Node& node, T&& head)
+    static inline void AddNode(Node& node, const Node& head)
     {
-        node.addNodes(std::forward<T>(head));
+        node.addNode(std::move(head));
     }
 
-    template<
-        class T,
-        class ... Ts,
-        class = std::enable_if_t<
-            CanBeDereferenced<T>::value,
-            void
-            >
-        >
-    static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
+    static inline void AddNode(Node& node, NodeList&& head)
+    {
+        node.addNodes(std::move(head));
+    }
+
+    static inline void AddNode(Node& node, const NodeList& head)
+    {
+        node.addNodes(head);
+    }
+
+    template<class T, class ... Ts, class = Deferencible<T>>
+    static inline void AddNode(Node& node, std::initializer_list<T>&& list)
     {
         for (auto&& item : list) {
-            AddNode_(node, std::move<T>(item));
+            AddNode(node, std::move<T>(item));
         }
     }
 
-    template<
-        class T,
-        class = std::enable_if_t<
-            IsSame<T, Node>::value,
-            void
-            >
-        >
-    static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
+    template<class T, class = IsSame<T, Node>>
+    static inline void AddNode(Node& node, std::initializer_list<T>&& list)
     {
-        AddNode_(node, NodeList(std::move<T>(list)));
+        AddNode(node, NodeList(std::move<T>(list)));
     }
 
-    template<
-        class T,
-        class = std::enable_if_t<
-            IsSame<T, NodeList>::value,
-            void
-            >,
-        class = void
-        >
-    static inline void AddNode_(Node& node, std::initializer_list<T>&& list)
+    template<class T, class = IsSame<T, NodeList>, class = void>
+    static inline void AddNode(Node& node, std::initializer_list<T>&& list)
     {
-        for (const auto& item : list) {
-            AddNode_(node, std::move<T>(item));
+        for (auto&& item : list) {
+            AddNode(node, std::move<T>(item));
         }
-    }
-
-    template<class Head, class... Tail>
-    static inline void AddNode_(Node& node, Head&& head, Tail&& ...tail)
-    {
-        AddNode_(node, std::forward<Head>(head));
-        AddNode_(node, std::forward<Tail>(tail)...);
     }
 
     template<class Head, class... Tail>
     static inline void AddNode(Node& node, Head&& head, Tail&& ...tail)
     {
-        AddNode_(node, std::forward<Head>(head));
-        AddNode_(node, std::forward<Tail>(tail)...);
+        AddNode(node, std::forward<Head>(head));
+        AddNode(node, std::forward<Tail>(tail)...);
     }
 
 public:
@@ -283,7 +226,7 @@ public:
 
     template<
         class ... Ts,
-        class = WithOptions<Ts...>
+        class = NotEmpty<Ts...>
     >
     inline Node(std::string name, std::initializer_list<Node>&& list, Ts&& ... args)
         : Node(std::move(name), NodeList(std::move(list)))
@@ -294,11 +237,7 @@ public:
     template<
         class T,
         class ... Ts,
-        class = std::enable_if_t<
-            CanBeDereferenced<T>::value &&
-            IsEmpty<Ts...>,
-            void
-            >
+        class = SatisfyAll<Empty<Ts...>>
     >
     inline Node(std::string name, std::initializer_list<T>&& list)
         : Node(std::move(name))
@@ -311,12 +250,8 @@ public:
     template<
         class T,
         class ... Ts,
-        class = std::enable_if_t<
-            CanBeDereferenced<T>::value &&
-            !IsEmpty<Ts...>,
-            void
-            >
-        >
+        class = SatisfyAll<NotEmpty<Ts...>>
+    >
     inline Node(std::string name, std::initializer_list<T>&& list, Ts&& ... args)
         : Node(std::move(name), std::move(list))
     {
@@ -401,11 +336,7 @@ public:
     template<
         class T,
         class ... Ts,
-        class = std::enable_if_t<
-            OneOf<T, Node, NodeList>::value &&
-            !IsEmpty<Ts...>,
-            void
-            >,
+        class = AllOf<OneOf<T, Node, NodeList>, NotEmpty<Ts...>>,
         class = void
     >
     inline Node(std::string name, T&& value, Ts&& ... args)
@@ -417,7 +348,7 @@ public:
     template<
         class T,
         class ... Ts,
-        class=LikeAIntegralWithoutOptions<T, Ts...>
+        class = LikeAIntegralWithoutOptions<T, Ts...>
     >
     inline Node(std::string name, T&& value)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
@@ -428,7 +359,7 @@ public:
     template<
         class T,
         class ... Ts,
-        class=LikeAIntegralWithOptions<T, Ts...>
+        class = LikeAIntegralWithOptions<T, Ts...>
     >
     inline Node(std::string name, T&& value, Ts&& ... args)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
@@ -438,14 +369,14 @@ public:
 
     template<
         class T,
-        class=LikeAnOptionalOfConvertibleToString<T>,
-        class=void
+        class = LikeAnOptionalOfConvertibleToString<T>,
+        class = void
     >
-    inline Node(std::string name, const T& param)
+    inline Node(std::string name, const T& value)
         : Node(std::move(name))
     {
-        if (param) {
-            this->value(std::to_string(*param));
+        if (value) {
+            this->value(std::to_string(*value));
         }
         else {
             this->value(std::string());
@@ -453,16 +384,16 @@ public:
     }
 
     template<
-        class T,
-        class=LikeAnOptionalOfString<T>,
-        class=void,
-        class=void
+        class T, 
+        class = LikeAnOptionalOfString<T>, 
+        class = void, 
+        class = void
     >
-    inline Node(std::string name, const T& param)
+    inline Node(std::string name, const T& value)
         : Node(std::move(name))
     {
-        if (param) {
-            this->value(*param);
+        if (value) {
+            this->value(*value);
         }
         else {
             this->value(std::string());
@@ -470,8 +401,8 @@ public:
     }
 
     template<
-        class T,
-        class=ConvertibleToString<T>
+        class T, 
+        class = ConvertibleToString<T>
     >
     Node& addNode(std::string name, T&& value)
     {
