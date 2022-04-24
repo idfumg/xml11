@@ -14,14 +14,45 @@ template<class T> inline static constexpr std::true_type CheckExpression(T&& arg
 template<class T> using CreateValue = std::decay_t<T>;
 template<class T> using TypeAfterDereference = decltype(ExpressionType(*CreateValue<T>()));
 template<class T> using CanBeDereferenced = decltype(CheckExpression(*CreateValue<T>()));
+template<class T> using NotDereferencible = std::enable_if_t<!CanBeDereferenced<T>::value, std::true_type>;
 template<class T> using ConvertibleToBool = decltype(CheckExpression(static_cast<bool>(CreateValue<T>())));
 template<class T> using ConvertibleToString = decltype(CheckExpression(std::to_string(CreateValue<T>())));
 template<class T> using ConvertibleToStringFromOptional = decltype(CheckExpression(std::to_string(*CreateValue<T>())));
 template<class T, class U> using IsSame = std::is_same<std::decay_t<T>, std::decay_t<U>>;
+template<class T, class U> using NotSame = std::enable_if_t<IsSame<T, U>::value, std::true_type>;
 template<class T, class U> using IsSameAfterDereference = IsSame<TypeAfterDereference<T>, U>;
+template<class T, class U> using NotIsSameAfterDereference = std::enable_if_t<!IsSameAfterDereference<T, U>::value, std::true_type>;
 template<class ... Ts> inline constexpr auto IsEmpty = sizeof...(Ts) == 0;
-template<class T, class ... Ts> inline static constexpr auto NoneOf = (... && !IsSame<T, Ts>::value);
-template<class T, class ... Ts> inline static constexpr auto OneOf = (... || IsSame<T, Ts>::value);
+template<class ... Ts> using NotEmpty = std::enable_if_t<!IsEmpty<Ts...>, std::true_type>;
+template<class ... Ts> using Empty = std::enable_if_t<IsEmpty<Ts...>, std::true_type>;
+template<class T, class ... Ts> inline static constexpr auto NoneOf_ = (... && !IsSame<T, Ts>::value);
+template<class ... Ts> using NoneOf = std::enable_if_t<NoneOf_<Ts...>, std::true_type>;
+template<class T, class ... Ts> inline static constexpr auto OneOf_ = (... || IsSame<T, Ts>::value);
+template<class ... Ts> using OneOf = std::enable_if_t<OneOf_<Ts...>, std::true_type>;
+template<class T, class ... Ts> inline static constexpr auto AllOf_ = (... && Ts::value);
+template<class ... Ts> using AllOf = std::enable_if_t<AllOf_<Ts...>, std::true_type>;
+template<class ... Ts> using SatisfyAll = std::enable_if_t<AllOf_<Ts...>, void>;
+template<class T> using IsIntegral = std::enable_if_t<std::is_integral<std::decay_t<T>>::value, std::true_type>;
+
+template<class T> using NotAStringButConvertibleToString = SatisfyAll<
+    NoneOf<T, std::string, char*, const char*>,
+    ConvertibleToString<T>>;
+template<class ... Ts> using WithOptions = SatisfyAll<
+    NotEmpty<Ts...>>;
+template<class T, class ... Ts> using LikeAIntegralWithoutOptions = SatisfyAll<
+    IsIntegral<T>, 
+    Empty<Ts...>>;
+template<class T, class ... Ts> using LikeAIntegralWithOptions = SatisfyAll<
+    IsIntegral<T>, 
+    NotEmpty<Ts...>>;
+template<class T> using LikeAnOptionalOfString = SatisfyAll<
+    NoneOf<T, std::string, char*, const char*>, 
+    IsSameAfterDereference<T, std::string>>;
+template<class T> using LikeAnOptionalOfConvertibleToString = SatisfyAll<
+    NoneOf<T, std::string, char*, const char*>,
+    CanBeDereferenced<T>,
+    NotIsSameAfterDereference<T, std::string>,
+    ConvertibleToStringFromOptional<T>>;
 
 } // anonymous namespace
 

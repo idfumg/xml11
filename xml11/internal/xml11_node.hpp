@@ -82,7 +82,7 @@ public:
     template<
         class T,
         class = std::enable_if_t<
-            NoneOf<T, Node, NodeList, std::string, char*> &&
+            NoneOf<T, Node, NodeList, std::string, char*>::value &&
             ConvertibleToString<T>::value,
             void
             >
@@ -105,7 +105,7 @@ public:
 
     template<
         class T,
-        class ... Args,
+        class ... Ts,
         class = std::enable_if_t<
             IsSame<T, Node>::value,
             void
@@ -118,7 +118,7 @@ public:
 
     template<
         class T,
-        class ... Args,
+        class ... Ts,
         class = std::enable_if_t<
             IsSame<T, NodeList>::value,
             void
@@ -132,7 +132,7 @@ public:
 
     template<
         class T,
-        class ... Args,
+        class ... Ts,
         class = std::enable_if_t<
             CanBeDereferenced<T>::value,
             void
@@ -282,27 +282,24 @@ public:
     }
 
     template<
-        class ... Args,
-        class = std::enable_if_t<
-            !IsEmpty<Args...>,
-            void
-            >
-        >
-    inline Node(std::string name, std::initializer_list<Node>&& list, Args&& ... args)
+        class ... Ts,
+        class = WithOptions<Ts...>
+    >
+    inline Node(std::string name, std::initializer_list<Node>&& list, Ts&& ... args)
         : Node(std::move(name), NodeList(std::move(list)))
     {
-        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+        AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
     }
 
     template<
         class T,
-        class ... Args,
+        class ... Ts,
         class = std::enable_if_t<
             CanBeDereferenced<T>::value &&
-            IsEmpty<Args...>,
+            IsEmpty<Ts...>,
             void
             >
-        >
+    >
     inline Node(std::string name, std::initializer_list<T>&& list)
         : Node(std::move(name))
     {
@@ -313,59 +310,47 @@ public:
 
     template<
         class T,
-        class ... Args,
+        class ... Ts,
         class = std::enable_if_t<
             CanBeDereferenced<T>::value &&
-            !IsEmpty<Args...>,
+            !IsEmpty<Ts...>,
             void
             >
         >
-    inline Node(std::string name, std::initializer_list<T>&& list, Args&& ... args)
+    inline Node(std::string name, std::initializer_list<T>&& list, Ts&& ... args)
         : Node(std::move(name), std::move(list))
     {
-        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+        AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
     }
 
     template<
-        class ... Args,
-        class = std::enable_if_t<
-            !IsEmpty<Args...>,
-            void
-            >
-        >
-    inline Node(std::string name, std::string value, Args&& ... args)
+        class ... Ts,
+        class = WithOptions<Ts...>
+    >
+    inline Node(std::string name, std::string value, Ts&& ... args)
         : Node(std::move(name), std::move(value))
     {
-        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+        AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
     }
 
     template<
-        class ... Args,
-        class = std::enable_if_t<
-            !IsEmpty<Args...>,
-            void
-            >
-        >
-    inline Node(std::string name, std::string value, const NodeType type, Args&& ... args)
+        class ... Ts,
+        class = WithOptions<Ts...>
+    >
+    inline Node(std::string name, std::string value, const NodeType type, Ts&& ... args)
         : Node(std::move(name), std::move(value), type)
     {
-        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+        AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
     }
 
     template<
         class T,
-        class ... Args,
-        class = std::enable_if_t<
-            NoneOf<T, std::string, char*> &&
-            CanBeDereferenced<T>::value &&
-            ConvertibleToBool<T>::value &&
-            IsSameAfterDereference<T, std::string>::value,
-            void
-        >,
+        class ... Ts,
+        class = LikeAnOptionalOfString<T>,
         class = void,
         class = void
-        >
-    inline Node(std::string name, T&& param, const NodeType type, Args&& ... args)
+    >
+    inline Node(std::string name, T&& param, const NodeType type, Ts&& ... args)
         : Node(std::move(name))
     {
         if (!!(*this)) {
@@ -377,7 +362,7 @@ public:
                     return;
                 }
                 this->type(type);
-                AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+                AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
             }
             else {
                 pimpl = nullptr;
@@ -387,19 +372,13 @@ public:
 
     template<
         class T,
-        class ... Args,
-        class = std::enable_if_t<
-            NoneOf<T, std::string, char*> &&
-            CanBeDereferenced<T>::value &&
-            ConvertibleToStringFromOptional<T>::value &&
-            std::is_convertible_v<bool, T>,
-            void
-            >,
+        class ... Ts,
+        class = LikeAnOptionalOfConvertibleToString<T>,
         class = void,
         class = void,
         class = void
-        >
-    inline Node(std::string name, T&& param, const NodeType type, Args&& ... args)
+    >
+    inline Node(std::string name, T&& param, const NodeType type, Ts&& ... args)
         : Node(std::move(name))
     {
         if (!!(*this)) {
@@ -411,7 +390,7 @@ public:
                     return;
                 }
                 this->type(type);
-                AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+                AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
             }
             else {
                 pimpl = nullptr;
@@ -421,29 +400,25 @@ public:
 
     template<
         class T,
-        class ... Args,
+        class ... Ts,
         class = std::enable_if_t<
-            OneOf<T, Node, NodeList> &&
-            !IsEmpty<Args...>,
+            OneOf<T, Node, NodeList>::value &&
+            !IsEmpty<Ts...>,
             void
             >,
         class = void
-        >
-    inline Node(std::string name, T&& value, Args&& ... args)
+    >
+    inline Node(std::string name, T&& value, Ts&& ... args)
         : Node(std::move(name), std::forward<T>(value))
     {
-        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+        AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
     }
 
     template<
         class T,
-        class ... Args,
-        class = std::enable_if_t<
-            std::is_integral<std::decay_t<T>>::value &&
-            IsEmpty<Args...>,
-            void
-            >
-        >
+        class ... Ts,
+        class=LikeAIntegralWithoutOptions<T, Ts...>
+    >
     inline Node(std::string name, T&& value)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
     {
@@ -452,28 +427,20 @@ public:
 
     template<
         class T,
-        class ... Args,
-        class = std::enable_if_t<
-            std::is_integral<std::decay_t<T>>::value &&
-            !IsEmpty<Args...>,
-            void
-            >
-        >
-    inline Node(std::string name, T&& value, Args&& ... args)
+        class ... Ts,
+        class=LikeAIntegralWithOptions<T, Ts...>
+    >
+    inline Node(std::string name, T&& value, Ts&& ... args)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
     {
-        AddNode(*const_cast<Node*>(this), std::forward<Args>(args)...);
+        AddNode(*const_cast<Node*>(this), std::forward<Ts>(args)...);
     }
 
     template<
         class T,
-        class=std::enable_if_t<
-            NoneOf<T, std::string, char*, const char*> &&
-            !IsSameAfterDereference<T, std::string>::value &&
-            ConvertibleToStringFromOptional<T>::value,
-            T>,
+        class=LikeAnOptionalOfConvertibleToString<T>,
         class=void
-        >
+    >
     inline Node(std::string name, const T& param)
         : Node(std::move(name))
     {
@@ -487,13 +454,10 @@ public:
 
     template<
         class T,
-        class=std::enable_if_t<
-            NoneOf<T, std::string, char*> &&
-            IsSameAfterDereference<T, std::string>::value,
-            T>,
+        class=LikeAnOptionalOfString<T>,
         class=void,
         class=void
-        >
+    >
     inline Node(std::string name, const T& param)
         : Node(std::move(name))
     {
@@ -507,7 +471,8 @@ public:
 
     template<
         class T,
-        class = ConvertibleToString<T>>
+        class=ConvertibleToString<T>
+    >
     Node& addNode(std::string name, T&& value)
     {
         return addNode(std::move(name), std::to_string(std::forward<T>(value)));
