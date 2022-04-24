@@ -237,7 +237,7 @@ public:
     template<
         class T,
         class ... Ts,
-        class = SatisfyAll<Empty<Ts...>>
+        class = AllOf<Empty<Ts...>>
     >
     inline Node(std::string name, std::initializer_list<T>&& list)
         : Node(std::move(name))
@@ -250,7 +250,7 @@ public:
     template<
         class T,
         class ... Ts,
-        class = SatisfyAll<NotEmpty<Ts...>>
+        class = AllOf<NotEmpty<Ts...>>
     >
     inline Node(std::string name, std::initializer_list<T>&& list, Ts&& ... args)
         : Node(std::move(name), std::move(list))

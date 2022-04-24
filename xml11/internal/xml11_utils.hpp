@@ -31,25 +31,24 @@ template<class T, class ... Ts> inline static constexpr auto OneOf_ = (... || Is
 template<class ... Ts> using OneOf = std::enable_if_t<OneOf_<Ts...>, std::true_type>;
 template<class T, class ... Ts> inline static constexpr auto AllOf_ = (... && Ts::value);
 template<class ... Ts> using AllOf = std::enable_if_t<AllOf_<Ts...>, std::true_type>;
-template<class ... Ts> using SatisfyAll = std::enable_if_t<AllOf_<Ts...>, std::true_type>;
 template<class T> using IsIntegral = std::enable_if_t<std::is_integral<std::decay_t<T>>::value, std::true_type>;
 template<class T> using NotString = NoneOf<T, std::string, char*, const char*>;
 
-template<class T> using NotAStringButConvertibleToString = SatisfyAll<
+template<class T> using NotAStringButConvertibleToString = AllOf<
     NotString<T>,
     ConvertibleToString<T>>;
-template<class ... Ts> using WithOptions = SatisfyAll<
+template<class ... Ts> using WithOptions = AllOf<
     NotEmpty<Ts...>>;
-template<class T, class ... Ts> using LikeAIntegralWithoutOptions = SatisfyAll<
+template<class T, class ... Ts> using LikeAIntegralWithoutOptions = AllOf<
     IsIntegral<T>, 
     Empty<Ts...>>;
-template<class T, class ... Ts> using LikeAIntegralWithOptions = SatisfyAll<
+template<class T, class ... Ts> using LikeAIntegralWithOptions = AllOf<
     IsIntegral<T>, 
     NotEmpty<Ts...>>;
-template<class T> using LikeAnOptionalOfString = SatisfyAll<
+template<class T> using LikeAnOptionalOfString = AllOf<
     NotString<T>, 
     IsSameAfterDereference<T, std::string>>;
-template<class T> using LikeAnOptionalOfConvertibleToString = SatisfyAll<
+template<class T> using LikeAnOptionalOfConvertibleToString = AllOf<
     NotString<T>,
     Deferencible<T>,
     NotIsSameAfterDereference<T, std::string>,
