@@ -6,6 +6,8 @@
 
 This library was developed with intention to avoid direct pointer manipulation by users when working with XML data. With the help of C++17 standard and some template metaprogramming we can use pretty powerful syntax for readability, better maintability and robustness of the code.
 
+> The main goal is to provide lightweight syntactic sugar for XML and implement declarative behaviour in our sources.
+
 ## Features
 
 - Order of elements is preserved;
@@ -15,8 +17,6 @@ This library was developed with intention to avoid direct pointer manipulation b
 - Pointer-ariphmetics is hidden;
 - Can be used with different backends;
 - Header-only powerful wrapper.
-
-> The main goal is to provide lightweight syntactic sugar for XML and implement declarative behaviour in our sources.
 
 ## Dependencies
 
