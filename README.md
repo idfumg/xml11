@@ -29,7 +29,7 @@ This library was developed with intention to avoid direct pointer manipulation b
 
 ## Run tests
 
-- Start tests easily by `./run.sh` bash script with Docker.
+- Start tests easily by `./run_tests.sh` bash script with Docker.
 
 ## Usage
 
