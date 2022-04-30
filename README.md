@@ -1,36 +1,99 @@
-# xml11
-An xml library generic wrapper for c++11.
+# XML11
 
-This library is developed with intention to avoid direct pointer manipulation by
-users when working with XML data.
-Plus, with help of c++11 standard we can use pretty powerful syntax for clarity
-of project code base and better maintability and the lowest level of errors.
+## _Declarative XML programming_
 
-Also, the wrapper allows you to interchange internal implementation by
-select/write the one with a library you like.
-Currently, two implementation exists - libxml2 and rapidxml.
-Rapidxml is very fast and not required install anything.
-Libxml2 also fast parser and can get you more detailed information about errors.
+[![](https://img.shields.io/github/v/tag/idfumg/xml11)]() [![](https://img.shields.io/github/languages/top/idfumg/xml11)]() [![](https://img.shields.io/github/issues/idfumg/xml11)]() [![](https://img.shields.io/github/license/idfumg/xml11)]() [![](https://img.shields.io/badge/c%2B%2B-17-green)]()
 
-Wrapper saves order of elements and use hash table for find operations.
-It uses lightweight functions, move semantic when possible.
+This library was developed with intention to avoid direct pointer manipulation by users when working with XML data. With the help of C++17 standard and some template metaprogramming we can use pretty powerful syntax for readability, better maintability and robustness of the code.
 
-Wrapper for libxml2 uses SAX for better performance/memory usage.
+## Features
 
-For adding more implementation see xml11.cpp, xml11_rapidxml, xml11_libxml2, xml11_nodeimpl.
+- Order of elements is preserved;
+- Using hash table for O(1) wherever possible;
+- Lightweight functions;
+- Move semantics;
+- Pointer-ariphmetics is hidden;
+- Can be used with different backends;
+- Header-only powerful wrapper.
 
-For more information see tests, Makefile and xml11.hpp, xml11_declarative.hpp.
+> The main goal is to provide lightweight syntactic sugar for XML and implement declarative behaviour in our sources.
+
+## Dependencies
+
+- There is the only one dependency - `libxml2`, that can be replaced by almost anything.
+ 
+## Installation
+
+- Install `libxml2`;
+- Download `xml11` directory and include the `xml11/xml11.hpp` header file.
+
+## Run tests
+
+- Start tests easily by `./run.sh` bash script with Docker.
+
+## Usage
+
+- Parse and create from user defined literals
 
 ```c++
+#include "../xml11/xml11.hpp"
 
-#include "xml11/xml11.hpp"
-#include <cassert>
+using namespace xml11;
+using namespace xml11::literals;
 
 int main() {
-    using namespace xml11;
+    static const auto root = 
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<Story>"
+        "  <Info property=\"property_value\">"
+        "    <author>John Fleck</author>"
+        "    <nested1>"
+        "      <nested2>text</nested2>"
+        "    </nested1>"
+        "  </Info>"
+        "</Story>"_xml;
+        
+    std::cout << root.toString(true) << std::endl;
+    return 0;
+}
+```
 
-    // You momentally can understand XML structure and change values of it.
-    Node node {
+- Parse and create from string
+ 
+```c++
+#include "../xml11/xml11.hpp"
+
+using namespace xml11;
+using namespace xml11::literals;
+
+int main() {
+    static const std::string text = 
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<Story>"
+        "  <Info property=\"property_value\">"
+        "    <author>John Fleck</author>"
+        "    <nested1>"
+        "      <nested2>text</nested2>"
+        "    </nested1>"
+        "  </Info>"
+        "</Story>";
+        
+    const auto root = Node::fromString(text);
+    std::cout << root.toString(true) << std::endl;
+    return 0;
+}
+```
+
+- Create XML Node from code written in a declarative style
+
+```c++
+#include "../xml11/xml11.hpp"
+
+using namespace xml11;
+using namespace xml11::literals;
+
+int main() {
+    const auto root = Node{
         "root", {
             {"node1", "value1", Node::Type::ATTRIBUTE},
             {"node2", "value2"},
@@ -56,66 +119,123 @@ int main() {
         }
     };
 
-    // Find/set text of node.
-    assert(node("node2").text() == "value2");
-    node("node2").text("new_node2_text");
-    node("node2").text("<aqwe><nested1/></aqwe>");
-
-    // XPath find node.
-    assert(node.findNodesXPath("Employers/Employer").size() == 3);
-
-    // You can insert new XML to node in text form.
-    // It will be parsed and inserted.
-    node("node2").value("<aqwe><nested1/></aqwe>");
-
-    // You can use direct find functions to find single/multi nodes.
-    const auto employersNode = node("Employers");
-    const auto employersNodes = employersNode["Employer"];
-    assert(employersNodes.size() == 3);
-
-    // If you decide operator like syntax is awful you can use named function.
-    const auto employersNodesNamed = employersNode.findNodes("Employer");
-    assert(employersNodesNamed.size() == 3);
-
-    // Or single node.
-    const auto node2Node = node.findNode("node2");
-    assert(node2Node);
-
-    // Or you can iterate over all node elements.
-    assert(node.nodes().size() == 5);
-
-    // You can add new nodes quite simple.
-    node.addNode("my_node", "my_value");
-
-    // Or use operator semantics.
-    node += {"my_node", "my_value"};
-
-    // Or use operator semantics with explicit Node class declaration.
-    node += Node {"my_node", "my_value"};
-
-    // Parsing operations.
-    const auto text =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>";
-
-    const auto root = Node::fromString(text);
-    assert(root);
-
+    std::cout << root.toString(true) << std::endl;
     return 0;
 }
-
 ```
 
-If you care about parsing, serialization errors or access to text/value/type of not
-valid xml, you have to catch exceptions. All other operations is implicitly
-suppress everything and safe.
+- Create an XML attribute
 
 ```c++
+#include "../xml11/xml11.hpp"
 
-try {
-    NoRoot noRoot {Node::fromString("")};
-    assert(false);
-} catch (const Node::Xml11Exception& e) {
-    assert(true);
+using namespace xml11;
+using namespace xml11::literals;
+
+int main() {
+    const auto root = Node{
+        "root", {
+            {"Employer", {
+                {"name", "Artem"},
+                {"surname", "Pushkin", Node::Type::ATTRIBUTE}
+            }}
+        }
+    };
+
+    std::cout << root.toString(true) << std::endl;
+    return 0;
 }
+```
 
+- Use string as a value
+
+```c++
+#include "../xml11/xml11.hpp"
+
+using namespace xml11;
+using namespace xml11::literals;
+
+int main() {
+    const string value = "Pushkin";
+    const auto root = Node{
+        "root", {
+            {"Employer", {
+                {"name", "Artem"},
+                {"surname", value}
+            }}
+        }
+    };
+
+    std::cout << root.toString(true) << std::endl;
+    return 0;
+}
+```
+
+- Use int as a value
+
+```c++
+#include "../xml11/xml11.hpp"
+
+using namespace xml11;
+using namespace xml11::literals;
+
+int main() {
+    const int value = 101;
+    const auto root = Node{
+        "root", {
+            {"Employer", {
+                {"name", "Artem"},
+                {"years", value}
+            }}
+        }
+    };
+
+    std::cout << root.toString(true) << std::endl;
+    return 0;
+}
+```
+
+- Use optional-like type as a value
+
+```c++
+#include "../xml11/xml11.hpp"
+
+using namespace xml11;
+using namespace xml11::literals;
+
+int main() {
+    const std::optional<int> int_opt_value = 101;
+    const std::optional<std::string> string_opt_value = "Pushkin";
+    const auto root = Node{
+        "root", {
+            {"Employer", {
+                {"name", "Artem"},
+                {"surname", string_opt_value},
+                {"years", int_opt_value}
+            }}
+        }
+    };
+
+    std::cout << root.toString(true) << std::endl;
+    return 0;
+}
+```
+
+- Working with errors and exceptions
+
+```c++
+#include "../xml11/xml11.hpp"
+
+using namespace xml11;
+using namespace xml11::literals;
+
+int main() {
+    try {
+        NoRoot noRoot {Node::fromString("")};
+        assert(false);
+    } catch (const Node::Xml11Exception& e) {
+        assert(true);
+    }
+    return 0;
+}
 ```
