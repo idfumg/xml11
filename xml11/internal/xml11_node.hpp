@@ -1,6 +1,7 @@
 #pragma once
 
 #include "xml11_nodetype.hpp"
+#include "xml11_exceptions.hpp"
 #include "xml11_utils.hpp"
 #include "xml11_nodeimpl.hpp"
 #include <type_traits>
@@ -11,11 +12,6 @@ using ValueFilter = std::function<std::string (const std::string& value)>;
 
 class Node;
 using NodeList = std::vector<Node>;
-
-class Xml11Exception final : public std::runtime_error {
-public:
-    using std::runtime_error::runtime_error;
-};
 
 class Node {
 public:
