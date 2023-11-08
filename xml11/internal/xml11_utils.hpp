@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <cctype>
 
 namespace xml11 {
 
@@ -29,9 +30,10 @@ template<class T, class ... Ts> inline static constexpr auto NoneOf_ = (... && !
 template<class ... Ts> using NoneOf = std::enable_if_t<NoneOf_<Ts...>, std::true_type>;
 template<class T, class ... Ts> inline static constexpr auto OneOf_ = (... || IsSame<T, Ts>::value);
 template<class ... Ts> using OneOf = std::enable_if_t<OneOf_<Ts...>, std::true_type>;
-template<class T, class ... Ts> inline static constexpr auto AllOf_ = (... && Ts::value);
+template<class ... Ts> inline static constexpr auto AllOf_ = (... && Ts::value);
 template<class ... Ts> using AllOf = std::enable_if_t<AllOf_<Ts...>, std::true_type>;
 template<class T> using IsIntegral = std::enable_if_t<std::is_integral<std::decay_t<T>>::value, std::true_type>;
+template<class T> using NotPointer = std::enable_if_t<!std::is_pointer_v<T>, std::true_type>;
 template<class T> using NotString = NoneOf<T, std::string, char*, const char*>;
 
 template<class T> using NotAStringButConvertibleToString = AllOf<
@@ -40,13 +42,13 @@ template<class T> using NotAStringButConvertibleToString = AllOf<
 template<class ... Ts> using WithOptions = AllOf<
     NotEmpty<Ts...>>;
 template<class T, class ... Ts> using LikeAIntegralWithoutOptions = AllOf<
-    IsIntegral<T>, 
+    IsIntegral<T>,
     Empty<Ts...>>;
 template<class T, class ... Ts> using LikeAIntegralWithOptions = AllOf<
-    IsIntegral<T>, 
+    IsIntegral<T>,
     NotEmpty<Ts...>>;
 template<class T> using LikeAnOptionalOfString = AllOf<
-    NotString<T>, 
+    NotString<T>,
     IsSameAfterDereference<T, std::string>>;
 template<class T> using LikeAnOptionalOfConvertibleToString = AllOf<
     NotString<T>,

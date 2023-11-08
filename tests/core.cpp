@@ -2,20 +2,23 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
+
 using namespace testing;
 using namespace xml11;
 using namespace xml11::literals;
+using namespace std::string_literals;
 
 static std::string GetText() noexcept
 {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n";
+        "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>\n"_s;
 }
 
 static std::string GetText2() noexcept
 {
-    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>";
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
+        <story><info id1=\"123456789\" id2=\"555\"><author id3=\"009\">John Fleck</author><date>June 2, 2002</date><keyword>example</keyword></info><body><headline>This is the headline</headline><para>Para1</para><para>Para2</para><para>Para3</para><nested1><nested2 id=\"\">nested2 text фыв</nested2></nested1></body><ebook/><ebook/></story>"_s;
 }
 
 static Node GetRoot() noexcept
@@ -186,8 +189,9 @@ TEST(Main, SetTextToTheElementNode) {
 TEST(Main, SetTextAsNewXmlTextToTheNodeWillUrlEncodeItSymbolsWhenSerializationToString) {
     Node root = GetEmployers();
     root("node2").text("<aqwe><nested1/></aqwe>");
+    std::cout << root("node2").toString(false) << std::endl;
 
-    EXPECT_TRUE(root("node2").toString(false).find("&lt;aqwe&gt;&lt;nested1/&gt;&lt;/aqwe&gt;") != std::string::npos);
+    EXPECT_TRUE(root("node2").toString(false).find("<aqwe><nested1/></aqwe>") != std::string::npos);
 }
 
 TEST(Main, SetTextAsNewXmlTextToTheNodeWillNotUrlEncodeWhenWorkingWithRawNodeText) {
@@ -406,6 +410,7 @@ TEST(Main, EraseNodeFromTreeHierarchy) {
 TEST(Main, GetAllNodesOfRoot) {
     const auto root = GetEmployers();
     EXPECT_EQ(root.nodes().size(), 5);
+    EXPECT_EQ(Node::fromString(root.toString()).toString(), root.toString());
 }
 
 TEST(Main, InitialRegisterOfLetterIsPreserved) {
@@ -414,6 +419,7 @@ TEST(Main, InitialRegisterOfLetterIsPreserved) {
     EXPECT_EQ(root.name(), "StorY");
     EXPECT_TRUE(root("info")("author").toString(false).find("JOHN FLECK") != std::string::npos);
     EXPECT_TRUE(root("info")("author").toString(false).find("author") != std::string::npos);
+    EXPECT_EQ(Node::fromString(root.toString()).toString(), root.toString());
 }
 
 TEST(Main, AccessToTheNodesIsCaseInsensitiveByDefault) {
@@ -438,6 +444,7 @@ TEST(Main, AccessToTheNodesViaXPath) {
     EXPECT_EQ(root.findNodeXPath("children/subchild1").name(), "subchild1");
     EXPECT_EQ(root.findNodeXPath("children/subchild1").text(), "subvalue1");
     EXPECT_EQ(root.findNodeXPath("children/subchild2").text(), "subvalue2");
+    EXPECT_EQ(Node::fromString(root.toString()).toString(), root.toString());
 }
 
 TEST(Main, AddNodeWithBraceInitializerList) {
@@ -462,12 +469,14 @@ TEST(Main, AddNodeListWithThreeNodesWithBraceInitializerList) {
     const Node root {"root", {{"node3", "value3"}, {"node4", "value4"}, {"node5", "value5"}}};
     EXPECT_TRUE(root("node5"));
     EXPECT_EQ(root("node5").text(), "value5");
+    EXPECT_EQ(Node::fromString(root.toString()).toString(), root.toString());
 }
 
 TEST(Main, AddNodeListWithThreeNodesWithBraceInitializerListWithAnExplicitTypeName) {
     const Node root {"root", {{"node3", "value3"}}, Node{"node4", "value4"}, Node{"node5", "value5"}};
     EXPECT_TRUE(root("node5"));
     EXPECT_EQ(root("node5").text(), "value5");
+    EXPECT_EQ(Node::fromString(root.toString()).toString(), root.toString());
 }
 
 TEST(Main, CreateNodeWithIntegerValue) {
@@ -598,6 +607,7 @@ TEST(Main, CreateANodeWithTheOptionalValueAsAnAttributeAndAdditionalPlainSubNode
     const Node root {"root", {{"node4", "4"}, {"node3", validOptional, NodeType::ATTRIBUTE, "33", Node{"node4", "4"}}}};
     EXPECT_EQ(root("node3").text(), "33");
     EXPECT_TRUE(root("node3")("node4"));
+    EXPECT_EQ(Node::fromString(root.toString()).toString(), root.toString());
 }
 
 TEST(Main, CreateANodeWithAnEmptyValue) {
@@ -696,6 +706,23 @@ TEST(Main, CreateSeveralOptionalNodesAndSeveralPlainOnes) {
     EXPECT_EQ(root("attr").text(), "AttrValue");
     EXPECT_TRUE(root.toString(false).find("IppValue") != std::string::npos);
     EXPECT_TRUE(root.toString(false).find("AttrValue") != std::string::npos);
+}
+
+TEST(Main, DoNotMistakeANodeWithAString) {
+    const auto carInfoNode = xml11::Node{"CV", {
+        {"M5", "123"},
+    }};
+
+    const auto want = xml11::Node {"CK",
+        NodeList {
+            {"VB", "FPK"},
+        },
+        carInfoNode,
+    };
+
+    const auto got = Node::fromString(want.toString());
+
+    EXPECT_EQ(want.toString(), got.toString());
 }
 
 // void test_fn1()

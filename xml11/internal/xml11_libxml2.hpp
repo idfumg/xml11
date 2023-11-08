@@ -1,7 +1,14 @@
 #pragma once
 
+#include "xml11_nodetype.hpp"
+#include "xml11_nodeimpl.hpp"
+
 #include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
+
+#include <type_traits>
+#include <memory>
+#include <string>
 
 namespace xml11 {
 
@@ -10,7 +17,7 @@ namespace {
 #define CreateErrorText(param) \
     (std::string(__FILE__) + ": " + __FUNCTION__ + ": " + std::to_string(__LINE__) + ": Error in " + (param));
 
-static const size_t parseOptions = XML_PARSE_NOBLANKS | XML_PARSE_HUGE;
+static inline const size_t parseOptions = XML_PARSE_NOBLANKS | XML_PARSE_HUGE;
 
 using BufferType = std::decay_t<decltype(xmlBufferCreate())>;
 using WriterType = std::decay_t<decltype(xmlNewTextWriterMemory({}, {}))>;
@@ -34,7 +41,6 @@ static inline void CleanupParser() noexcept
 
     xmlSetStructuredErrorFunc(NULL, NULL);
     xmlSetGenericErrorFunc(NULL, NULL);
-    initGenericErrorDefaultFunc(NULL);
     xmlCleanupParser();
 }
 

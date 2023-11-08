@@ -42,7 +42,6 @@ public:
 public:
     static inline void AddNode(Node&) noexcept
     {
-
     }
 
     template<class Head, class = Deferencible<Head>, class = void>
@@ -63,7 +62,12 @@ public:
         node.text(std::move(value));
     }
 
-    template<class T, class = NotAStringButConvertibleToString<T>>
+    template<
+        class T,
+        class = NotAStringButConvertibleToString<T>,
+        class = NoneOf<T, Node, NodeList>,
+        class = NotPointer<T>
+    >
     static inline void AddNode(Node& node, T&& value)
     {
         node.text(std::to_string(std::forward<T>(value)));
@@ -122,7 +126,7 @@ public:
         }
     }
 
-    template<class Head, class... Tail>
+    template<class Head, class... Tail, class = NotEmpty<Tail...>>
     static inline void AddNode(Node& node, Head&& head, Tail&& ...tail)
     {
         AddNode(node, std::forward<Head>(head));
@@ -138,25 +142,21 @@ public:
     inline Node() noexcept
         : pimpl {nullptr}
     {
-
     }
 
     inline Node(const std::shared_ptr<class NodeImpl>& node) noexcept
         : pimpl {node}
     {
-
     }
 
     inline Node(std::shared_ptr<class NodeImpl>&& node) noexcept
         : pimpl {std::move(node)}
     {
-
     }
 
     inline Node(const Node& node) noexcept
         : pimpl {node.pimpl}
     {
-
     }
 
     inline Node(Node&& node) noexcept
@@ -221,7 +221,6 @@ public:
     inline Node(std::string name, std::initializer_list<Node>&& list)
         : Node(std::move(name), NodeList(std::move(list)))
     {
-
     }
 
     template<
@@ -353,7 +352,6 @@ public:
     inline Node(std::string name, T&& value)
         : Node(std::move(name), std::to_string(std::forward<T>(value)))
     {
-
     }
 
     template<
@@ -384,9 +382,9 @@ public:
     }
 
     template<
-        class T, 
-        class = LikeAnOptionalOfString<T>, 
-        class = void, 
+        class T,
+        class = LikeAnOptionalOfString<T>,
+        class = void,
         class = void
     >
     inline Node(std::string name, const T& value)
@@ -401,7 +399,7 @@ public:
     }
 
     template<
-        class T, 
+        class T,
         class = ConvertibleToString<T>
     >
     Node& addNode(std::string name, T&& value)

@@ -1,5 +1,5 @@
 LIBS=-lgtest -lxml2 -pthread
-FLAGS=-pedantic-errors -Wno-undef-prefix -Wno-old-style-cast -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -Wno-sign-compare
+FLAGS=-pedantic-errors -Wno-undef-prefix -Wno-old-style-cast -Wall -Werror -Wextra -ansi -Wshadow -Wstrict-aliasing -O3 -std=c++17 -fno-rtti -Wno-sign-compare -I/usr/include/libxml2
 CLANG_FLAGS=-fno-omit-frame-pointer -g -fsanitize=address
 SOURCES=tests/core.cpp tests/main.cpp
 

@@ -9,7 +9,7 @@
 
 #include "internal/xml11_node.hpp"
 
-#ifndef USE_XML11_LIBXML2
+#ifdef USE_XML11_RAPIDXML
 
 #include "internal/xml11_rapidxml.hpp"
 
@@ -17,6 +17,6 @@
 
 #include "internal/xml11_libxml2.hpp"
 
-#endif // USE_XML11_LIBXML2
+#endif // USE_XML11_RAPIDXML
 
 #endif // XML11_HPP
